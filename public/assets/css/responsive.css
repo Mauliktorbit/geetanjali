@@ -1,0 +1,435 @@
+/* ========== Global responsive fixes (all pages) ========== */
+
+html {
+    overflow-x: clip;
+}
+
+body {
+    overflow-x: clip;
+}
+
+img,
+video,
+iframe {
+    max-width: 100%;
+}
+
+/* ---------- Tablet (≤1199) ---------- */
+@media (max-width: 1199.98px) {
+    .primary-nav__list > li > a,
+    .primary-nav__list .dropdown-toggle {
+        padding: 12px 8px;
+        font-size: 11.5px;
+        letter-spacing: 0.04em;
+    }
+
+    .footer-brand {
+        grid-column: 1 / -1;
+    }
+}
+
+/* ---------- Tablet / small laptop (≤991) ---------- */
+@media (max-width: 991.98px) {
+    .site-container {
+        padding-inline: 20px;
+    }
+
+    .main-navbar {
+        grid-template-columns: 44px 1fr auto !important;
+        column-gap: 0.5rem;
+    }
+
+    .brand-logo img {
+        width: clamp(120px, 36vw, 150px);
+    }
+
+    .navbar-actions {
+        min-width: 0;
+        gap: 0.25rem;
+    }
+
+    /* Cart: stack items earlier */
+    .cart-shell {
+        padding-inline: 20px;
+    }
+
+    .cart-table-head {
+        display: none;
+    }
+
+    .cart-item {
+        grid-template-columns: 1fr auto;
+        gap: 0.75rem 0.5rem;
+        position: relative;
+        padding-right: 2.5rem;
+    }
+
+    .cart-item__product {
+        grid-column: 1 / -1;
+    }
+
+    .cart-item__image {
+        width: 88px;
+        height: 88px;
+    }
+
+    .cart-item__price {
+        grid-column: 1;
+    }
+
+    .cart-item__qty {
+        grid-column: 2;
+        justify-self: end;
+    }
+
+    .cart-item__total {
+        grid-column: 1 / -1;
+    }
+
+    .cart-item form {
+        position: absolute;
+        top: 0.85rem;
+        right: 0.75rem;
+    }
+
+    /* Wishlist / contact / pages shells */
+    .wishlist-shell,
+    .wishlist-trust__inner,
+    .contact-shell,
+    .contact-trust__inner,
+    .static-page__shell {
+        padding-inline: 20px;
+    }
+
+    .static-page__form {
+        grid-template-columns: 1fr;
+    }
+
+    .static-page__form button {
+        width: 100%;
+    }
+
+    /* Auth: single column on tablet */
+    .auth-main {
+        grid-template-columns: 1fr !important;
+    }
+
+    .auth-visual {
+        min-height: 220px;
+        max-height: 280px;
+    }
+
+    .auth-benefits {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .auth-benefits__item:nth-child(2n)::after {
+        display: none;
+    }
+
+    /* Offers cards stack */
+    .offer-card__body {
+        grid-template-columns: 1fr;
+        min-height: 0;
+        gap: 0.75rem;
+    }
+
+    .offer-card__media {
+        min-height: 140px;
+        order: -1;
+    }
+
+    .offer-card__value {
+        font-size: clamp(36px, 10vw, 48px) !important;
+    }
+
+    .offers-container {
+        padding-inline: 20px;
+    }
+
+    /* Collection / offers heroes readable — New Arrivals keeps its light overlay */
+    .kundan-hero__overlay,
+    .offers-hero__overlay {
+        background: linear-gradient(
+            180deg,
+            rgba(2, 47, 39, 0.55) 0%,
+            rgba(2, 47, 39, 0.78) 55%,
+            rgba(2, 47, 39, 0.9) 100%
+        ) !important;
+    }
+
+    .bridal-hero {
+        min-height: 380px !important;
+    }
+
+    .bridal-hero__overlay {
+        background: linear-gradient(
+            180deg,
+            rgba(20, 10, 8, 0.3) 0%,
+            rgba(20, 10, 8, 0.6) 48%,
+            rgba(20, 10, 8, 0.86) 100%
+        ) !important;
+    }
+
+    /* Home categories scroll on tablet too */
+    .category-track {
+        display: flex;
+        overflow-x: auto;
+        gap: 1rem;
+        padding-bottom: 8px;
+        scroll-snap-type: x mandatory;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+    .category-track::-webkit-scrollbar {
+        display: none;
+    }
+
+    .category-item {
+        flex: 0 0 auto;
+        width: 112px;
+        scroll-snap-align: start;
+    }
+
+    .newsletter__form {
+        width: 100%;
+        max-width: 520px;
+    }
+
+    .newsletter__form .btn-gold,
+    .about-newsletter__form .btn-subscribe {
+        white-space: nowrap;
+    }
+
+    .product-benefits {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+}
+
+/* ---------- Mobile (≤767) ---------- */
+@media (max-width: 767.98px) {
+    .site-container {
+        padding-inline: 15px;
+    }
+
+    .section {
+        padding-block: 48px;
+    }
+
+    .section-title {
+        font-size: clamp(24px, 7vw, 30px);
+    }
+
+    .cart-shell,
+    .wishlist-shell,
+    .wishlist-trust__inner,
+    .contact-shell,
+    .contact-trust__inner,
+    .static-page__shell,
+    .offers-container,
+    .product-shell {
+        padding-inline: 15px !important;
+    }
+
+    .cart-coupon__form {
+        flex-direction: column;
+    }
+
+    .cart-coupon__form input,
+    .cart-coupon__form button {
+        width: 100%;
+        border-radius: 5px !important;
+    }
+
+    .cart-coupon__form button {
+        border: 0;
+        min-height: 44px;
+    }
+
+    .cart-header__actions,
+    .wishlist-header__actions {
+        width: 100%;
+    }
+
+    .wishlist-btn {
+        flex: 1 1 calc(50% - 0.35rem);
+    }
+
+    .wishlist-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 0.7rem;
+    }
+
+    .wishlist-card__actions {
+        grid-template-columns: 1fr;
+    }
+
+    .contact-trust__inner {
+        grid-template-columns: 1fr !important;
+    }
+
+    .wishlist-trust__inner {
+        grid-template-columns: 1fr !important;
+    }
+
+    .auth-header {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.5rem;
+        min-height: auto;
+        padding: 0.75rem 1rem;
+    }
+
+    .auth-logo img {
+        width: min(180px, 48vw);
+    }
+
+    .auth-back {
+        white-space: normal;
+        text-align: center;
+    }
+
+    .about-newsletter__form {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .about-newsletter__form input,
+    .about-newsletter__form .btn-subscribe {
+        width: 100%;
+    }
+
+    .newsletter__form {
+        flex-direction: column;
+    }
+
+    .newsletter__form input,
+    .newsletter__form .btn-gold {
+        width: 100%;
+    }
+
+    .offer-card__value {
+        font-size: clamp(32px, 11vw, 42px) !important;
+    }
+
+    .bridal-hero {
+        min-height: 360px !important;
+    }
+
+    .details-table,
+    .details-table tbody,
+    .details-table tr,
+    .details-table td {
+        display: block;
+        width: 100%;
+    }
+
+    .details-table td:first-child {
+        width: auto;
+        padding-bottom: 0.15rem;
+        font-weight: 600;
+    }
+
+    .details-table tr {
+        padding: 0.65rem 0;
+        border-bottom: 1px solid #eee;
+    }
+
+    .related-grid {
+        gap: 0.65rem;
+    }
+
+    .product-tabs {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .product-tabs button {
+        flex: 0 0 auto;
+    }
+
+    .footer-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .footer-pair {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 1.15rem 0.85rem;
+    }
+
+    .payment-icons {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+}
+
+/* ---------- Small phones (≤575) ---------- */
+@media (max-width: 575.98px) {
+    .wishlist-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .wishlist-btn {
+        width: 100%;
+        flex: 1 1 100%;
+    }
+
+    .product-grid,
+    .kundan-grid,
+    .bridal-grid,
+    .na-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 0.65rem;
+    }
+
+    .related-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .about-values__grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .service-grid,
+    .kundan-services__grid,
+    .bridal-services__grid,
+    .product-service-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 0.85rem;
+    }
+
+    .cart-payments__logos span {
+        min-width: 72px;
+        font-size: 10.5px;
+    }
+
+    .contact-form__row {
+        grid-template-columns: 1fr;
+    }
+
+    h1.font-heading,
+    .section-title,
+    .cart-header h1,
+    .wishlist-header h1,
+    .contact-hero__content h1 {
+        word-break: break-word;
+    }
+}
+
+/* ---------- Tiny phones (≤380) ---------- */
+@media (max-width: 380px) {
+    .product-grid,
+    .kundan-grid,
+    .bridal-grid,
+    .na-grid,
+    .related-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .wishlist-header__actions {
+        flex-direction: column;
+    }
+}

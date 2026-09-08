@@ -1,0 +1,180 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,500&family=Poppins:wght@300;400;500;600;700&display=swap');
+
+:root {
+    --primary-green: #064E3B;
+    --dark-green: #03382B;
+    --deep-green: #022F27;
+    --gold: #C9A24D;
+    --light-gold: #DDBB6A;
+    --ivory: #FAF8F2;
+    --warm-ivory: #F8F5ED;
+    --white: #FFFFFF;
+    --text-dark: #222222;
+    --text-muted: #6B6B6B;
+    --text-nav: #333333;
+    --border: #E8E2D6;
+    --search-bg: #F7F6F2;
+    --hero-text: #F4F1E8;
+    --container-max: 1400px;
+    --section-space: 88px;
+    --section-space-sm: 52px;
+    --header-height: 88px;
+    --font-heading: 'Cormorant Garamond', Georgia, serif;
+    --font-body: 'Poppins', system-ui, sans-serif;
+    --shadow-soft: 0 8px 28px rgba(6, 78, 59, 0.08);
+    --shadow-card: 0 10px 30px rgba(34, 34, 34, 0.08);
+    --transition: 300ms ease;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    margin: 0;
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--text-dark);
+    background: var(--white);
+    -webkit-font-smoothing: antialiased;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+    transition: color var(--transition);
+}
+
+a:hover {
+    color: var(--gold);
+}
+
+h1, h2, h3, h4, h5, .font-heading {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.site-container {
+    width: 100%;
+    max-width: var(--container-max);
+    margin-inline: auto;
+    padding-inline: 28px;
+}
+
+.section {
+    padding-block: var(--section-space);
+}
+
+.section-title {
+    font-size: clamp(28px, 3.2vw, 42px);
+    letter-spacing: 0.04em;
+    text-align: center;
+    text-transform: uppercase;
+    color: var(--text-dark);
+    margin: 0;
+}
+
+.section-divider {
+    width: 64px;
+    height: 2px;
+    margin: 14px auto 0;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    position: relative;
+}
+
+.section-divider::before,
+.section-divider::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--gold);
+    transform: translateY(-50%);
+}
+
+.section-divider::before { left: -10px; }
+.section-divider::after { right: -10px; }
+
+.btn-gold {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    min-height: 48px;
+    padding: 0 28px;
+    border: none;
+    border-radius: 5px;
+    background: var(--gold);
+    color: var(--dark-green);
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transition: background var(--transition), transform var(--transition), color var(--transition);
+}
+
+.btn-gold:hover {
+    background: var(--light-gold);
+    color: var(--deep-green);
+    transform: translateY(-2px);
+}
+
+.btn-outline-gold {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 46px;
+    padding: 0 30px;
+    border: 1.5px solid var(--gold);
+    border-radius: 5px;
+    background: var(--white);
+    color: var(--primary-green);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transition: all var(--transition);
+}
+
+.btn-outline-gold:hover {
+    background: var(--primary-green);
+    border-color: var(--primary-green);
+    color: var(--white);
+}
+
+.reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+}
+
+.reveal.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+@media (max-width: 991.98px) {
+    .site-container { padding-inline: 20px; }
+    .section { padding-block: var(--section-space-sm); }
+}
+
+@media (max-width: 575.98px) {
+    .site-container { padding-inline: 16px; }
+}

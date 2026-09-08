@@ -1,0 +1,45 @@
+@extends('admin.layouts.app')
+@section('title', 'Edit Affiliate')
+@section('content')
+<div class="page-header">
+    <div>
+        <h1>Edit Affiliate</h1>
+        @include('admin.components.breadcrumbs', ['items' => [['label'=>'Affiliates','url'=>route('admin.affiliates.index')], ['label'=>'Edit']]])
+    </div>
+</div>
+@include('admin.components.alerts')
+<div class="card">
+    <form method="POST" action="{{ route('admin.affiliates.update', $item) }}" enctype="multipart/form-data" class="form-grid">
+        @csrf
+        @method('PUT')
+
+            <div class="form-group">
+                <label>Name</label>
+                <input type="text" name="name" class="form-control" value="{{ old('name', $item->name ?? '') }}" required>
+            </div>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" name="email" class="form-control" value="{{ old('email', $item->email ?? '') }}" >
+            </div>
+            <div class="form-group">
+                <label>Phone</label>
+                <input type="text" name="phone" class="form-control" value="{{ old('phone', $item->phone ?? '') }}" >
+            </div>
+            <div class="form-group">
+                <label>Code</label>
+                <input type="text" name="code" class="form-control" value="{{ old('code', $item->code ?? '') }}" required>
+            </div>
+            <div class="form-group">
+                <label>Commission Percent</label>
+                <input type="number" name="commission_percent" class="form-control" value="{{ old('commission_percent', $item->commission_percent ?? '') }}" >
+            </div>
+            <div class="form-group form-check">
+                <label><input type="checkbox" name="is_active" value="1" {{ old('is_active', $item->is_active ?? true) ? 'checked' : '' }}> Is Active</label>
+            </div>
+        <div class="form-actions">
+            <button class="btn btn-primary">Update</button>
+            <a href="{{ route('admin.affiliates.index') }}" class="btn btn-ghost">Cancel</a>
+        </div>
+    </form>
+</div>
+@endsection

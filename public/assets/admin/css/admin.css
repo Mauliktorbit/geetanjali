@@ -1,0 +1,9 @@
+/* Admin area styles */
+.admin-header {
+    background: #064e3b;
+    color: #fff;
+}
+
+.admin-header a {
+    color: #ddbb6a;
+}

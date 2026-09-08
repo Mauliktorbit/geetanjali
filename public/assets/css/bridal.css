@@ -1,0 +1,745 @@
+/* ========== Bridal Collection Page ========== */
+
+.bridal-page {
+    background: var(--white);
+}
+
+/* ----- Hero ----- */
+.bridal-hero {
+    position: relative;
+    min-height: 450px;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    background: #2a1510;
+}
+
+.bridal-hero__bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+}
+
+.bridal-hero__bg img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center right;
+}
+
+.bridal-hero__overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        90deg,
+        rgba(20, 10, 8, 0.78) 0%,
+        rgba(30, 14, 10, 0.55) 38%,
+        rgba(30, 14, 10, 0.2) 62%,
+        rgba(30, 14, 10, 0.05) 100%
+    );
+}
+
+.bridal-hero__inner {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    padding-block: 3.5rem;
+}
+
+.bridal-hero__inner > .container {
+    position: relative;
+    z-index: 1;
+}
+
+.bridal-hero__content {
+    max-width: 480px;
+    color: var(--white);
+}
+
+.bridal-hero__label {
+    margin: 0 0 0.55rem;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--light-gold);
+}
+
+.bridal-hero__content h1 {
+    margin: 0;
+    font-size: clamp(32px, 4.2vw, 50px);
+    font-weight: 600;
+    line-height: 1.1;
+    color: #f6e9d0;
+}
+
+.bridal-hero__content h1 span {
+    display: block;
+}
+
+.bridal-hero__accent {
+    color: var(--light-gold);
+}
+
+.bridal-hero__divider {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    margin: 1rem 0 1.1rem;
+    color: var(--gold);
+}
+
+.bridal-hero__divider span {
+    display: block;
+    width: 42px;
+    height: 1px;
+    background: var(--gold);
+}
+
+.bridal-hero__divider i {
+    font-size: 8px;
+}
+
+.bridal-hero__desc {
+    margin: 0 0 1.5rem;
+    font-size: 14px;
+    line-height: 1.65;
+    color: rgba(255, 255, 255, 0.92);
+    max-width: 450px;
+}
+
+.bridal-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 13px 25px;
+    border-radius: 5px;
+    background: var(--light-gold);
+    color: #16352d;
+    font-size: 12.5px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border: 0;
+    text-decoration: none;
+    transition: background 0.25s ease, color 0.25s ease;
+}
+
+.bridal-btn:hover {
+    background: var(--primary-green);
+    color: var(--white);
+}
+
+.bridal-btn--apply {
+    width: 100%;
+    margin-top: 0.75rem;
+}
+
+.bridal-btn--promo {
+    padding: 11px 18px;
+    font-size: 11.5px;
+}
+
+/* ----- Service strips ----- */
+.bridal-services {
+    background: var(--ivory);
+    border-top: 1px solid #eeeae1;
+    border-bottom: 1px solid #eeeae1;
+    padding: 1.35rem 0;
+}
+
+.bridal-services--trust {
+    margin-top: 0;
+    border-top: 0;
+}
+
+.bridal-services__grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1rem;
+}
+
+.bridal-services__item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+    justify-content: center;
+    text-align: left;
+}
+
+.bridal-services__item i {
+    font-size: 1.25rem;
+    color: var(--gold);
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.bridal-services__item h3 {
+    margin: 0;
+    font-family: var(--font-body);
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #333;
+}
+
+.bridal-services__item p {
+    margin: 0.1rem 0 0;
+    font-size: 10.5px;
+    color: #777;
+    line-height: 1.35;
+}
+
+/* ----- Intro ----- */
+.bridal-intro {
+    padding: 3.4rem 0 1.75rem;
+    text-align: center;
+}
+
+.bridal-intro h2 {
+    margin: 0;
+    font-size: clamp(28px, 3vw, 34px);
+    color: #16352d;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.bridal-intro p {
+    margin: 0.85rem auto 0;
+    max-width: 700px;
+    font-size: 13.5px;
+    color: #555;
+    line-height: 1.6;
+}
+
+/* ----- Toolbar / filters ----- */
+.bridal-listing {
+    padding-bottom: 3rem;
+}
+
+.bridal-toolbar {
+    margin-bottom: 1rem;
+}
+
+.bridal-toolbar__desktop {
+    width: 100%;
+}
+
+.bridal-toolbar__mobile {
+    display: flex;
+    gap: 0.65rem;
+    margin-bottom: 0.75rem;
+}
+
+.bridal-toolbar__chip,
+.bridal-toolbar__sort-mobile .bridal-select {
+    flex: 1;
+    height: 42px;
+}
+
+.bridal-toolbar__chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--white);
+    font-size: 12px;
+    color: #333;
+}
+
+.bridal-filter-form--compact {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    width: 100%;
+}
+
+.bridal-filter-form__filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+}
+
+.bridal-filter-form__actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-shrink: 0;
+}
+
+.bridal-filter-form--stacked .bridal-filter-form__filters {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.bridal-filter-form--stacked .bridal-select {
+    width: 100%;
+}
+
+.bridal-filter-form--stacked .bridal-filter-form__actions {
+    flex-direction: column;
+    align-items: stretch;
+    margin-top: 1rem;
+}
+
+.bridal-select {
+    appearance: none;
+    height: 42px;
+    min-width: 148px;
+    padding: 0 2rem 0 14px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--white) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16'%3E%3Cpath fill='%23666' d='M1.5 5.5L8 12l6.5-6.5'/%3E%3C/svg%3E") no-repeat right 12px center;
+    font-size: 12px;
+    color: #333;
+    cursor: pointer;
+    transition: border-color 0.25s ease, color 0.25s ease;
+}
+
+.bridal-select:hover,
+.bridal-select:focus {
+    border-color: var(--gold);
+    color: #16352d;
+    outline: none;
+}
+
+.bridal-select--sort {
+    min-width: 130px;
+}
+
+.bridal-sort {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 12px;
+    color: #555;
+    white-space: nowrap;
+}
+
+.bridal-view-toggle {
+    display: inline-flex;
+    gap: 0.25rem;
+}
+
+.bridal-view-btn {
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--white);
+    color: #777;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.bridal-view-btn.is-active,
+.bridal-view-btn:hover {
+    color: var(--primary-green);
+    border-color: var(--primary-green);
+}
+
+.bridal-filter-clear {
+    text-align: center;
+    font-size: 12px;
+    color: #888;
+    text-decoration: underline;
+}
+
+.bridal-listing__meta {
+    margin-bottom: 0.85rem;
+}
+
+.bridal-listing__count {
+    margin: 0;
+    font-size: 12px;
+    color: #666;
+}
+
+/* ----- Product grid ----- */
+.bridal-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+}
+
+.bridal-grid--list {
+    grid-template-columns: 1fr;
+}
+
+.bridal-grid--list .product-card {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    align-items: stretch;
+}
+
+.bridal-grid--list .product-card__media {
+    aspect-ratio: auto;
+    min-height: 200px;
+}
+
+.bridal-grid--list .product-card__body {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.bridal-page .product-card {
+    border-radius: 7px;
+}
+
+.bridal-page .product-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(201, 162, 77, 0.55);
+    box-shadow: 0 8px 20px rgba(34, 34, 34, 0.06);
+}
+
+.bridal-page .product-card:hover .product-card__media img {
+    transform: scale(1.03);
+}
+
+.bridal-page .product-card__wishlist {
+    opacity: 1;
+    transform: none;
+    color: #555;
+}
+
+.bridal-page .product-card__wishlist:hover,
+.bridal-page .product-card__wishlist.is-active {
+    color: var(--gold);
+}
+
+.bridal-page .product-card__name {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #222;
+    min-height: 2.5em;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.bridal-page .price-current {
+    font-size: 14.5px;
+    font-weight: 600;
+    color: #222;
+}
+
+.bridal-page .product-card__rating {
+    color: #f0a500;
+    font-size: 11px;
+}
+
+.bridal-page .product-card__pricing {
+    justify-content: flex-start;
+}
+
+.bridal-pagination {
+    margin-top: 2rem;
+    display: flex;
+    justify-content: center;
+}
+
+.bridal-pagination .page-link {
+    color: var(--primary-green);
+    border-color: var(--border);
+    font-size: 13px;
+}
+
+.bridal-pagination .page-item.active .page-link {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: #16352d;
+}
+
+.bridal-empty {
+    text-align: center;
+    padding: 3rem 1rem;
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+}
+
+.bridal-empty p {
+    margin-bottom: 1rem;
+    color: #666;
+}
+
+/* ----- Promos ----- */
+.bridal-promos {
+    padding: 3rem 0;
+}
+
+.bridal-promos__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+}
+
+.bridal-promo {
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    min-height: 240px;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.bridal-promo--dark {
+    background: var(--dark-green);
+    color: var(--white);
+}
+
+.bridal-promo--light {
+    background: var(--ivory);
+    color: #16352d;
+}
+
+.bridal-promo__content {
+    padding: 1.75rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+.bridal-promo__content h3 {
+    margin: 0 0 0.65rem;
+    font-size: clamp(24px, 2.4vw, 30px);
+    font-weight: 600;
+    line-height: 1.15;
+    white-space: pre-line;
+}
+
+.bridal-promo--dark .bridal-promo__content h3 {
+    color: var(--light-gold);
+}
+
+.bridal-promo__content p {
+    margin: 0 0 1.15rem;
+    font-size: 13px;
+    line-height: 1.55;
+    max-width: 280px;
+}
+
+.bridal-promo--dark .bridal-promo__content p {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.bridal-promo--light .bridal-promo__content p {
+    color: #555;
+}
+
+.bridal-promo__media {
+    position: relative;
+    min-height: 100%;
+}
+
+.bridal-promo__media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* ----- Mobile filter drawer ----- */
+.bridal-filter-drawer[hidden] {
+    display: none !important;
+}
+
+.bridal-filter-drawer {
+    position: fixed;
+    inset: 0;
+    z-index: 1080;
+}
+
+.bridal-filter-drawer__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(2, 47, 39, 0.45);
+}
+
+.bridal-filter-drawer__panel {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    max-height: 88vh;
+    background: var(--white);
+    border-radius: 14px 14px 0 0;
+    display: flex;
+    flex-direction: column;
+    transform: translateY(100%);
+    transition: transform 0.28s ease;
+}
+
+.bridal-filter-drawer.is-open .bridal-filter-drawer__panel {
+    transform: translateY(0);
+}
+
+.bridal-filter-drawer__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.1rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.bridal-filter-drawer__head h2 {
+    margin: 0;
+    font-family: var(--font-body);
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--primary-green);
+}
+
+.bridal-filter-drawer__close {
+    border: 0;
+    background: transparent;
+    font-size: 1.1rem;
+    color: #444;
+}
+
+.bridal-filter-drawer__body {
+    overflow: auto;
+    padding: 1rem 1.1rem 1.5rem;
+}
+
+/* ----- Responsive ----- */
+@media (max-width: 1199.98px) {
+    .bridal-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .bridal-services__grid {
+        grid-template-columns: repeat(3, 1fr);
+        row-gap: 1.15rem;
+    }
+
+    .bridal-select {
+        min-width: 130px;
+    }
+}
+
+@media (max-width: 991.98px) {
+    .bridal-promos__grid {
+        grid-template-columns: 1fr;
+    }
+
+    .bridal-promo {
+        min-height: 220px;
+    }
+
+    .bridal-hero {
+        min-height: 380px;
+        align-items: flex-end;
+    }
+
+    .bridal-hero__overlay {
+        background: linear-gradient(
+            180deg,
+            rgba(20, 10, 8, 0.3) 0%,
+            rgba(20, 10, 8, 0.6) 48%,
+            rgba(20, 10, 8, 0.86) 100%
+        );
+    }
+}
+
+@media (max-width: 767.98px) {
+    .bridal-hero {
+        min-height: 360px;
+        align-items: flex-end;
+    }
+
+    .bridal-hero__overlay {
+        background: linear-gradient(
+            180deg,
+            rgba(20, 10, 8, 0.25) 0%,
+            rgba(20, 10, 8, 0.55) 45%,
+            rgba(20, 10, 8, 0.82) 100%
+        );
+    }
+
+    .bridal-hero__bg img {
+        object-position: center right;
+    }
+
+    .bridal-hero__inner {
+        padding-bottom: 2.5rem;
+    }
+
+    .bridal-hero__content h1 {
+        font-size: 30px;
+    }
+
+    .bridal-hero__desc {
+        font-size: 13px;
+    }
+
+    .bridal-intro {
+        padding-top: 2.5rem;
+    }
+
+    .bridal-intro h2 {
+        font-size: 26px;
+        letter-spacing: 0.02em;
+    }
+
+    .bridal-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    .bridal-grid--list {
+        grid-template-columns: 1fr;
+    }
+
+    .bridal-grid--list .product-card {
+        grid-template-columns: 120px 1fr;
+    }
+
+    .bridal-grid--list .product-card__media {
+        min-height: 120px;
+    }
+
+    .bridal-page .product-card__name {
+        font-size: 12px;
+    }
+
+    .bridal-page .price-current {
+        font-size: 13px;
+    }
+
+    .bridal-page .product-card__rating {
+        font-size: 10.5px;
+    }
+
+    .bridal-page .product-card__wishlist {
+        width: 30px;
+        height: 30px;
+        top: 8px;
+        right: 8px;
+    }
+
+    .bridal-services__grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .bridal-services__item {
+        justify-content: flex-start;
+    }
+
+    .bridal-promo {
+        grid-template-columns: 1fr;
+    }
+
+    .bridal-promo__media {
+        min-height: 180px;
+        order: -1;
+    }
+
+    .bridal-promos {
+        padding: 2rem 0;
+    }
+}
