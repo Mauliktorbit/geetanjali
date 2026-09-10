@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Inventory;
 use App\Models\StockMovement;
+use App\Models\Warehouse;
 use App\Repositories\InventoryRepository;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -12,6 +13,28 @@ use InvalidArgumentException;
 class InventoryService
 {
     public function __construct(protected InventoryRepository $inventoryRepository) {}
+
+    public function availableStockForProduct(int $productId): int
+    {
+        return (int) Inventory::query()->where('product_id', $productId)->sum('available_stock');
+    }
+
+    public function defaultWarehouseId(): int
+    {
+        $id = Warehouse::query()->where('is_default', true)->where('is_active', true)->value('id')
+            ?? Warehouse::query()->where('is_active', true)->orderBy('id')->value('id');
+
+        if ($id) {
+            return (int) $id;
+        }
+
+        return (int) Warehouse::query()->create([
+            'name' => 'Main Warehouse',
+            'code' => 'MAIN',
+            'is_default' => true,
+            'is_active' => true,
+        ])->id;
+    }
 
     public function adjustStock(
         int $productId,

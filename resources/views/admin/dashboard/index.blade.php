@@ -83,17 +83,18 @@
         </div>
         <div class="table-responsive">
             <table class="data-table">
-                <thead><tr><th>Order</th><th>Customer</th><th>Status</th><th>Total</th></tr></thead>
+                <thead><tr><th>Order</th><th>Product</th><th>Customer</th><th>Status</th><th>Total</th></tr></thead>
                 <tbody>
                 @forelse($recentOrders as $order)
                     <tr>
                         <td><a href="{{ route('admin.orders.show', $order) }}">{{ $order->order_number }}</a></td>
+                        <td>{{ $order->productSummary() }}</td>
                         <td>{{ $order->customer_name }}</td>
                         <td>@include('admin.components.status-badge', ['status' => $order->status])</td>
                         <td>{{ money($order->grand_total) }}</td>
                     </tr>
                 @empty
-                    <tr><td colspan="4">@include('admin.components.empty-state', ['title' => 'No orders yet', 'text' => 'Create your first order to get started.'])</td></tr>
+                    <tr><td colspan="5">@include('admin.components.empty-state', ['title' => 'No orders yet', 'text' => 'Create your first order to get started.'])</td></tr>
                 @endforelse
                 </tbody>
             </table>

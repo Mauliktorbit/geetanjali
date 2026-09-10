@@ -59,6 +59,7 @@
                 @include('frontend.components.new-arrivals.filter-panel', [
                     'filters' => $filters,
                     'formId' => 'na-filter-form',
+                    'categoryOptions' => $categoryOptions ?? [],
                 ])
             </div>
         </div>

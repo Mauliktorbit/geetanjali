@@ -21,7 +21,7 @@
         </button>
 
         <img
-            src="{{ asset($images[0]->url ?? 'public/assets/images/products/gallery/main.jpg') }}"
+            src="{{ storefront_image($images[0]->url ?? null, 'public/assets/images/products/gallery/main.jpg') }}"
             alt="{{ $images[0]->alt ?? $product->name }}"
             data-main-image
             loading="eager"
@@ -46,12 +46,12 @@
                     type="button"
                     class="product-thumb {{ $index === 0 ? 'is-active' : '' }}"
                     data-thumb
-                    data-full="{{ asset($image->url) }}"
+                    data-full="{{ storefront_image($image->url) }}"
                     data-alt="{{ $image->alt }}"
                     aria-label="View image {{ $index + 1 }}"
                 >
                     <img
-                        src="{{ asset($image->url) }}"
+                        src="{{ storefront_image($image->url) }}"
                         alt="{{ $image->alt }}"
                         loading="lazy"
                         width="96"

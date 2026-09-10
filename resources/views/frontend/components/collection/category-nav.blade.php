@@ -12,7 +12,7 @@
                     >
                         <span class="kundan-cat-nav__circle">
                             <img
-                                src="{{ asset($category['image']) }}"
+                                src="{{ storefront_image($category['image']) }}"
                                 alt=""
                                 loading="lazy"
                                 width="90"

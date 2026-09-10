@@ -7,7 +7,7 @@
         <div class="auth-form-col">
             <div class="auth-form-wrap">
                 <h1 class="font-heading">Forgot Password</h1>
-                <p class="auth-subtitle">Enter your email and we will send a 6-digit OTP to reset your password</p>
+                <p class="auth-subtitle">Enter your account email and we will send a 6-digit OTP to reset your password. This works for customer and admin accounts.</p>
                 @include('frontend.components.gold-divider', ['align' => 'center'])
 
                 @if (session('success'))
@@ -39,7 +39,7 @@
                 </form>
 
                 <p class="auth-switch">
-                    <a href="{{ route('login') }}">Back to Sign In</a>
+                    <a href="{{ $loginUrl }}">{{ $loginLabel }}</a>
                 </p>
             </div>
         </div>

@@ -87,10 +87,15 @@ function initQty(page, updateUrl, csrf) {
 
 function initRemove(page) {
     page.querySelectorAll('[data-remove-form]').forEach((form) => {
-        form.addEventListener('submit', (e) => {
-            if (!window.confirm('Remove this item from your cart?')) {
-                e.preventDefault();
-            }
+        form.addEventListener('submit', async (e) => {
+            if (form.dataset.swalConfirmed === '1') return;
+            e.preventDefault();
+            const ok = window.AppAlert
+                ? await window.AppAlert.confirm('Remove this item from your cart?', form)
+                : window.confirm('Remove this item from your cart?');
+            if (!ok) return;
+            form.dataset.swalConfirmed = '1';
+            form.submit();
         });
     });
 }

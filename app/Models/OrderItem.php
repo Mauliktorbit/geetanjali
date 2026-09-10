@@ -48,7 +48,21 @@ class OrderItem extends Model
 
     public function product(): BelongsTo
     {
-        return $this->belongsTo(Product::class);
+        return $this->belongsTo(Product::class)->withTrashed();
+    }
+
+    public function imagePath(): string
+    {
+        $metaImage = is_array($this->meta) ? ($this->meta['image'] ?? null) : null;
+        if (filled($metaImage)) {
+            return (string) $metaImage;
+        }
+
+        if ($this->product) {
+            return $this->product->imagePath();
+        }
+
+        return 'public/assets/images/categories/kundan.jpg';
     }
 
     public function variant(): BelongsTo

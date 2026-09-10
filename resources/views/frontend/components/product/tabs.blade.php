@@ -15,7 +15,7 @@
                 <div class="tab-copy">
                     <p>{{ $product->description }}</p>
                     <ul class="check-list">
-                        @foreach ($product->highlights as $item)
+                        @foreach ($product->highlights ?? [] as $item)
                             <li>
                                 <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
                                 <span>{{ $item }}</span>
@@ -40,6 +40,7 @@
             <table class="details-table">
                 <tbody>
                     <tr><td>SKU</td><td>{{ $product->sku }}</td></tr>
+                    <tr><td>Category</td><td>{{ $product->category }}</td></tr>
                     <tr><td>Metal</td><td>{{ $product->metal }}</td></tr>
                     <tr><td>Purity</td><td>{{ $product->purity }}</td></tr>
                     <tr><td>Stone</td><td>{{ $product->stone }}</td></tr>

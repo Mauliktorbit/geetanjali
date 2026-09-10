@@ -35,24 +35,21 @@ class OrderController extends AdminController
     {
         $filters = $request->all();
         $items = app(\App\Repositories\OrderRepository::class)->paginate($filters);
-        $statusCounts = app(\App\Repositories\OrderRepository::class)->statusCounts(
-            $request->input('date_from'),
-            $request->input('date_to')
-        );
 
         return view('admin.orders.index', [
             'items' => $items,
-            'statusCounts' => $statusCounts,
-            'statuses' => OrderStatus::labels(),
+            'statuses' => OrderStatus::simpleLabels(),
         ]);
     }
 
     public function create()
     {
         return view('admin.orders.create', [
-            'customers' => Customer::orderBy('name')->limit(500)->get(['id', 'name', 'email', 'phone']),
-            'products' => Product::where('is_active', true)->where('is_archived', false)->orderBy('name')->get(['id', 'name', 'sku', 'regular_price', 'sale_price']),
-            'warehouses' => Warehouse::orderBy('name')->get(['id', 'name']),
+            'products' => Product::query()
+                ->where('is_active', true)
+                ->where('is_archived', false)
+                ->orderBy('name')
+                ->get(['id', 'name', 'sku', 'regular_price', 'sale_price']),
         ]);
     }
 
@@ -60,32 +57,37 @@ class OrderController extends AdminController
     {
         $data = $request->validated();
         $items = $data['items'] ?? [];
-        unset($data['items']);
+        $paymentStatus = $data['payment_status'] ?? 'pending';
+        unset($data['items'], $data['payment_status']);
 
         $shipping = $data['shipping_address'] ?? [];
-        $data['shipping_city'] = $data['shipping_city'] ?? ($shipping['city'] ?? null);
-        $data['shipping_state'] = $data['shipping_state'] ?? ($shipping['state'] ?? null);
-        $data['shipping_country'] = $data['shipping_country'] ?? ($shipping['country'] ?? null);
-        $data['shipping_pincode'] = $data['shipping_pincode'] ?? ($shipping['pincode'] ?? null);
-        $data['source'] = $data['source'] ?? 'manual';
+        $data['shipping_address'] = [
+            'line1' => $shipping['line1'] ?? null,
+            'city' => $data['shipping_city'] ?? null,
+            'state' => $data['shipping_state'] ?? null,
+            'pincode' => $data['shipping_pincode'] ?? null,
+        ];
+        $data['source'] = 'manual';
 
         $order = $this->orderService->createOrder($data, $items);
+
+        if ($paymentStatus === 'paid') {
+            $order->update([
+                'payment_status' => 'paid',
+                'paid_amount' => $order->grand_total,
+            ]);
+        }
 
         return $this->success('Order created successfully.', 'admin.orders.show', [$order]);
     }
 
     public function show(Order $order)
     {
-        $order->load([
-            'customer', 'items.product', 'payments', 'shipments.courier',
-            'statusHistories.user', 'notes.user', 'invoices', 'returns',
-        ]);
+        $order->load(['items.product.category']);
 
         return view('admin.orders.show', [
             'item' => $order,
-            'statuses' => OrderStatus::labels(),
-            'couriers' => Courier::where('is_active', true)->orderBy('name')->get(),
-            'products' => Product::where('is_active', true)->orderBy('name')->limit(300)->get(['id', 'name', 'sku', 'regular_price', 'sale_price']),
+            'statuses' => OrderStatus::simpleLabels(),
         ]);
     }
 
@@ -95,29 +97,52 @@ class OrderController extends AdminController
 
         return view('admin.orders.edit', [
             'item' => $order,
-            'customers' => Customer::orderBy('name')->limit(500)->get(['id', 'name', 'email', 'phone']),
-            'warehouses' => Warehouse::orderBy('name')->get(['id', 'name']),
-            'statuses' => OrderStatus::labels(),
         ]);
     }
 
     public function update(Request $request, Order $order)
     {
-        $data = $request->validate([
-            'customer_name' => ['nullable', 'string', 'max:255'],
-            'customer_email' => ['nullable', 'email'],
-            'customer_phone' => ['nullable', 'string', 'max:30'],
-            'shipping_method' => ['nullable', 'string', 'max:100'],
-            'payment_method' => ['nullable', 'string', 'max:50'],
-            'warehouse_id' => ['nullable', 'exists:warehouses,id'],
-            'customer_notes' => ['nullable', 'string'],
-            'internal_notes' => ['nullable', 'string'],
-            'shipping_charge' => ['nullable', 'numeric', 'min:0'],
-            'cod_charge' => ['nullable', 'numeric', 'min:0'],
+        $pincode = digits_only($request->input('shipping_pincode'));
+        $request->merge([
+            'customer_phone' => indian_mobile($request->input('customer_phone')),
+            'shipping_pincode' => $pincode === '' ? null : $pincode,
         ]);
 
-        $order->update($data);
-        $this->orderService->recalculateTotals($order);
+        $data = $request->validate([
+            'customer_name' => ['required', 'string', 'max:255'],
+            'customer_email' => ['nullable', 'email'],
+            'customer_phone' => indian_mobile_rules(true),
+            'shipping_address.line1' => ['nullable', 'string', 'max:255'],
+            'shipping_city' => ['nullable', 'string', 'max:100'],
+            'shipping_state' => ['nullable', 'string', 'max:100'],
+            'shipping_pincode' => indian_pincode_rules(false),
+            'payment_status' => ['required', 'in:pending,paid'],
+        ], [
+            'customer_phone.required' => 'Please enter the customer phone number.',
+            'customer_phone.regex' => 'Enter a valid 10-digit mobile number.',
+            'shipping_pincode.regex' => 'Enter a valid 6-digit pincode.',
+        ]);
+
+        $shipping = $order->shipping_address ?? [];
+        if (! is_array($shipping)) {
+            $shipping = [];
+        }
+        $shipping['line1'] = $data['shipping_address']['line1'] ?? ($shipping['line1'] ?? $shipping['address_line1'] ?? null);
+        $shipping['city'] = $data['shipping_city'] ?? ($shipping['city'] ?? null);
+        $shipping['state'] = $data['shipping_state'] ?? ($shipping['state'] ?? null);
+        $shipping['pincode'] = $data['shipping_pincode'] ?? ($shipping['pincode'] ?? null);
+
+        $order->update([
+            'customer_name' => $data['customer_name'],
+            'customer_email' => $data['customer_email'] ?? null,
+            'customer_phone' => $data['customer_phone'] ?? null,
+            'shipping_address' => $shipping,
+            'shipping_city' => $data['shipping_city'] ?? null,
+            'shipping_state' => $data['shipping_state'] ?? null,
+            'shipping_pincode' => $data['shipping_pincode'] ?? null,
+            'payment_status' => $data['payment_status'],
+            'paid_amount' => $data['payment_status'] === 'paid' ? $order->grand_total : 0,
+        ]);
 
         return $this->success('Order updated.', 'admin.orders.show', [$order]);
     }
@@ -125,11 +150,10 @@ class OrderController extends AdminController
     public function updateStatus(Request $request, Order $order)
     {
         $request->validate([
-            'status' => ['required', 'string'],
-            'note' => ['nullable', 'string'],
+            'status' => ['required', 'string', 'in:'.implode(',', array_keys(OrderStatus::simpleLabels()))],
         ]);
 
-        $this->orderService->updateStatus($order, $request->input('status'), $request->input('note'));
+        $this->orderService->updateStatus($order, $request->input('status'));
 
         return $this->success('Order status updated.');
     }
@@ -183,13 +207,18 @@ class OrderController extends AdminController
 
     public function changeAddress(Request $request, Order $order)
     {
+        $pincode = digits_only($request->input('shipping_pincode'));
+        $request->merge([
+            'shipping_pincode' => $pincode === '' ? null : $pincode,
+        ]);
+
         $data = $request->validate([
             'billing_address' => ['nullable', 'array'],
             'shipping_address' => ['nullable', 'array'],
             'shipping_city' => ['nullable', 'string', 'max:100'],
             'shipping_state' => ['nullable', 'string', 'max:100'],
             'shipping_country' => ['nullable', 'string', 'max:100'],
-            'shipping_pincode' => ['nullable', 'string', 'max:20'],
+            'shipping_pincode' => indian_pincode_rules(false),
         ]);
 
         $shipping = $data['shipping_address'] ?? [];

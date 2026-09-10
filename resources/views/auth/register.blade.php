@@ -69,8 +69,11 @@
                                 type="tel"
                                 name="mobile"
                                 value="{{ old('mobile') }}"
-                                placeholder="Enter your mobile number"
+                                placeholder="10-digit mobile number"
                                 autocomplete="tel"
+                                inputmode="numeric"
+                                maxlength="10"
+                                pattern="[6-9][0-9]{9}"
                                 required
                             >
                         </div>

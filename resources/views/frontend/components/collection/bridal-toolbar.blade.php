@@ -1,4 +1,8 @@
-@props(['filters' => []])
+@props(['filters' => [], 'listingUrl' => null, 'showBridalSets' => true])
+
+@php
+    $listingUrl = $listingUrl ?? route('collections.bridal');
+@endphp
 
 <div class="bridal-toolbar">
     <div class="bridal-toolbar__mobile d-lg-none">
@@ -6,7 +10,7 @@
             <i class="bi bi-sliders" aria-hidden="true"></i>
             Filter
         </button>
-        <form method="get" action="{{ route('collections.bridal') }}" class="bridal-toolbar__sort-mobile">
+        <form method="get" action="{{ $listingUrl }}" class="bridal-toolbar__sort-mobile">
             @foreach (['category', 'metal', 'stone', 'price'] as $key)
                 @if (!empty($filters[$key]))
                     <input type="hidden" name="{{ $key }}" value="{{ $filters[$key] }}">
@@ -31,6 +35,8 @@
             'formId' => 'bridal-filter-form',
             'showSort' => true,
             'compact' => true,
+            'listingUrl' => $listingUrl,
+            'showBridalSets' => $showBridalSets,
         ])
     </div>
 </div>

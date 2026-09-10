@@ -137,6 +137,42 @@ class Order extends Model
         return $this->hasMany(Refund::class);
     }
 
+    public function canRequestReturn(): bool
+    {
+        if ((string) $this->status !== \App\Enums\OrderStatus::DELIVERED) {
+            return false;
+        }
+
+        $open = $this->relationLoaded('returns')
+            ? $this->returns->contains(fn ($row) => in_array((string) $row->status, \App\Enums\ReturnStatus::open(), true))
+            : $this->returns()->whereIn('status', \App\Enums\ReturnStatus::open())->exists();
+
+        return ! $open;
+    }
+
+    public function canCancel(): bool
+    {
+        return in_array((string) $this->status, \App\Enums\OrderStatus::cancellable(), true);
+    }
+
+    public function productSummary(): string
+    {
+        $names = $this->relationLoaded('items')
+            ? $this->items->pluck('product_name')
+            : $this->items()->pluck('product_name');
+
+        $names = $names->filter(fn ($name) => filled($name))->values();
+
+        if ($names->isEmpty()) {
+            return '—';
+        }
+
+        $first = (string) $names->first();
+        $extra = $names->count() - 1;
+
+        return $extra > 0 ? $first.' +'.$extra.' more' : $first;
+    }
+
     public function balanceDue(): float
     {
         return max(0, (float) $this->grand_total - (float) $this->paid_amount);

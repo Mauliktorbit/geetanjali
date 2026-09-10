@@ -23,7 +23,7 @@
                 </div>
                 <div>
                     <label for="track_phone">Phone (optional)</label>
-                    <input id="track_phone" type="tel" name="phone" value="{{ old('phone') }}" maxlength="20" placeholder="Registered mobile number">
+                    <input id="track_phone" type="tel" name="phone" value="{{ old('phone') }}" maxlength="10" inputmode="numeric" pattern="[6-9][0-9]{9}" placeholder="10-digit mobile number">
                     @error('phone') <p class="static-page__error">{{ $message }}</p> @enderror
                 </div>
                 <button type="submit">Track Order</button>

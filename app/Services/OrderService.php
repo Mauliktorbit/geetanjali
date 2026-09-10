@@ -29,6 +29,10 @@ class OrderService
         }
 
         return DB::transaction(function () use ($data, $items) {
+            if (empty($data['warehouse_id'])) {
+                $data['warehouse_id'] = $this->inventoryService->defaultWarehouseId();
+            }
+
             $order = Order::create(array_merge([
                 'order_number' => $this->generateOrderNumber(),
                 'status' => OrderStatus::NEW,
@@ -60,13 +64,7 @@ class OrderService
             }
 
             $this->recordStatusHistory($order, null, OrderStatus::NEW, 'Order created');
-            $this->notificationService->notifyAdmins(
-                'order_created',
-                'New order ' . $order->order_number,
-                'Order placed for ' . money($order->grand_total),
-                '/admin/orders/' . $order->id,
-                ['order_id' => $order->id]
-            );
+            $this->notificationService->notifyNewOrder($order);
 
             return $order->fresh(['items', 'customer']);
         });
@@ -102,13 +100,6 @@ class OrderService
 
             $order->update($updates);
             $this->recordStatusHistory($order, $from, $toStatus, $note);
-            $this->notificationService->notifyAdmins(
-                'order_status',
-                'Order ' . $order->order_number . ' → ' . OrderStatus::label($toStatus),
-                $note,
-                '/admin/orders/' . $order->id,
-                ['order_id' => $order->id, 'status' => $toStatus]
-            );
 
             return $order->fresh();
         });
@@ -117,7 +108,7 @@ class OrderService
     public function cancelOrder(Order $order, ?string $reason = null): Order
     {
         if (! in_array($order->status, OrderStatus::cancellable(), true)) {
-            throw new InvalidArgumentException('Order cannot be cancelled in current status.');
+            throw new InvalidArgumentException('This order cannot be cancelled because it has already been shipped or delivered.');
         }
 
         return $this->updateStatus($order, OrderStatus::CANCELLED, $reason ?? 'Cancelled by admin');
@@ -294,6 +285,11 @@ class OrderService
         $line = ($unitPrice * $qty) - $discount;
         $tax = round($line * ($taxRate / 100), 2);
 
+        $meta = is_array($item['meta'] ?? null) ? $item['meta'] : [];
+        if (empty($meta['image']) && $product) {
+            $meta['image'] = $product->imagePath();
+        }
+
         return OrderItem::create([
             'order_id' => $order->id,
             'product_id' => $product?->id,
@@ -309,7 +305,7 @@ class OrderService
             'tax_rate' => $taxRate,
             'hsn_sac' => $item['hsn_sac'] ?? $product?->hsn_sac,
             'total' => round($line + $tax, 2),
-            'meta' => $item['meta'] ?? null,
+            'meta' => $meta ?: null,
         ]);
     }
 

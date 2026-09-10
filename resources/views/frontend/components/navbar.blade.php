@@ -1,13 +1,5 @@
 @php
-    $navItems = [
-        ['label' => 'Home', 'route' => 'home'],
-        ['label' => 'Kundan Collection', 'route' => 'collections.kundan'],
-        ['label' => 'Bridal Collection', 'route' => 'collections.bridal'],
-        ['label' => 'New Arrivals', 'route' => 'products.new-arrivals'],
-        ['label' => 'Offers', 'route' => 'offers.index'],
-        ['label' => 'About Us', 'route' => 'about'],
-        ['label' => 'Contact Us', 'route' => 'contact'],
-    ];
+    $navItems = $navItems ?? \App\Services\StorefrontCatalogService::navMenuItems();
 @endphp
 
 <div class="top-promo">
@@ -133,8 +125,9 @@
                     @else
                         <li>
                             @php
-                                $isActive = isset($item['route']) && request()->routeIs($item['route']);
-                                $href = isset($item['route']) ? route($item['route']) : ($item['href'] ?? '#');
+                                $href = ! empty($item['route']) ? route($item['route']) : ($item['href'] ?? '#');
+                                $isActive = (! empty($item['route']) && request()->routeIs($item['route']))
+                                    || (! empty($item['href']) && url()->current() === $item['href']);
                             @endphp
                             <a
                                 href="{{ $href }}"
@@ -168,11 +161,18 @@
     <div class="offcanvas-body">
         <nav class="offcanvas-nav__menu" aria-label="Mobile">
             @foreach ($navItems as $item)
-                @php
-                    $href = isset($item['route']) ? route($item['route']) : ($item['href'] ?? '#');
-                    $isActive = isset($item['route']) && request()->routeIs($item['route']);
-                @endphp
-                <a class="nav-link{{ $isActive ? ' is-active' : '' }}" href="{{ $href }}">{{ $item['label'] }}</a>
+                @if (! empty($item['dropdown']))
+                    @foreach ($item['dropdown'] as $child)
+                        <a class="nav-link" href="{{ $child['url'] ?? '#' }}">{{ $child['label'] ?? $child }}</a>
+                    @endforeach
+                @else
+                    @php
+                        $href = ! empty($item['route']) ? route($item['route']) : ($item['href'] ?? '#');
+                        $isActive = (! empty($item['route']) && request()->routeIs($item['route']))
+                            || (! empty($item['href']) && url()->current() === $item['href']);
+                    @endphp
+                    <a class="nav-link{{ $isActive ? ' is-active' : '' }}" href="{{ $href }}">{{ $item['label'] }}</a>
+                @endif
             @endforeach
             <a class="nav-link" href="{{ route('wishlist.index') }}">Wishlist</a>
             @auth

@@ -17,13 +17,13 @@ class SupplierRequest extends FormRequest
             'name' => 'required',
             'company_name' => 'nullable',
             'email' => 'nullable|email',
-            'phone' => 'nullable',
+            'phone' => indian_mobile_rules(false),
             'gstin' => 'nullable',
             'address' => 'nullable',
             'city' => 'nullable',
             'state' => 'nullable',
             'country' => 'nullable',
-            'pincode' => 'nullable',
+            'pincode' => indian_pincode_rules(false),
             'contact_person' => 'nullable',
             'lead_time_days' => 'nullable|numeric',
             'notes' => 'nullable',
@@ -39,8 +39,10 @@ class SupplierRequest extends FormRequest
                 $booleans[$key] = $this->boolean($key);
             }
         }
-        if ($booleans) {
-            $this->merge($booleans);
-        }
+        $pincode = digits_only($this->input('pincode'));
+        $booleans['phone'] = indian_mobile($this->input('phone'));
+        $booleans['pincode'] = $pincode === '' ? null : $pincode;
+
+        $this->merge($booleans);
     }
 }

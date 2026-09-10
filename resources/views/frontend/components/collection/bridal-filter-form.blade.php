@@ -3,30 +3,35 @@
     'formId' => 'bridal-filter-form',
     'showSort' => true,
     'compact' => true,
+    'listingUrl' => null,
+    'showBridalSets' => true,
 ])
 
 @php
     $view = $filters['view'] ?? 'grid';
+    $categoryOptions = $categoryOptions ?? \App\Services\StorefrontCatalogService::jewelleryTypeOptions();
+    $listingUrl = $listingUrl ?? route('collections.bridal');
 @endphp
 
 <form
     id="{{ $formId }}"
     class="bridal-filter-form {{ $compact ? 'bridal-filter-form--compact' : 'bridal-filter-form--stacked' }}"
     method="get"
-    action="{{ route('collections.bridal') }}"
+    action="{{ $listingUrl }}"
     data-bridal-filter-form
 >
     <div class="bridal-filter-form__filters">
         <label class="visually-hidden" for="{{ $formId }}-category">Category</label>
         <select id="{{ $formId }}-category" name="category" class="bridal-select" @if ($compact) data-auto-submit @endif>
             <option value="" @selected(($filters['category'] ?? '') === '')>All Categories</option>
-            <option value="bridal-sets" @selected(($filters['category'] ?? '') === 'bridal-sets')>Bridal Sets</option>
-            <option value="necklaces" @selected(($filters['category'] ?? '') === 'necklaces')>Necklaces</option>
-            <option value="earrings" @selected(($filters['category'] ?? '') === 'earrings')>Earrings</option>
-            <option value="bangles" @selected(($filters['category'] ?? '') === 'bangles')>Bangles</option>
-            <option value="rings" @selected(($filters['category'] ?? '') === 'rings')>Rings</option>
-            <option value="maang-tikka" @selected(($filters['category'] ?? '') === 'maang-tikka')>Maang Tikka</option>
-            <option value="jhumkas" @selected(($filters['category'] ?? '') === 'jhumkas')>Jhumkas</option>
+            @if ($showBridalSets)
+                <option value="bridal-sets" @selected(($filters['category'] ?? '') === 'bridal-sets')>Bridal Sets</option>
+            @endif
+            @foreach ($categoryOptions as $key => $label)
+                @if ($key !== 'sets')
+                    <option value="{{ $key }}" @selected(($filters['category'] ?? '') === $key)>{{ $label }}</option>
+                @endif
+            @endforeach
         </select>
 
         <label class="visually-hidden" for="{{ $formId }}-metal">Metal</label>
@@ -97,7 +102,7 @@
 
         @unless ($compact)
             <button type="submit" class="bridal-btn bridal-btn--apply">Apply Filters</button>
-            <a href="{{ route('collections.bridal') }}" class="bridal-filter-clear">Clear All</a>
+            <a href="{{ $listingUrl }}" class="bridal-filter-clear">Clear All</a>
         @endunless
     </div>
 </form>

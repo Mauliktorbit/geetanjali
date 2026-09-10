@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\Customer;
+use App\Models\Product;
 use App\Models\User;
 use Illuminate\Support\Facades\Session;
 
@@ -92,7 +93,12 @@ class CartService
             return false;
         }
 
-        $qty = max(1, min(10, $quantity));
+        $available = $this->availableStock($productId);
+        if ($available <= 0) {
+            return false;
+        }
+
+        $qty = max(1, min(10, $quantity, $available));
         $customer = $this->customer(true);
 
         if ($customer) {
@@ -100,7 +106,7 @@ class CartService
                 'customer_id' => $customer->id,
                 'product_id' => $productId,
             ]);
-            $item->quantity = min(10, (int) $item->quantity + $qty);
+            $item->quantity = min(10, $available, (int) $item->quantity + $qty);
             $item->payload = $product;
             $item->save();
             $this->forgetSessionCart();
@@ -111,7 +117,7 @@ class CartService
         $cart = $this->sessionMap();
         $key = (string) $productId;
         if (isset($cart[$key])) {
-            $cart[$key]['quantity'] = min(10, ((int) $cart[$key]['quantity']) + $qty);
+            $cart[$key]['quantity'] = min(10, $available, ((int) $cart[$key]['quantity']) + $qty);
         } else {
             $cart[$key] = array_merge($product, ['quantity' => $qty]);
         }
@@ -137,8 +143,13 @@ class CartService
             if ($quantity < 1) {
                 $item->delete();
             } else {
-                $item->quantity = min(10, $quantity);
-                $item->save();
+                $available = $this->availableStock($productId);
+                if ($available <= 0) {
+                    $item->delete();
+                } else {
+                    $item->quantity = min(10, $quantity, $available);
+                    $item->save();
+                }
             }
 
             return;
@@ -152,7 +163,12 @@ class CartService
         if ($quantity < 1) {
             unset($cart[$key]);
         } else {
-            $cart[$key]['quantity'] = min(10, $quantity);
+            $available = $this->availableStock($productId);
+            if ($available <= 0) {
+                unset($cart[$key]);
+            } else {
+                $cart[$key]['quantity'] = min(10, $quantity, $available);
+            }
         }
         Session::put(self::SESSION_KEY, $cart);
     }
@@ -298,6 +314,11 @@ class CartService
         $this->forgetSessionCart();
     }
 
+    private function availableStock(int $productId): int
+    {
+        return (int) Product::query()->find($productId)?->inventories()->sum('available_stock');
+    }
+
     private function customer(bool $create = false): ?Customer
     {
         /** @var User|null $user */
@@ -306,22 +327,7 @@ class CartService
             return null;
         }
 
-        if ($user->customer) {
-            return $user->customer;
-        }
-
-        if (! $create) {
-            return null;
-        }
-
-        return Customer::create([
-            'user_id' => $user->id,
-            'name' => $user->name,
-            'email' => $user->email,
-            'phone' => $user->mobile ?: $user->phone,
-            'is_verified' => true,
-            'acquisition_source' => 'website',
-        ]);
+        return Customer::forUser($user, $create);
     }
 
     private function customerCart(): ?Cart

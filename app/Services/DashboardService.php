@@ -109,7 +109,7 @@ class DashboardService
     protected function recentOrders(int $limit = 10): Collection
     {
         return Order::query()
-            ->with('customer:id,name,email')
+            ->with(['customer:id,name,email', 'items'])
             ->latest()
             ->limit($limit)
             ->get([

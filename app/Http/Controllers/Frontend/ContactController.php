@@ -32,12 +32,18 @@ class ContactController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        $request->merge([
+            'phone' => indian_mobile($request->input('phone')),
+        ]);
+
         $data = $request->validate([
             'name' => ['required', 'string', 'max:100'],
             'email' => ['required', 'email', 'max:150'],
-            'phone' => ['nullable', 'string', 'max:20'],
+            'phone' => indian_mobile_rules(false),
             'subject' => ['nullable', 'string', 'max:150'],
             'message' => ['required', 'string', 'max:2000'],
+        ], [
+            'phone.regex' => 'Enter a valid 10-digit mobile number.',
         ]);
 
         Enquiry::create($data);

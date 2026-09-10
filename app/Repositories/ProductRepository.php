@@ -18,8 +18,17 @@ class ProductRepository extends BaseRepository
     {
         parent::applyFilters($query, $filters);
 
+        $query->with(['category', 'collections']);
+
         if (! empty($filters['category_id'])) {
             $query->where('category_id', $filters['category_id']);
+        }
+
+        if (! empty($filters['collection_id'])) {
+            $query->whereHas(
+                'collections',
+                fn (Builder $q) => $q->where('collections.id', $filters['collection_id'])
+            );
         }
 
         if (! empty($filters['brand_id'])) {

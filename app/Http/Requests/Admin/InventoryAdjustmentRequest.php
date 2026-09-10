@@ -15,11 +15,16 @@ class InventoryAdjustmentRequest extends FormRequest
     {
         return [
             'product_id' => ['required', 'exists:products,id'],
-            'product_variant_id' => ['nullable', 'exists:product_variants,id'],
-            'warehouse_id' => ['required', 'exists:warehouses,id'],
-            'quantity_change' => ['required', 'integer', 'not_in:0'],
-            'reason' => ['required', 'string', 'max:500'],
-            'type' => ['nullable', 'string', 'max:50'],
+            'stock' => ['required', 'integer', 'min:0'],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'product_id.required' => 'Please choose a product.',
+            'stock.required' => 'Please enter the stock quantity.',
+            'stock.min' => 'Stock cannot be less than 0.',
         ];
     }
 }

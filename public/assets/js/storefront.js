@@ -128,6 +128,10 @@ async function handleWishlistToggle(btn) {
 }
 
 async function handleAddToCart(btn, buyNow) {
+    if (btn.disabled || btn.closest('[data-out-of-stock]')) {
+        storefrontToast('This product is out of stock.');
+        return;
+    }
     const url = storefrontRoutes().cartAdd;
     const payload = productPayload(btn);
     if (!url || !payload.product_id) {

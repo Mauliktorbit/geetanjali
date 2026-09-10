@@ -85,7 +85,7 @@ class CatalogService
             'price' => $price,
             'compare_at_price' => $compare > $price ? $compare : null,
             'discount_label' => $discount,
-            'metal' => $product->category?->name ?: ($product->product_type ? ucfirst((string) $product->product_type) : null),
+            'metal' => $product->metal ?: ($product->category?->name ?: ($product->product_type ? ucfirst((string) $product->product_type) : null)),
             'weight' => $weight,
             'url' => route('products.show', $product->slug),
         ];

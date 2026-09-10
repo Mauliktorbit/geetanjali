@@ -8,22 +8,23 @@
 
     <div class="related-grid">
         @foreach ($products as $item)
-            <a class="related-card" href="{{ route('products.show', $item->slug) }}">
+            @php $card = is_array($item) ? $item : (array) $item; @endphp
+            <a class="related-card" href="{{ $card['url'] ?? route('products.show', $card['slug']) }}">
                 <div class="related-card__media">
                     <img
-                        src="{{ asset($item->image) }}"
-                        alt="{{ $item->name }}"
+                        src="{{ storefront_image($card['image'] ?? null) }}"
+                        alt="{{ $card['name'] }}"
                         loading="lazy"
                         width="280"
                         height="280"
                     >
                 </div>
                 <div class="related-card__body">
-                    <h3>{{ $item->name }}</h3>
-                    <div class="price">₹{{ number_format($item->price) }}</div>
+                    <h3>{{ $card['name'] }}</h3>
+                    <div class="price">₹{{ number_format($card['price'] ?? 0) }}</div>
                     <div class="meta">
                         <span class="stars" aria-hidden="true">★★★★★</span>
-                        ({{ $item->review_count }})
+                        ({{ $card['review_count'] ?? 0 }})
                     </div>
                 </div>
             </a>

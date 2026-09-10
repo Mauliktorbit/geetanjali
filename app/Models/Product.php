@@ -44,6 +44,16 @@ class Product extends Model
         'return_eligible',
         'return_days',
         'warranty',
+        'badge',
+        'metal',
+        'purity',
+        'stone',
+        'style',
+        'occasion',
+        'certification',
+        'dimensions_text',
+        'tax_note',
+        'highlights',
         'shipping_class_id',
         'estimated_delivery',
         'cod_available',
@@ -56,6 +66,7 @@ class Product extends Model
         'wishlist_count',
         'avg_rating',
         'review_count',
+        'sold_count',
         'published_at',
     ];
 
@@ -70,6 +81,7 @@ class Product extends Model
             'width' => 'decimal:2',
             'height' => 'decimal:2',
             'gallery_images' => 'array',
+            'highlights' => 'array',
             'return_eligible' => 'boolean',
             'cod_available' => 'boolean',
             'is_featured' => 'boolean',
@@ -134,6 +146,31 @@ class Product extends Model
         return $this->hasMany(Review::class);
     }
 
+    public function approvedReviews(): HasMany
+    {
+        return $this->reviews()
+            ->where('status', 'approved')
+            ->latest();
+    }
+
+    public function scopeStorefront($query)
+    {
+        return $query->where('is_active', true)->where('is_archived', false);
+    }
+
+    public function scopeInCollection($query, string $slug)
+    {
+        return $query->storefront()->whereHas(
+            'collections',
+            fn ($c) => $c->where('slug', $slug)->where('is_active', true)
+        );
+    }
+
+    public function scopeKundan($query)
+    {
+        return $query->inCollection('kundan');
+    }
+
     public function relatedProducts(): BelongsToMany
     {
         return $this->belongsToMany(Product::class, 'product_related', 'product_id', 'related_product_id')
@@ -161,6 +198,23 @@ class Product extends Model
     public function getEffectivePriceAttribute(): float
     {
         return (float) ($this->sale_price ?? $this->regular_price);
+    }
+
+    public function imagePath(): string
+    {
+        if (filled($this->main_image)) {
+            return (string) $this->main_image;
+        }
+
+        foreach ((array) $this->gallery_images as $image) {
+            if (filled($image)) {
+                return (string) $image;
+            }
+        }
+
+        $slug = $this->relationLoaded('category') ? $this->category?->slug : null;
+
+        return \App\Services\StorefrontCatalogService::categoryImage($slug);
     }
 
     public function getTotalStockAttribute(): int

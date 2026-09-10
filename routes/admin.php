@@ -34,6 +34,7 @@ use App\Http\Controllers\Admin\PageController;
 use App\Http\Controllers\Admin\PaymentController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\ProductQuestionController;
+use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\PurchaseOrderController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\ReturnController;
@@ -58,13 +59,15 @@ use App\Http\Controllers\Admin\WarehouseController;
 use Illuminate\Support\Facades\Route;
 
 Route::name('admin.')->group(function () {
-    Route::get('login', [AuthController::class, 'showLogin'])->name('login');
-    Route::post('login', [AuthController::class, 'login'])->name('login.submit');
+    Route::get('login', fn () => redirect()->route('login'))->name('login');
+    Route::post('login', fn () => redirect()->route('login'));
 
     Route::middleware(['auth', 'admin'])->group(function () {
         Route::post('logout', [AuthController::class, 'logout'])->name('logout');
         Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
         Route::get('dashboard', [DashboardController::class, 'index']);
+        Route::get('profile', [ProfileController::class, 'edit'])->name('profile.edit');
+        Route::put('profile', [ProfileController::class, 'update'])->name('profile.update');
 
         // Products
         Route::get('products/export', [ProductController::class, 'export'])->name('products.export');
@@ -77,16 +80,7 @@ Route::name('admin.')->group(function () {
         Route::resource('products', ProductController::class);
 
         // Customers
-        Route::get('customers/export', [CustomerController::class, 'export'])->name('customers.export');
-        Route::post('customers/{customer}/block', [CustomerController::class, 'block'])->name('customers.block');
-        Route::post('customers/{customer}/unblock', [CustomerController::class, 'unblock'])->name('customers.unblock');
-        Route::post('customers/{customer}/reset-password', [CustomerController::class, 'resetPassword'])->name('customers.reset-password');
-        Route::post('customers/{customer}/assign-group', [CustomerController::class, 'assignGroup'])->name('customers.assign-group');
-        Route::post('customers/{customer}/store-credit', [CustomerController::class, 'addStoreCredit'])->name('customers.store-credit');
-        Route::post('customers/{customer}/reward-points', [CustomerController::class, 'addRewardPoints'])->name('customers.reward-points');
-        Route::post('customers/{customer}/notes', [CustomerController::class, 'addNote'])->name('customers.notes');
-        Route::post('customers/{customer}/merge', [CustomerController::class, 'merge'])->name('customers.merge');
-        Route::resource('customers', CustomerController::class);
+        Route::resource('customers', CustomerController::class)->only(['index', 'show']);
 
         // Orders
         Route::post('orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.status');
@@ -109,6 +103,7 @@ Route::name('admin.')->group(function () {
 
         // Collections
         Route::post('collections/bulk', [CollectionController::class, 'bulk'])->name('collections.bulk');
+        Route::post('collections/{collection}/toggle', [CollectionController::class, 'toggle'])->name('collections.toggle');
         Route::resource('collections', CollectionController::class);
 
         // Enquiries
@@ -117,7 +112,8 @@ Route::name('admin.')->group(function () {
 
         // Inventory
         Route::get('inventory', [InventoryController::class, 'index'])->name('inventory.index');
-        Route::get('inventory/adjust', [InventoryController::class, 'adjustForm'])->name('inventory.adjust');
+        Route::get('inventory/view/{product}', [InventoryController::class, 'show'])->name('inventory.show');
+        Route::get('inventory/adjust/{product?}', [InventoryController::class, 'adjustForm'])->name('inventory.adjust');
         Route::post('inventory/adjust', [InventoryController::class, 'adjust'])->name('inventory.adjust.store');
         Route::get('inventory/transfer', [InventoryController::class, 'transferForm'])->name('inventory.transfer');
         Route::post('inventory/transfer', [InventoryController::class, 'transfer'])->name('inventory.transfer.store');
@@ -135,13 +131,9 @@ Route::name('admin.')->group(function () {
         Route::get('payments/{payment}', [PaymentController::class, 'show'])->name('payments.show');
 
         // Returns
-        Route::post('returns/{returnRequest}/approve', [ReturnController::class, 'approve'])->name('returns.approve');
-        Route::post('returns/{returnRequest}/reject', [ReturnController::class, 'reject'])->name('returns.reject');
-        Route::post('returns/{returnRequest}/inspect', [ReturnController::class, 'inspect'])->name('returns.inspect');
-        Route::post('returns/{returnRequest}/refund', [ReturnController::class, 'refund'])->name('returns.refund');
-        Route::post('returns/{returnRequest}/replacement', [ReturnController::class, 'replacement'])->name('returns.replacement');
         Route::get('returns', [ReturnController::class, 'index'])->name('returns.index');
         Route::get('returns/{returnRequest}', [ReturnController::class, 'show'])->name('returns.show');
+        Route::post('returns/{returnRequest}/status', [ReturnController::class, 'updateStatus'])->name('returns.status');
 
         // Shipments
         Route::post('shipments/reverse', [ShipmentController::class, 'reverse'])->name('shipments.reverse');
@@ -202,6 +194,7 @@ Route::name('admin.')->group(function () {
 
         // Notifications & audit
         Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
+        Route::get('notifications/feed', [NotificationController::class, 'feed'])->name('notifications.feed');
         Route::post('notifications/{notification}/read', [NotificationController::class, 'markRead'])->name('notifications.read');
         Route::post('notifications/read-all', [NotificationController::class, 'markAllRead'])->name('notifications.read-all');
         Route::get('audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');

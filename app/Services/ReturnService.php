@@ -70,13 +70,7 @@ class ReturnService
 
             $this->orderService->updateStatus($order, OrderStatus::RETURN_REQUESTED, 'Return requested');
 
-            $this->notificationService->notifyAdmins(
-                'return_requested',
-                'Return ' . $return->return_number,
-                'Return requested for order ' . $order->order_number,
-                '/admin/returns/' . $return->id,
-                ['return_id' => $return->id]
-            );
+            $this->notificationService->notifyNewReturn($return->fresh(['items.orderItem', 'order', 'customer']));
 
             return $return->fresh(['items']);
         });
@@ -85,7 +79,12 @@ class ReturnService
     public function approve(ReturnRequest $return, ?string $note = null): ReturnRequest
     {
         return DB::transaction(function () use ($return, $note) {
-            if ($return->status !== 'requested') {
+            $current = \App\Enums\ReturnStatus::normalize((string) $return->status);
+            if ($current === \App\Enums\ReturnStatus::APPROVED) {
+                return $return;
+            }
+
+            if ($current !== \App\Enums\ReturnStatus::REQUESTED) {
                 throw new InvalidArgumentException('Only requested returns can be approved.');
             }
 
@@ -103,7 +102,8 @@ class ReturnService
     public function reject(ReturnRequest $return, string $reason): ReturnRequest
     {
         return DB::transaction(function () use ($return, $reason) {
-            if (! in_array($return->status, ['requested', 'approved'], true)) {
+            $current = \App\Enums\ReturnStatus::normalize((string) $return->status);
+            if (! in_array($current, [\App\Enums\ReturnStatus::REQUESTED, \App\Enums\ReturnStatus::APPROVED], true)) {
                 throw new InvalidArgumentException('Return cannot be rejected in current status.');
             }
 
@@ -161,34 +161,78 @@ class ReturnService
     public function processRefund(ReturnRequest $return): ReturnRequest
     {
         return DB::transaction(function () use ($return) {
-            if (! in_array($return->status, ['approved', 'inspected', 'picked_up'], true)) {
-                throw new InvalidArgumentException('Return is not ready for refund.');
+            $current = \App\Enums\ReturnStatus::normalize((string) $return->status);
+            if ($current === \App\Enums\ReturnStatus::REFUNDED) {
+                return $return;
+            }
+
+            if (! in_array($current, [\App\Enums\ReturnStatus::APPROVED, \App\Enums\ReturnStatus::REQUESTED], true)) {
+                throw new InvalidArgumentException('This return is not ready for refund.');
+            }
+
+            if ($current === \App\Enums\ReturnStatus::REQUESTED) {
+                $return->update([
+                    'status' => \App\Enums\ReturnStatus::APPROVED,
+                    'approved_at' => now(),
+                    'reviewed_by' => Auth::id(),
+                ]);
+                $return->refresh();
+            }
+
+            $order = $return->order;
+            if (! $order) {
+                throw new InvalidArgumentException('This return has no order.');
             }
 
             $amount = max(0, (float) $return->refund_amount - (float) $return->return_shipping_deduction);
+            $refundable = max(0, (float) $order->paid_amount - (float) $order->refunded_amount);
+            $amount = min($amount, $refundable);
 
-            $this->paymentService->processRefund(
-                $return->order,
-                $amount,
-                null,
-                $return->refund_method ?? 'original',
-                'Refund for return ' . $return->return_number,
-                $return->id
-            );
+            if ($amount > 0) {
+                $this->paymentService->processRefund(
+                    $order,
+                    $amount,
+                    null,
+                    $return->refund_method ?? 'original',
+                    'Refund for return ' . $return->return_number,
+                    $return->id
+                );
+            }
 
             $return->update([
-                'status' => 'refunded',
+                'status' => \App\Enums\ReturnStatus::REFUNDED,
                 'completed_at' => now(),
             ]);
 
             $this->orderService->updateStatus(
-                $return->order,
+                $order,
                 OrderStatus::REFUNDED,
                 'Refunded via return ' . $return->return_number
             );
 
             return $return->fresh();
         });
+    }
+
+    public function updateStatus(ReturnRequest $return, string $status): ReturnRequest
+    {
+        $next = \App\Enums\ReturnStatus::normalize($status);
+        $current = \App\Enums\ReturnStatus::normalize((string) $return->status);
+
+        if ($next === $current) {
+            return $return;
+        }
+
+        if (in_array($current, [\App\Enums\ReturnStatus::REJECTED, \App\Enums\ReturnStatus::REFUNDED], true)) {
+            throw new InvalidArgumentException('This return is already closed.');
+        }
+
+        return match ($next) {
+            \App\Enums\ReturnStatus::APPROVED => $this->approve($return),
+            \App\Enums\ReturnStatus::REJECTED => $this->reject($return, 'Rejected by admin'),
+            \App\Enums\ReturnStatus::REFUNDED => $this->processRefund($return),
+            default => throw new InvalidArgumentException('This status cannot be used.'),
+        };
     }
 
     public function createReplacement(ReturnRequest $return): Order

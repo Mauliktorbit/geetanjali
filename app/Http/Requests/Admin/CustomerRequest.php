@@ -14,30 +14,47 @@ class CustomerRequest extends FormRequest
 
     public function rules(): array
     {
-        $customerId = $this->route('customer')?->id ?? $this->route('customer');
+        $customer = $this->route('customer');
+        $customerId = is_object($customer) ? $customer->id : $customer;
+        $userId = is_object($customer) ? $customer->user_id : null;
 
         return [
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', Rule::unique('customers', 'email')->ignore($customerId)],
-            'phone' => ['nullable', 'string', 'max:30'],
-            'dob' => ['nullable', 'date'],
-            'gender' => ['nullable', 'string', 'max:20'],
-            'gstin' => ['nullable', 'string', 'max:20'],
-            'company_name' => ['nullable', 'string', 'max:255'],
-            'customer_group_id' => ['nullable', 'exists:customer_groups,id'],
-            'acquisition_source' => ['nullable', 'string', 'max:100'],
-            'password' => [$this->isMethod('post') ? 'nullable' : 'nullable', 'string', 'min:8'],
-            'is_verified' => ['nullable', 'boolean'],
-            'is_blocked' => ['nullable', 'boolean'],
-            'notes' => ['nullable', 'string'],
+            'email' => [
+                'required',
+                'email',
+                'max:255',
+                Rule::unique('customers', 'email')->ignore($customerId),
+                Rule::unique('users', 'email')->ignore($userId),
+            ],
+            'phone' => indian_mobile_rules(false),
+            'password' => ['nullable', 'string', 'min:8'],
+            'is_blocked' => ['sometimes', 'boolean'],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'name.required' => 'Please enter the customer name.',
+            'email.required' => 'Please enter the customer email.',
+            'email.email' => 'Please enter a valid email address.',
+            'email.unique' => 'This email is already used.',
+            'password.min' => 'Password must be at least 8 characters.',
+            'phone.regex' => 'Enter a valid 10-digit mobile number.',
         ];
     }
 
     protected function prepareForValidation(): void
     {
-        $this->merge([
-            'is_verified' => $this->boolean('is_verified'),
-            'is_blocked' => $this->boolean('is_blocked'),
-        ]);
+        $merge = [
+            'phone' => indian_mobile($this->input('phone')),
+        ];
+
+        if ($this->has('is_blocked')) {
+            $merge['is_blocked'] = $this->boolean('is_blocked');
+        }
+
+        $this->merge($merge);
     }
 }

@@ -15,7 +15,7 @@
             <input type="email" name="email" value="{{ old('email', $user->email) }}" required>
         </label>
         <label>Phone
-            <input type="tel" name="mobile" value="{{ old('mobile', $user->mobile ?: $user->phone) }}" required>
+            <input type="tel" name="mobile" value="{{ old('mobile', $user->mobile ?: $user->phone) }}" maxlength="10" inputmode="numeric" pattern="[6-9][0-9]{9}" autocomplete="tel" required>
         </label>
         <label>New password
             <input type="password" name="password" autocomplete="new-password">

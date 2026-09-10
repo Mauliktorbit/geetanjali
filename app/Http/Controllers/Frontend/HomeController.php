@@ -3,13 +3,15 @@
 namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
+use App\Services\StorefrontCatalogService;
 use Illuminate\View\View;
 
 class HomeController extends Controller
 {
+    public function __construct(private readonly StorefrontCatalogService $catalog) {}
+
     /**
      * Display the public homepage.
-     * Static demo data is structured for easy replacement with Eloquent later.
      */
     public function index(): View
     {
@@ -71,16 +73,13 @@ class HomeController extends Controller
      */
     private function categories(): array
     {
-        return [
-            ['name' => 'Rings', 'image' => 'public/assets/images/categories/rings.jpg', 'url' => route('products.new-arrivals', ['category' => 'rings'])],
-            ['name' => 'Earrings', 'image' => 'public/assets/images/categories/earrings.jpg', 'url' => route('collections.kundan', ['category' => 'earrings'])],
-            ['name' => 'Necklaces', 'image' => 'public/assets/images/categories/necklaces.jpg', 'url' => route('collections.kundan', ['category' => 'necklaces'])],
-            ['name' => 'Bangles', 'image' => 'public/assets/images/categories/bangles.jpg', 'url' => route('collections.kundan', ['category' => 'bangles'])],
-            ['name' => 'Mangalsutra', 'image' => 'public/assets/images/categories/mangalsutra.jpg', 'url' => route('collections.bridal')],
-            ['name' => 'Bridal', 'image' => 'public/assets/images/categories/bridal.jpg', 'url' => route('collections.bridal')],
-            ['name' => 'Kundan', 'image' => 'public/assets/images/categories/kundan.jpg', 'url' => route('collections.kundan')],
-            ['name' => 'Diamond', 'image' => 'public/assets/images/categories/diamond.jpg', 'url' => route('offers.index')],
-        ];
+        return StorefrontCatalogService::jewelleryTypes()->map(function ($category) {
+            return [
+                'name' => $category->name,
+                'image' => StorefrontCatalogService::categoryImage($category->slug, $category->image ?? null),
+                'url' => route('collections.kundan', ['category' => $category->slug]),
+            ];
+        })->all();
     }
 
     /**
@@ -130,145 +129,10 @@ class HomeController extends Controller
      */
     private function productsByTab(): array
     {
-        $kundan = [
-            [
-                'id' => 101,
-                'name' => 'Heritage Kundan Set',
-                'slug' => 'heritage-kundan-set',
-                'image' => 'public/assets/images/categories/kundan.jpg',
-                'price' => 62999,
-                'compare_at_price' => 71999,
-                'discount_label' => '12% Off',
-                'badge' => 'Bestseller',
-                'url' => route('collections.kundan'),
-            ],
-            [
-                'id' => 102,
-                'name' => 'Kundan Emerald Drop Earrings',
-                'slug' => 'kundan-emerald-drop-earrings',
-                'image' => 'public/assets/images/products/gold-drop-earrings.jpg',
-                'price' => 24999,
-                'compare_at_price' => 28999,
-                'discount_label' => '14% Off',
-                'url' => route('products.show', 'kundan-emerald-drop-earrings'),
-            ],
-            [
-                'id' => 103,
-                'name' => 'Royal Kundan Necklace',
-                'slug' => 'royal-kundan-necklace',
-                'image' => 'public/assets/images/products/traditional-gold-necklace.jpg',
-                'price' => 89999,
-                'compare_at_price' => 99999,
-                'discount_label' => '10% Off',
-                'url' => route('collections.kundan'),
-            ],
-            [
-                'id' => 104,
-                'name' => 'Polki Kundan Ring',
-                'slug' => 'polki-kundan-ring',
-                'image' => 'public/assets/images/categories/rings.jpg',
-                'price' => 18999,
-                'compare_at_price' => 21999,
-                'discount_label' => '14% Off',
-                'url' => route('collections.kundan'),
-            ],
-        ];
-
-        $bridal = [
-            [
-                'id' => 201,
-                'name' => 'Bridal Kundan Necklace Set',
-                'slug' => 'bridal-kundan-necklace-set',
-                'image' => 'public/assets/images/categories/bridal.jpg',
-                'price' => 125999,
-                'compare_at_price' => 145999,
-                'discount_label' => '14% Off',
-                'badge' => 'Bridal',
-                'url' => route('collections.bridal'),
-            ],
-            [
-                'id' => 202,
-                'name' => 'Temple Bridal Jhumkas',
-                'slug' => 'temple-bridal-jhumkas',
-                'image' => 'public/assets/images/categories/earrings.jpg',
-                'price' => 34999,
-                'compare_at_price' => 39999,
-                'discount_label' => '13% Off',
-                'url' => route('collections.bridal'),
-            ],
-            [
-                'id' => 203,
-                'name' => 'Bridal Gold Bangle Pair',
-                'slug' => 'bridal-gold-bangle-pair',
-                'image' => 'public/assets/images/products/classic-gold-bangle.jpg',
-                'price' => 78999,
-                'compare_at_price' => 88999,
-                'discount_label' => '11% Off',
-                'url' => route('collections.bridal'),
-            ],
-            [
-                'id' => 204,
-                'name' => 'Wedding Maang Tikka Set',
-                'slug' => 'wedding-maang-tikka-set',
-                'image' => 'public/assets/images/products/gold-floral-pendant.jpg',
-                'price' => 28999,
-                'compare_at_price' => 33999,
-                'discount_label' => '15% Off',
-                'url' => route('collections.bridal'),
-            ],
-        ];
-
-        $newArrivals = [
-            [
-                'id' => 301,
-                'name' => 'New Season Gold Pendant',
-                'slug' => 'new-season-gold-pendant',
-                'image' => 'public/assets/images/products/gold-floral-pendant.jpg',
-                'price' => 45999,
-                'compare_at_price' => 52999,
-                'discount_label' => '13% Off',
-                'badge' => 'New',
-                'url' => route('products.new-arrivals'),
-            ],
-            [
-                'id' => 302,
-                'name' => 'Fresh Drop Pearl Earrings',
-                'slug' => 'fresh-drop-pearl-earrings',
-                'image' => 'public/assets/images/products/gold-drop-earrings.jpg',
-                'price' => 21999,
-                'compare_at_price' => 25999,
-                'discount_label' => '15% Off',
-                'badge' => 'New',
-                'url' => route('products.new-arrivals'),
-            ],
-            [
-                'id' => 303,
-                'name' => 'Modern Gold Necklace',
-                'slug' => 'modern-gold-necklace',
-                'image' => 'public/assets/images/categories/necklaces.jpg',
-                'price' => 67999,
-                'compare_at_price' => 75999,
-                'discount_label' => '11% Off',
-                'badge' => 'New',
-                'url' => route('products.new-arrivals'),
-            ],
-            [
-                'id' => 304,
-                'name' => 'Lightweight Daily Wear Ring',
-                'slug' => 'lightweight-daily-wear-ring',
-                'image' => 'public/assets/images/categories/rings.jpg',
-                'price' => 15999,
-                'compare_at_price' => 18999,
-                'discount_label' => '16% Off',
-                'badge' => 'New',
-                'url' => route('products.new-arrivals'),
-            ],
-        ];
-
         return [
-            'kundan' => $kundan,
-            'bridal' => $bridal,
-            'new-arrivals' => $newArrivals,
+            'kundan' => $this->catalog->homeCards('kundan'),
+            'bridal' => $this->catalog->homeCards('bridal'),
+            'new-arrivals' => $this->catalog->homeCards('new-arrivals'),
         ];
     }
 

@@ -17,7 +17,7 @@ class PasswordResetController extends Controller
 
     public function showEmailForm(): View
     {
-        return view('auth.forgot-password');
+        return view('auth.forgot-password', $this->authViewData());
     }
 
     public function sendOtp(Request $request): RedirectResponse
@@ -27,15 +27,12 @@ class PasswordResetController extends Controller
         ]);
 
         $email = strtolower($data['email']);
-        $user = User::query()
-            ->whereRaw('LOWER(email) = ?', [$email])
-            ->where('is_staff', false)
-            ->first();
+        $user = $this->findUserByEmail($email);
 
         if (! $user) {
             return back()
                 ->withInput(['email' => $email])
-                ->withErrors(['email' => 'No customer account was found for this email.']);
+                ->withErrors(['email' => 'No account was found for this email.']);
         }
 
         if (! $user->is_active) {
@@ -61,6 +58,7 @@ class PasswordResetController extends Controller
         }
 
         $request->session()->put('password_reset_email', $user->email);
+        $request->session()->put('password_reset_is_staff', (bool) $user->is_staff);
         $request->session()->forget('password_otp_verified');
 
         return redirect()
@@ -76,10 +74,10 @@ class PasswordResetController extends Controller
 
         $email = $request->session()->get('password_reset_email');
 
-        return view('auth.verify-otp', [
+        return view('auth.verify-otp', array_merge($this->authViewData(), [
             'email' => $email,
             'maskedEmail' => $this->maskEmail($email),
-        ]);
+        ]));
     }
 
     public function verifyOtp(Request $request): RedirectResponse
@@ -110,7 +108,7 @@ class PasswordResetController extends Controller
             return redirect()->route('password.request');
         }
 
-        $user = User::query()->where('email', $email)->where('is_staff', false)->first();
+        $user = $this->findUserByEmail($email);
         if (! $user) {
             return redirect()->route('password.request');
         }
@@ -127,6 +125,7 @@ class PasswordResetController extends Controller
             return back()->withErrors(['otp' => 'We could not resend the OTP right now. Please try again.']);
         }
 
+        $request->session()->put('password_reset_is_staff', (bool) $user->is_staff);
         $request->session()->forget('password_otp_verified');
 
         return back()->with('success', 'A new OTP has been sent to your email.');
@@ -139,10 +138,10 @@ class PasswordResetController extends Controller
             return redirect()->route('password.request');
         }
 
-        return view('auth.reset-password', [
+        return view('auth.reset-password', array_merge($this->authViewData(), [
             'email' => $email,
             'maskedEmail' => $this->maskEmail($email),
-        ]);
+        ]));
     }
 
     public function reset(Request $request): RedirectResponse
@@ -156,11 +155,24 @@ class PasswordResetController extends Controller
             'password' => ['required', 'confirmed', Password::defaults()],
         ]);
 
-        $user = User::query()->where('email', $email)->where('is_staff', false)->firstOrFail();
-        $user->update(['password' => $data['password']]);
+        $user = $this->findUserByEmail($email);
+        if (! $user) {
+            return redirect()->route('password.request')->withErrors(['email' => 'Please verify your OTP again.']);
+        }
+
+        $user->update([
+            'password' => $data['password'],
+            'failed_login_attempts' => 0,
+            'locked_until' => null,
+        ]);
 
         $this->otps->clear($email);
-        $request->session()->forget(['password_reset_email', 'password_otp_verified']);
+        $request->session()->forget([
+            'password_reset_email',
+            'password_otp_verified',
+            'password_reset_is_staff',
+            'password_reset_from',
+        ]);
 
         return redirect()->route('login')->with('success', 'Your password has been updated. Please sign in.');
     }
@@ -170,6 +182,25 @@ class PasswordResetController extends Controller
         $request->session()->put('password_otp_verified', true);
 
         return redirect()->route('password.reset')->with('success', 'OTP verified. Please set a new password.');
+    }
+
+    private function findUserByEmail(string $email): ?User
+    {
+        return User::query()
+            ->whereRaw('LOWER(email) = ?', [$email])
+            ->first();
+    }
+
+    /**
+     * @return array{loginUrl: string, loginLabel: string, fromAdmin: bool}
+     */
+    private function authViewData(): array
+    {
+        return [
+            'loginUrl' => route('login'),
+            'loginLabel' => 'Back to Sign In',
+            'fromAdmin' => false,
+        ];
     }
 
     private function maskEmail(string $email): string

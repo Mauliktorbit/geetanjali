@@ -31,9 +31,11 @@
                     <div class="footer-col">
                         <h3>Shop</h3>
                         <ul>
-                            <li><a href="{{ route('collections.kundan') }}">Kundan Collection</a></li>
-                            <li><a href="{{ route('collections.bridal') }}">Bridal Collection</a></li>
-                            <li><a href="{{ route('products.new-arrivals') }}">New Arrivals</a></li>
+                            @foreach ($storefrontCollections ?? \App\Services\StorefrontCatalogService::navCollections() as $shopCollection)
+                                <li>
+                                    <a href="{{ \App\Services\StorefrontCatalogService::storefrontUrl($shopCollection) }}">{{ $shopCollection->name }}</a>
+                                </li>
+                            @endforeach
                             <li><a href="{{ route('offers.index') }}">Offers</a></li>
                         </ul>
                     </div>

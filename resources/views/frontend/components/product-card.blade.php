@@ -14,14 +14,17 @@
     $reviewCount = $product['review_count'] ?? null;
     $productId = $product['id'] ?? null;
     $url = $product['url'] ?? (! empty($product['slug']) ? route('products.show', $product['slug']) : null);
+    $outOfStock = ($product['stock_status'] ?? 'in_stock') === 'out_of_stock'
+        || (isset($product['stock']) && (int) $product['stock'] <= 0);
 @endphp
 
 <article
-    class="product-card"
+    class="product-card{{ $outOfStock ? ' product-card--oos' : '' }}"
     @if ($productId) data-product-id="{{ $productId }}" @endif
+    @if ($outOfStock) data-out-of-stock="1" @endif
     data-product-name="{{ $name }}"
     data-product-price="{{ $price }}"
-    data-product-image="{{ $image }}"
+    data-product-image="{{ storefront_image($image) }}"
     data-product-url="{{ $url ?? '' }}"
     data-product-slug="{{ $product['slug'] ?? '' }}"
     data-product-compare="{{ $compareAt ?? '' }}"
@@ -33,10 +36,15 @@
         @if ($badge)
             <span class="product-card__badge">{{ $badge }}</span>
         @endif
+        @if ($outOfStock)
+            <span class="product-card__oos">
+                <span class="product-card__oos-text">Out of stock</span>
+            </span>
+        @endif
         @if ($url)
             <a href="{{ $url }}" aria-label="View {{ $name }}">
                 <img
-                    src="{{ asset($image) }}"
+                    src="{{ storefront_image($image) }}"
                     alt="{{ $name }}"
                     loading="lazy"
                     width="400"
@@ -45,7 +53,7 @@
             </a>
         @else
             <img
-                src="{{ asset($image) }}"
+                src="{{ storefront_image($image) }}"
                 alt="{{ $name }}"
                 loading="lazy"
                 width="400"
@@ -84,7 +92,7 @@
                     </div>
                 @endif
             </div>
-            @if ($showCart)
+            @if ($showCart && ! $outOfStock)
                 <button
                     type="button"
                     class="btn-add-cart"

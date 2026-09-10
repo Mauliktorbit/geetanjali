@@ -485,7 +485,8 @@
 }
 
 .account-form input,
-.account-form select {
+.account-form select,
+.account-form textarea {
     height: 42px;
     border: 1px solid #e8e2d6;
     border-radius: 8px;
@@ -493,6 +494,57 @@
     font: inherit;
     color: #222;
     background: #faf8f2;
+}
+
+.account-form textarea {
+    height: auto;
+    min-height: 96px;
+    padding: 0.7rem;
+    resize: vertical;
+}
+
+.account-form .password-field {
+    position: relative;
+    display: block;
+    width: 100%;
+}
+
+.account-form .password-field input {
+    width: 100%;
+    padding-right: 2.6rem;
+}
+
+.account-form .password-field__toggle {
+    position: absolute;
+    top: 50%;
+    right: 6px;
+    transform: translateY(-50%);
+    width: 32px;
+    height: 32px;
+    border: 0;
+    background: transparent;
+    color: #777;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: 6px;
+}
+
+.account-form .password-field__toggle:hover {
+    color: #c9912e;
+}
+
+.account-form .password-field__toggle .password-toggle__icon--hide {
+    display: none;
+}
+
+.account-form .password-field__toggle.is-visible .password-toggle__icon--show {
+    display: none;
+}
+
+.account-form .password-field__toggle.is-visible .password-toggle__icon--hide {
+    display: block;
 }
 
 .account-check {
@@ -517,6 +569,20 @@
 
 .account-solid-btn:hover { background: #03382b; }
 
+.account-danger-btn {
+    height: 44px;
+    border: 0;
+    border-radius: 8px;
+    background: #c0392b;
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.account-danger-btn:hover {
+    background: #a93226;
+}
+
 .account-toggle {
     display: flex;
     align-items: center;
@@ -540,7 +606,10 @@
     gap: 0.75rem;
     padding: 0.8rem 0;
     border-bottom: 1px solid #f0ece3;
+    text-decoration: none;
+    color: inherit;
 }
+.account-return:hover strong { color: #0a6b52; }
 
 .account-pay-row strong,
 .account-return strong { display: block; color: #064e3b; font-size: 14px; }
@@ -647,4 +716,101 @@
     .account-hero-card__meta { text-align: left; justify-items: start; }
     .account-order { grid-template-columns: 52px 1fr auto; }
     .account-order__price { display: none; }
+}
+
+.account-return-banner {
+    border-radius: 12px;
+    padding: 0.9rem 1rem;
+    margin: 0.85rem 0 1.15rem;
+}
+.account-return-banner strong {
+    display: block;
+    font-size: 16px;
+    margin-bottom: 0.15rem;
+}
+.account-return-banner p {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #555;
+}
+.account-return-banner--success { background: #edf7f0; }
+.account-return-banner--success strong { color: #16803c; }
+.account-return-banner--info { background: #fbf3e4; }
+.account-return-banner--info strong { color: #c47b16; }
+.account-return-banner--warning { background: #f4eef8; }
+.account-return-banner--warning strong { color: #7a4a9e; }
+.account-return-banner--danger { background: #fdf2f2; }
+.account-return-banner--danger strong { color: #c0392b; }
+
+.account-journey {
+    list-style: none;
+    margin: 0.25rem 0 0;
+    padding: 0 0 0 0.2rem;
+}
+.account-journey__step {
+    display: grid;
+    grid-template-columns: 28px minmax(0, 1fr);
+    column-gap: 0.85rem;
+    position: relative;
+    padding: 0 0 1.05rem;
+}
+.account-journey__step:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    left: 13px;
+    top: 28px;
+    bottom: 0;
+    width: 2px;
+    background: #efe8d8;
+}
+.account-journey__step.is-done:not(:last-child)::before,
+.account-journey__step.is-failed:not(:last-child)::before {
+    background: #c5ddd1;
+}
+.account-journey__dot {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #d9d0c0;
+    background: #fff;
+    color: #8a8174;
+    font-size: 12px;
+    font-weight: 650;
+}
+.account-journey__step.is-done .account-journey__dot {
+    background: #064e3b;
+    border-color: #064e3b;
+    color: #fff;
+}
+.account-journey__step.is-failed .account-journey__dot {
+    background: #c0392b;
+    border-color: #c0392b;
+    color: #fff;
+}
+.account-journey__step.is-current .account-journey__dot {
+    border-color: #c9a24d;
+    background: #fffdf8;
+    color: #064e3b;
+}
+.account-journey__step.is-upcoming { opacity: 0.55; }
+.account-journey__step strong {
+    display: block;
+    color: #064e3b;
+    font-size: 14px;
+}
+.account-journey__step p {
+    margin: 0.15rem 0 0;
+    font-size: 13px;
+    color: #444;
+    line-height: 1.45;
+}
+.account-journey__step small {
+    display: block;
+    margin-top: 0.2rem;
+    color: #6b6b6b;
+    font-size: 12px;
 }

@@ -55,11 +55,11 @@ class CartController extends Controller
             if ($request->expectsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'This product is not available.',
+                    'message' => 'This product is out of stock.',
                 ], 404);
             }
 
-            return back()->with('error', 'This product is not available.');
+            return back()->with('error', 'This product is out of stock.');
         }
 
         if ($request->expectsJson()) {

@@ -2,6 +2,9 @@
 
 <div class="product-info">
     <h1 class="product-title">{{ $product->name }}</h1>
+    @if (!empty($product->category))
+        <p class="product-category">{{ $product->category }}</p>
+    @endif
 
     <div class="product-rating-row">
         <span class="product-stars" aria-label="{{ $product->rating }} out of 5 stars">
@@ -9,7 +12,7 @@
                 <i class="bi {{ $i <= floor($product->rating) ? 'bi-star-fill' : ($i - $product->rating < 1 ? 'bi-star-half' : 'bi-star') }}" aria-hidden="true"></i>
             @endfor
         </span>
-        <strong>{{ number_format($product->rating, 1) }}</strong>
+        <strong>{{ number_format((float) $product->rating, 1) }}</strong>
         <a href="#product-tabs" data-open-reviews>({{ $product->review_count }} Reviews)</a>
         <span class="sep" aria-hidden="true">|</span>
         <span>Sold {{ $product->sold_count }}</span>
@@ -28,7 +31,7 @@
     <p class="product-short">{{ $product->short_description }}</p>
 
     <div class="product-benefits" aria-label="Product benefits">
-        @foreach ($product->benefits as $benefit)
+        @foreach ($product->benefits ?? [] as $benefit)
             <div class="product-benefit">
                 <i class="bi {{ $benefit['icon'] }}" aria-hidden="true"></i>
                 <span>{{ $benefit['label'] }}</span>
@@ -48,7 +51,7 @@
     <div class="stock-status {{ ($product->stock_status ?? '') === 'out_of_stock' ? 'is-out' : '' }}">
         <span class="stock-dot" aria-hidden="true"></span>
         <span>
-            @if (($product->stock_status ?? 'in_stock') === 'in_stock')
+            @if (($product->stock_status ?? 'in_stock') === 'in_stock' && (int) ($product->stock ?? 0) > 0)
                 In Stock
             @else
                 Out of Stock
@@ -56,24 +59,33 @@
         </span>
     </div>
 
-    <div class="qty-row">
-        <div class="qty-control" role="group" aria-label="Quantity">
-            <button type="button" data-qty-minus aria-label="Decrease quantity">−</button>
-            <input type="number" name="quantity" value="1" min="1" max="{{ $product->stock }}" data-qty-input aria-label="Quantity">
-            <button type="button" data-qty-plus aria-label="Increase quantity">+</button>
+    @if (($product->stock_status ?? 'in_stock') === 'in_stock' && (int) ($product->stock ?? 0) > 0)
+        <div class="qty-row">
+            <div class="qty-control" role="group" aria-label="Quantity">
+                <button type="button" data-qty-minus aria-label="Decrease quantity">−</button>
+                <input type="number" name="quantity" value="1" min="1" max="{{ max(1, (int) $product->stock) }}" data-qty-input aria-label="Quantity">
+                <button type="button" data-qty-plus aria-label="Increase quantity">+</button>
+            </div>
+            <span class="visually-hidden">Select quantity</span>
         </div>
-        <span class="visually-hidden">Select quantity</span>
-    </div>
 
-    <div class="product-actions">
-        <button type="button" class="btn-add-cart-lg" data-add-to-cart>
-            <i class="bi bi-bag" aria-hidden="true"></i>
-            Add to Cart
-        </button>
-        <button type="button" class="btn-buy-now" data-buy-now>
-            Buy Now
-        </button>
-    </div>
+        <div class="product-actions">
+            <button type="button" class="btn-add-cart-lg" data-add-to-cart>
+                <i class="bi bi-bag" aria-hidden="true"></i>
+                Add to Cart
+            </button>
+            <button type="button" class="btn-buy-now" data-buy-now>
+                Buy Now
+            </button>
+        </div>
+    @else
+        <p class="stock-unavailable-note">This piece is currently unavailable. Please check back later or explore similar jewellery below.</p>
+        <div class="product-actions">
+            <button type="button" class="btn-out-of-stock" disabled>
+                Out of Stock
+            </button>
+        </div>
+    @endif
 
     <div class="delivery-card">
         <h3>Check Delivery</h3>
@@ -81,7 +93,7 @@
         <form class="delivery-form" action="{{ route('delivery.check') }}" method="post" data-delivery-form>
             @csrf
             <label class="visually-hidden" for="pincode">Pincode</label>
-            <input id="pincode" type="text" name="pincode" placeholder="Enter Pincode" maxlength="10" required>
+            <input id="pincode" type="text" name="pincode" placeholder="6-digit pincode" maxlength="6" inputmode="numeric" pattern="[0-9]{6}" required>
             <button type="submit">Check</button>
         </form>
         <div class="delivery-result" data-delivery-result aria-live="polite"></div>

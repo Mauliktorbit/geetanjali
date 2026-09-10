@@ -1,19 +1,13 @@
 @props([
     'filters' => [],
     'formId' => 'na-filter-form',
+    'categoryOptions' => null,
 ])
 
 @php
-    $categories = [
-        'rings' => 'Rings',
-        'earrings' => 'Earrings',
-        'necklaces' => 'Necklaces',
-        'bangles' => 'Bangles',
-        'mangalsutra' => 'Mangalsutra',
-        'bridal' => 'Bridal',
-        'kundan' => 'Kundan',
-        'diamond' => 'Diamond',
-    ];
+    $categories = ! empty($categoryOptions)
+        ? $categoryOptions
+        : \App\Services\StorefrontCatalogService::jewelleryTypeOptions();
     $metals = [
         '18k' => '18K Gold',
         '22k' => '22K Gold',

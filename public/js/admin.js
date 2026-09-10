@@ -17,6 +17,7 @@
       this.initFilterDropdowns();
       this.initCharts();
       this.initAlertDismiss();
+      this.initNotifications();
     },
 
     /* ------------------------------------------------------------------ */
@@ -129,6 +130,7 @@
           });
           menu.classList.toggle('open');
         });
+        menu.addEventListener('click', (e) => e.stopPropagation());
       });
 
       document.addEventListener('click', () => {
@@ -180,6 +182,8 @@
     /* Flash → toasts                                                     */
     /* ------------------------------------------------------------------ */
     initFlashToasts() {
+      if (window.AppAlert) return;
+
       const flash = document.getElementById('admin-flash-data');
       if (!flash) return;
 
@@ -238,6 +242,8 @@
     /* Confirm modal helper                                               */
     /* ------------------------------------------------------------------ */
     initConfirmModals() {
+      if (window.AppAlert) return;
+
       const backdrop = document.getElementById('confirm-modal');
       if (!backdrop) return;
 
@@ -491,6 +497,163 @@
           const alert = btn.closest('.alert');
           if (alert) alert.remove();
         });
+      });
+    },
+
+    /* ------------------------------------------------------------------ */
+    /* Order / return alerts                                              */
+    /* ------------------------------------------------------------------ */
+    initNotifications() {
+      const source = document.getElementById('admin-notify-data');
+      if (!source) return;
+
+      let config = {};
+      try {
+        config = JSON.parse(source.textContent || '{}');
+      } catch (err) {
+        return;
+      }
+
+      const csrf = config.csrf || document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+      const seenKey = 'gj.admin.alert.ids';
+      const seen = new Set((sessionStorage.getItem(seenKey) || '').split(',').filter(Boolean));
+
+      const saveSeen = () => {
+        const ids = Array.from(seen).slice(-80);
+        sessionStorage.setItem(seenKey, ids.join(','));
+      };
+
+      const setBadge = (count) => {
+        const badge = document.getElementById('admin-notify-badge');
+        if (!badge) return;
+        const n = Number(count) || 0;
+        badge.hidden = n < 1;
+        badge.textContent = n > 9 ? '9+' : String(n);
+      };
+
+      const iconSvg = (type) => {
+        if (type === 'return_requested') {
+          return '<svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>';
+        }
+        if (type === 'order_created') {
+          return '<svg viewBox="0 0 24 24"><path d="M6 6h15l-1.5 9h-12z"/><path d="M6 6 5 3H2"/><circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/></svg>';
+        }
+        return '<svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>';
+      };
+
+      const renderList = (items) => {
+        const list = document.getElementById('admin-notify-list');
+        if (!list) return;
+        if (!items || !items.length) {
+          list.innerHTML = '<p class="notify-panel__empty">No notifications yet. New orders and returns will appear here.</p>';
+          return;
+        }
+        list.innerHTML = items
+          .map((item) => {
+            const kind = item.type === 'return_requested' ? 'return' : item.type === 'order_created' ? 'order' : 'info';
+            return `<form method="POST" action="${item.read_url}" data-no-loading>
+              <input type="hidden" name="_token" value="${csrf}">
+              <button type="submit" class="notify-item${item.read ? '' : ' is-unread'}">
+                <span class="notify-item__icon notify-item__icon--${kind}">${iconSvg(item.type)}</span>
+                <span class="notify-item__copy">
+                  <strong></strong>
+                  <small></small>
+                  <em></em>
+                </span>
+              </button>
+            </form>`;
+          })
+          .join('');
+        Array.from(list.querySelectorAll('.notify-item')).forEach((btn, i) => {
+          const item = items[i];
+          if (!item) return;
+          const strong = btn.querySelector('strong');
+          const small = btn.querySelector('small');
+          const em = btn.querySelector('em');
+          if (strong) strong.textContent = item.title || '';
+          if (small) small.textContent = item.message || '';
+          if (em) em.textContent = item.time || '';
+        });
+      };
+
+      const markSeen = (alerts) => {
+        (alerts || []).forEach((item) => seen.add(String(item.id)));
+        saveSeen();
+      };
+
+      const popup = (alerts) => {
+        const fresh = (alerts || []).filter((item) => item && item.alert && !seen.has(String(item.id)));
+        if (!fresh.length) return;
+        markSeen(fresh);
+
+        const show = (item) => {
+          if (window.AppAlert && typeof window.AppAlert.notice === 'function') {
+            window.AppAlert.notice(item);
+            return;
+          }
+          if (typeof window.Swal === 'undefined') return;
+          window.Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: item.type === 'return_requested' ? 'warning' : 'success',
+            title: item.title,
+            text: item.message,
+            showConfirmButton: true,
+            confirmButtonText: 'View',
+            showCloseButton: true,
+            timer: 9000,
+            timerProgressBar: true,
+          }).then((res) => {
+            if (res.isConfirmed && item.read_url) {
+              const form = document.createElement('form');
+              form.method = 'POST';
+              form.action = item.read_url;
+              const token = document.createElement('input');
+              token.type = 'hidden';
+              token.name = '_token';
+              token.value = csrf;
+              form.appendChild(token);
+              document.body.appendChild(form);
+              form.submit();
+            }
+          });
+        };
+
+        if (fresh.length === 1) {
+          show(fresh[0]);
+          return;
+        }
+
+        const first = fresh[0];
+        show({
+          ...first,
+          title: fresh.length + ' new alerts',
+          message: fresh.map((row) => row.title).join(' · '),
+        });
+      };
+
+      setBadge(config.count);
+      popup(config.alerts || []);
+
+      const poll = () => {
+        if (!config.feed) return;
+        fetch(config.feed, {
+          headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+          credentials: 'same-origin',
+        })
+          .then((res) => (res.ok ? res.json() : null))
+          .then((data) => {
+            if (!data) return;
+            setBadge(data.count);
+            if (Array.isArray(data.items)) renderList(data.items);
+            popup(data.alerts || []);
+          })
+          .catch(() => {});
+      };
+
+      setInterval(poll, 20000);
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) poll();
       });
     },
   };

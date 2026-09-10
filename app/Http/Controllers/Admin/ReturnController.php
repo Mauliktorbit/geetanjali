@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\ReturnStatus;
 use App\Models\ReturnRequest;
 use App\Repositories\ReturnRequestRepository;
 use App\Services\ReturnService;
 use Illuminate\Http\Request;
+use InvalidArgumentException;
 
 class ReturnController extends AdminController
 {
@@ -16,60 +18,46 @@ class ReturnController extends AdminController
 
     public function index(Request $request)
     {
-        $items = $this->repository->paginate($request->all());
+        $items = $this->repository->paginate($request->only(['search', 'status']));
 
-        return view('admin.returns.index', compact('items'));
+        return view('admin.returns.index', [
+            'items' => $items,
+            'statuses' => ReturnStatus::labels(),
+        ]);
     }
 
     public function show(ReturnRequest $returnRequest)
     {
-        $returnRequest->load(['order.items', 'customer', 'items.orderItem', 'reason', 'reviewer']);
+        $returnRequest->load(['order.items.product', 'customer', 'items.orderItem.product', 'refunds']);
 
-        return view('admin.returns.show', ['item' => $returnRequest]);
+        return view('admin.returns.show', [
+            'item' => $returnRequest,
+            'statuses' => ReturnStatus::nextOptions((string) $returnRequest->status),
+        ]);
     }
 
-    public function approve(Request $request, ReturnRequest $returnRequest)
+    public function updateStatus(Request $request, ReturnRequest $returnRequest)
     {
-        $this->returnService->approve($returnRequest, $request->input('note'));
-
-        return $this->success('Return approved.');
-    }
-
-    public function reject(Request $request, ReturnRequest $returnRequest)
-    {
-        $request->validate(['reason' => ['required', 'string']]);
-        $this->returnService->reject($returnRequest, $request->input('reason'));
-
-        return $this->success('Return rejected.');
-    }
-
-    public function inspect(Request $request, ReturnRequest $returnRequest)
-    {
-        $request->validate([
-            'inspection_status' => ['required', 'in:passed,failed,partial'],
-            'notes' => ['nullable', 'string'],
+        $data = $request->validate([
+            'status' => ['required', 'in:'.implode(',', array_keys(ReturnStatus::labels()))],
+        ], [
+            'status.required' => 'Please choose a status.',
+            'status.in' => 'Choose Requested, Approved, Rejected or Refunded.',
         ]);
 
-        $this->returnService->completeInspection(
-            $returnRequest,
-            $request->input('inspection_status'),
-            $request->input('notes')
-        );
+        try {
+            $this->returnService->updateStatus($returnRequest, $data['status']);
+        } catch (InvalidArgumentException $e) {
+            return $this->error($e->getMessage());
+        }
 
-        return $this->success('Inspection completed.');
-    }
+        $message = match (\App\Enums\ReturnStatus::normalize($data['status'])) {
+            \App\Enums\ReturnStatus::APPROVED => 'Return approved. Refund is now pending.',
+            \App\Enums\ReturnStatus::REJECTED => 'Return was not accepted.',
+            \App\Enums\ReturnStatus::REFUNDED => 'Refund marked as completed.',
+            default => 'Return status updated.',
+        };
 
-    public function refund(ReturnRequest $returnRequest)
-    {
-        $this->returnService->processRefund($returnRequest);
-
-        return $this->success('Return refund processed.');
-    }
-
-    public function replacement(ReturnRequest $returnRequest)
-    {
-        $order = $this->returnService->createReplacement($returnRequest);
-
-        return $this->success('Replacement order created.', 'admin.orders.show', [$order]);
+        return $this->success($message);
     }
 }

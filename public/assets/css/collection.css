@@ -483,6 +483,10 @@
     transform: scale(1.03);
 }
 
+.kundan-page .product-card--oos:hover .product-card__media img {
+    transform: none;
+}
+
 .product-card__badge {
     position: absolute;
     top: 10px;
@@ -496,6 +500,44 @@
     text-transform: uppercase;
     padding: 5px 8px;
     border-radius: 2px;
+}
+
+.product-card__oos {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(18, 16, 12, 0.38);
+    pointer-events: none;
+}
+
+.product-card__oos-text {
+    display: inline-block;
+    background: rgba(28, 24, 20, 0.9);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 650;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 10px 18px;
+    border-radius: 2px;
+    border: 1px solid rgba(201, 162, 39, 0.45);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+    white-space: nowrap;
+}
+
+.product-card--oos .product-card__media img {
+    filter: grayscale(0.18) brightness(0.92);
+}
+
+.product-card--oos:hover .product-card__media img {
+    transform: none;
+}
+
+.product-card--oos .product-card__wishlist {
+    z-index: 3;
 }
 
 .product-card__rating {

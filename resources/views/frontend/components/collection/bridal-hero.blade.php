@@ -3,7 +3,7 @@
 <section class="bridal-hero" aria-labelledby="bridal-hero-heading">
     <div class="bridal-hero__bg" aria-hidden="true">
         <img
-            src="{{ asset($hero['image'] ?? 'public/assets/images/collections/bridal/hero.jpg') }}"
+            src="{{ $hero['image'] ?? asset('public/assets/images/collections/bridal/hero.jpg') }}"
             alt="{{ $hero['image_alt'] ?? 'Indian bride in traditional bridal jewellery' }}"
             width="1600"
             height="900"

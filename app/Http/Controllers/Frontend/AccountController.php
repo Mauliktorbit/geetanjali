@@ -7,6 +7,8 @@ use App\Models\CustomerAddress;
 use App\Models\CustomerPaymentMethod;
 use App\Services\AccountService;
 use App\Services\CheckoutService;
+use App\Services\OrderService;
+use App\Services\ReturnService;
 use App\Support\IndianStates;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -17,6 +19,8 @@ class AccountController extends Controller
     public function __construct(
         private readonly AccountService $account,
         private readonly CheckoutService $checkout,
+        private readonly ReturnService $returns,
+        private readonly OrderService $orders,
     ) {}
 
     public function index(Request $request): View|RedirectResponse
@@ -42,7 +46,7 @@ class AccountController extends Controller
 
         $user = $request->user();
         $customer = $this->account->ensureCustomer($user);
-        $orders = $customer->orders()->with('items')->latest()->paginate(10);
+        $orders = $customer->orders()->with(['items', 'returns'])->latest()->paginate(10);
 
         return $this->page('frontend.account.orders', $user, 'orders', [
             'orders' => $orders,
@@ -58,7 +62,7 @@ class AccountController extends Controller
 
         $user = $request->user();
         $customer = $this->account->ensureCustomer($user);
-        $order = $customer->orders()->with('items')->where('order_number', $orderNumber)->firstOrFail();
+        $order = $customer->orders()->with(['items', 'returns.items.orderItem'])->where('order_number', $orderNumber)->firstOrFail();
 
         return $this->page('frontend.account.order-show', $user, 'orders', [
             'order' => $order,
@@ -135,14 +139,21 @@ class AccountController extends Controller
     public function updateProfile(Request $request): RedirectResponse
     {
         $user = $request->user();
+        $request->merge([
+            'mobile' => indian_mobile($request->input('mobile')),
+        ]);
+
         $data = $request->validate([
             'name' => ['required', 'string', 'max:120'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email,'.$user->id],
-            'mobile' => ['required', 'string', 'max:20'],
+            'mobile' => indian_mobile_rules(true),
             'password' => ['nullable', 'confirmed', 'min:8'],
+        ], [
+            'mobile.required' => 'Please enter your mobile number.',
+            'mobile.regex' => 'Enter a valid 10-digit mobile number.',
         ]);
 
-        $mobile = preg_replace('/\D+/', '', $data['mobile']);
+        $mobile = $data['mobile'];
         $payload = [
             'name' => $data['name'],
             'email' => strtolower($data['email']),
@@ -263,12 +274,101 @@ class AccountController extends Controller
 
         $user = $request->user();
         $customer = $this->account->ensureCustomer($user);
-        $returns = $customer->returnRequests()->with('order')->latest()->get();
+        $returns = $customer->returnRequests()->with(['order', 'items.orderItem', 'refunds'])->latest()->get();
 
         return $this->page('frontend.account.returns', $user, 'returns', [
             'returns' => $returns,
             'breadcrumb' => $this->crumbs('Returns & Refunds', route('account.returns')),
         ]);
+    }
+
+    public function showReturn(Request $request, string $returnNumber): View|RedirectResponse
+    {
+        if ($redirect = $this->staffRedirect($request)) {
+            return $redirect;
+        }
+
+        $user = $request->user();
+        $customer = $this->account->ensureCustomer($user);
+        $return = $customer->returnRequests()
+            ->with(['order', 'items.orderItem', 'refunds'])
+            ->where('return_number', $returnNumber)
+            ->firstOrFail();
+
+        return $this->page('frontend.account.return-show', $user, 'returns', [
+            'return' => $return,
+            'breadcrumb' => [
+                ['label' => 'Home', 'url' => route('home')],
+                ['label' => 'My Account', 'url' => route('account.index')],
+                ['label' => 'Returns & Refunds', 'url' => route('account.returns')],
+                ['label' => $return->return_number, 'url' => null],
+            ],
+        ]);
+    }
+
+    public function storeReturn(Request $request, string $orderNumber): RedirectResponse
+    {
+        if ($redirect = $this->staffRedirect($request)) {
+            return $redirect;
+        }
+
+        $customer = $this->account->ensureCustomer($request->user());
+        $order = $customer->orders()->with(['items', 'returns'])->where('order_number', $orderNumber)->firstOrFail();
+
+        $data = $request->validate([
+            'reason' => ['required', 'string', 'max:500'],
+        ], [
+            'reason.required' => 'Please tell us why you want to return this order.',
+        ]);
+
+        if (! $order->canRequestReturn()) {
+            return back()->with('error', 'This order cannot be returned right now.');
+        }
+
+        $items = $order->items->map(fn ($item) => [
+            'order_item_id' => $item->id,
+            'quantity' => (int) $item->quantity,
+        ])->all();
+
+        try {
+            $return = $this->returns->requestReturn($order, $items, [
+                'customer_reason' => trim($data['reason']),
+            ]);
+        } catch (\InvalidArgumentException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        return redirect()->route('account.returns.show', $return->return_number)->with('success', 'Your return request has been submitted. We will review it shortly.');
+    }
+
+    public function cancelOrder(Request $request, string $orderNumber): RedirectResponse
+    {
+        if ($redirect = $this->staffRedirect($request)) {
+            return $redirect;
+        }
+
+        $customer = $this->account->ensureCustomer($request->user());
+        $order = $customer->orders()->where('order_number', $orderNumber)->firstOrFail();
+
+        $data = $request->validate([
+            'reason' => ['required', 'string', 'max:500'],
+        ], [
+            'reason.required' => 'Please tell us why you want to cancel this order.',
+        ]);
+
+        if (! $order->canCancel()) {
+            return back()->with('error', 'This order cannot be cancelled. If it is already delivered, you can request a return instead.');
+        }
+
+        try {
+            $this->orders->cancelOrder($order, trim($data['reason']));
+        } catch (\InvalidArgumentException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        return redirect()
+            ->route('account.orders.show', $order->order_number)
+            ->with('success', 'Your order has been cancelled.');
     }
 
     public function rewards(Request $request): View|RedirectResponse
@@ -351,15 +451,25 @@ class AccountController extends Controller
      */
     private function addressPayload(Request $request): array
     {
+        $pincode = digits_only($request->input('pincode'));
+        $request->merge([
+            'phone' => indian_mobile($request->input('phone')),
+            'pincode' => $pincode === '' ? null : $pincode,
+        ]);
+
         $data = $request->validate([
             'label' => ['required', 'in:home,office,other'],
             'name' => ['required', 'string', 'max:120'],
-            'phone' => ['required', 'string', 'max:20'],
+            'phone' => indian_mobile_rules(true),
             'address_line1' => ['required', 'string', 'max:180'],
             'address_line2' => ['nullable', 'string', 'max:180'],
             'city' => ['required', 'string', 'max:80'],
             'state' => ['required', 'string', 'max:80'],
-            'pincode' => ['required', 'string', 'regex:/^\d{6}$/'],
+            'pincode' => indian_pincode_rules(true),
+        ], [
+            'phone.required' => 'Please enter a 10-digit mobile number.',
+            'phone.regex' => 'Enter a valid 10-digit mobile number.',
+            'pincode.regex' => 'Enter a valid 6-digit pincode.',
         ]);
 
         $data['is_default'] = $request->boolean('is_default');

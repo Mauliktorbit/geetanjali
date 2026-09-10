@@ -42,7 +42,7 @@
             </select>
         </label>
         <label>Last 4 digits
-            <input type="text" name="last_four" maxlength="4" inputmode="numeric" required>
+            <input type="text" name="last_four" maxlength="4" inputmode="numeric" pattern="[0-9]{4}" required>
         </label>
         <label>Name on card
             <input type="text" name="holder_name" value="{{ $user->name }}" required>

@@ -1,7 +1,7 @@
 <div class="form-grid">
 <div class="form-group"><label>Name</label><input name="name" class="form-control" value="{{ old('name',$item->name ?? '') }}" required></div>
 <div class="form-group"><label>Email</label><input type="email" name="email" class="form-control" value="{{ old('email',$item->email ?? '') }}" required></div>
-<div class="form-group"><label>Phone</label><input name="phone" class="form-control" value="{{ old('phone',$item->phone ?? '') }}"></div>
+<div class="form-group"><label>Phone</label><input type="tel" name="phone" class="form-control" value="{{ old('phone',$item->phone ?? '') }}" maxlength="10" inputmode="numeric" pattern="[6-9][0-9]{9}" autocomplete="tel"></div>
 <div class="form-group"><label>Password</label><input type="password" name="password" class="form-control" {{ isset($item)?'':'required' }}></div>
 <div class="form-group"><label>Confirm password</label><input type="password" name="password_confirmation" class="form-control"></div>
 <div class="form-group"><label>Allowed IPs (comma)</label><input name="allowed_ips" class="form-control" value="{{ old('allowed_ips', isset($item) && $item->allowed_ips ? implode(', ',$item->allowed_ips) : '') }}"></div>

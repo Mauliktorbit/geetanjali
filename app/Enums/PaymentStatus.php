@@ -32,6 +32,11 @@ class PaymentStatus
         ];
     }
 
+    public static function simpleLabel(string $status): string
+    {
+        return $status === self::PAID ? 'Paid' : 'Pending';
+    }
+
     public static function label(string $status): string
     {
         return self::labels()[$status] ?? ucfirst(str_replace('_', ' ', $status));

@@ -37,24 +37,14 @@ class CheckoutService
         'wallet' => 'Wallet',
     ];
 
-    public function __construct(private readonly CartService $cart) {}
+    public function __construct(
+        private readonly CartService $cart,
+        private readonly NotificationService $notifications,
+    ) {}
 
     public function ensureCustomer(User $user): Customer
     {
-        $customer = $user->customer;
-
-        if ($customer) {
-            return $customer;
-        }
-
-        return Customer::create([
-            'user_id' => $user->id,
-            'name' => $user->name,
-            'email' => $user->email,
-            'phone' => $user->mobile ?: $user->phone,
-            'is_verified' => true,
-            'acquisition_source' => 'website',
-        ]);
+        return Customer::forUser($user, true);
     }
 
     /**
@@ -225,7 +215,9 @@ class CheckoutService
 
             $this->cart->clear();
 
-            return $order->load('items');
+            $this->notifications->notifyNewOrder($order->load('items'));
+
+            return $order;
         });
     }
 

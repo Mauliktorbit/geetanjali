@@ -24,10 +24,10 @@ class ProductRequest extends FormRequest
             'barcode' => ['nullable', 'string', 'max:100'],
             'short_description' => ['nullable', 'string', 'max:1000'],
             'description' => ['nullable', 'string'],
-            'category_id' => ['nullable', 'exists:categories,id'],
+            'category_id' => ['required', 'exists:categories,id'],
             'subcategory_id' => ['nullable', 'exists:categories,id'],
             'brand_id' => ['nullable', 'exists:brands,id'],
-            'product_type' => ['required', Rule::in(ProductType::all())],
+            'product_type' => ['nullable', Rule::in(ProductType::all())],
             'regular_price' => ['required', 'numeric', 'min:0'],
             'sale_price' => ['nullable', 'numeric', 'min:0', 'lte:regular_price'],
             'cost_price' => ['nullable', 'numeric', 'min:0'],
@@ -39,9 +39,9 @@ class ProductRequest extends FormRequest
             'length' => ['nullable', 'numeric', 'min:0'],
             'width' => ['nullable', 'numeric', 'min:0'],
             'height' => ['nullable', 'numeric', 'min:0'],
-            'main_image' => ['nullable', 'image', 'max:5120'],
+            'main_image' => ['nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:10240'],
             'gallery_images' => ['nullable', 'array'],
-            'gallery_images.*' => ['image', 'max:5120'],
+            'gallery_images.*' => ['nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:10240'],
             'video_url' => ['nullable', 'url', 'max:500'],
             'seo_title' => ['nullable', 'string', 'max:255'],
             'seo_description' => ['nullable', 'string', 'max:500'],
@@ -49,6 +49,21 @@ class ProductRequest extends FormRequest
             'return_eligible' => ['nullable', 'boolean'],
             'return_days' => ['nullable', 'integer', 'min:0'],
             'warranty' => ['nullable', 'string', 'max:255'],
+            'badge' => ['nullable', 'string', 'max:40'],
+            'metal' => ['nullable', 'string', 'max:80'],
+            'purity' => ['nullable', 'string', 'max:40'],
+            'stone' => ['nullable', 'string', 'max:120'],
+            'style' => ['nullable', 'string', 'max:80'],
+            'occasion' => ['nullable', 'string', 'max:120'],
+            'certification' => ['nullable', 'string', 'max:120'],
+            'dimensions_text' => ['nullable', 'string', 'max:120'],
+            'tax_note' => ['nullable', 'string', 'max:120'],
+            'highlights' => ['nullable', 'array'],
+            'highlights.*' => ['nullable', 'string', 'max:255'],
+            'highlights_text' => ['nullable', 'string'],
+            'sold_count' => ['nullable', 'integer', 'min:0'],
+            'collections' => ['required', 'array', 'min:1'],
+            'collections.*' => ['integer', Rule::exists('collections', 'id')],
             'shipping_class_id' => ['nullable', 'exists:shipping_classes,id'],
             'estimated_delivery' => ['nullable', 'string', 'max:100'],
             'cod_available' => ['nullable', 'boolean'],
@@ -82,6 +97,21 @@ class ProductRequest extends FormRequest
         ];
     }
 
+    public function messages(): array
+    {
+        return [
+            'category_id.required' => 'Please choose a category.',
+            'collections.required' => 'Please choose where this product should appear.',
+            'collections.min' => 'Please choose at least one collection.',
+            'main_image.image' => 'The main photo must be a JPG, PNG or WebP image.',
+            'main_image.uploaded' => 'The main photo could not be uploaded. Please use a JPG, PNG or WebP under 10 MB.',
+            'main_image.max' => 'The main photo must be 10 MB or smaller.',
+            'gallery_images.*.image' => 'Each extra photo must be a JPG, PNG or WebP image.',
+            'gallery_images.*.uploaded' => 'An extra photo could not be uploaded. Please use JPG, PNG or WebP files under 10 MB.',
+            'gallery_images.*.max' => 'Each extra photo must be 10 MB or smaller.',
+        ];
+    }
+
     protected function prepareForValidation(): void
     {
         $booleans = [
@@ -93,6 +123,35 @@ class ProductRequest extends FormRequest
         foreach ($booleans as $key) {
             $merged[$key] = $this->boolean($key);
         }
+
+        if ($this->exists('highlights_text')) {
+            $lines = preg_split('/\r\n|\r|\n/', (string) $this->input('highlights_text', '')) ?: [];
+            $merged['highlights'] = array_values(array_filter(array_map('trim', $lines)));
+        }
+
+        $merged['product_type'] = $this->input('product_type') ?: ProductType::SIMPLE;
+
+        $collections = $this->input('collections', []);
+        if (! is_array($collections)) {
+            $collections = filled($collections) ? [$collections] : [];
+        }
+        $merged['collections'] = array_values(array_filter($collections));
+
         $this->merge($merged);
+        $this->dropEmptyUploads('gallery_images');
+    }
+
+    private function dropEmptyUploads(string $key): void
+    {
+        $files = $this->file($key);
+        if (! is_array($files)) {
+            return;
+        }
+
+        $kept = array_values(array_filter($files, function ($file) {
+            return $file && $file->getError() !== UPLOAD_ERR_NO_FILE;
+        }));
+
+        $this->files->set($key, $kept);
     }
 }

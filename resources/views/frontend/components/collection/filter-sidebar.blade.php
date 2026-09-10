@@ -7,16 +7,7 @@
 ])
 
 @php
-    $typeOptions = [
-        'necklaces' => 'Necklaces',
-        'earrings' => 'Earrings',
-        'rings' => 'Rings',
-        'bangles' => 'Bangles',
-        'maang-tikka' => 'Maang Tikka',
-        'bracelets' => 'Bracelets',
-        'sets' => 'Sets',
-        'jhumkas' => 'Jhumkas',
-    ];
+    $typeOptions = $typeOptions ?? \App\Services\StorefrontCatalogService::jewelleryTypeOptions();
     $metalOptions = [
         '22k' => '22K Yellow Gold',
         '18k' => '18K Gold',

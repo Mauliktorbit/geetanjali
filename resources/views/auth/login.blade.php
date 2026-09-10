@@ -23,6 +23,12 @@
                     </div>
                 @endif
 
+                @if (session('error'))
+                    <div class="auth-alert" role="alert">
+                        {{ session('error') }}
+                    </div>
+                @endif
+
                 @if ($errors->any())
                     <div class="auth-alert" role="alert">
                         {{ $errors->first() }}
@@ -69,7 +75,7 @@
                         @error('password') <span class="auth-error">{{ $message }}</span> @enderror
                         <div class="auth-forgot">
                             <label class="auth-remember">
-                                <input type="checkbox" name="remember" value="1" @checked(old('remember'))>
+                                <input type="checkbox" name="remember" value="1" @checked(old('remember', true))>
                                 Remember me
                             </label>
                             <a href="{{ route('password.request') }}">Forgot Password?</a>

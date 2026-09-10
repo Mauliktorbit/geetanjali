@@ -72,7 +72,7 @@
                     <input type="text" name="name" value="{{ $user->name }}" required data-field="name">
                 </label>
                 <label class="is-full">Phone
-                    <input type="tel" name="phone" value="{{ $user->mobile ?: $user->phone }}" required data-field="phone">
+                    <input type="tel" name="phone" value="{{ $user->mobile ?: $user->phone }}" maxlength="10" inputmode="numeric" pattern="[6-9][0-9]{9}" autocomplete="tel" required data-field="phone">
                 </label>
                 <label class="is-full">Address
                     <input type="text" name="address_line1" required data-field="address_line1">
@@ -92,7 +92,7 @@
                     </select>
                 </label>
                 <label>Pincode
-                    <input type="text" name="pincode" maxlength="6" required data-field="pincode">
+                    <input type="text" name="pincode" maxlength="6" inputmode="numeric" pattern="[0-9]{6}" required data-field="pincode">
                 </label>
                 <label class="is-check">
                     <input type="checkbox" name="is_default" value="1" data-field="is_default"> Set as default

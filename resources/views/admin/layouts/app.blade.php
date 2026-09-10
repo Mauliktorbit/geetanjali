@@ -81,15 +81,11 @@
                     <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                 </a>
                 <div class="user-dropdown" data-dropdown>
-                    <button type="button" class="topbar-btn" data-dropdown-trigger aria-label="Notifications">
+                    <button type="button" class="topbar-btn" data-dropdown-trigger aria-label="Notifications" id="admin-notify-bell">
                         <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-                        <span class="topbar-badge">3</span>
+                        <span class="topbar-badge" id="admin-notify-badge" @if (($adminNotifyCount ?? 0) < 1) hidden @endif>{{ ($adminNotifyCount ?? 0) > 9 ? '9+' : (int) ($adminNotifyCount ?? 0) }}</span>
                     </button>
-                    <div class="dropdown-menu" data-dropdown-menu style="min-width:280px">
-                        <div style="padding:0.5rem 0.7rem;font-weight:650;font-size:0.85rem;color:var(--text-primary)">Notifications</div>
-                        <div class="dropdown-divider"></div>
-                        <a href="{{ $adminRoute('admin.notifications.index') }}">View all notifications</a>
-                    </div>
+                    @include('admin.components.notifications-dropdown')
                 </div>
 
                 <div class="user-dropdown" data-dropdown>
@@ -101,8 +97,7 @@
                         </span>
                     </button>
                     <div class="dropdown-menu" data-dropdown-menu>
-                        <a href="{{ $adminRoute('admin.settings.index') }}">Account settings</a>
-                        <a href="{{ $adminRoute('admin.profile.edit', [], '#') }}">Profile</a>
+                        <a href="{{ $adminRoute('admin.profile.edit') }}">Profile</a>
                         <div class="dropdown-divider"></div>
                         <form method="POST" action="{{ $adminRoute('admin.logout') }}" data-no-loading>
                             @csrf
@@ -114,11 +109,7 @@
         </header>
 
         <main class="admin-content">
-            @hasSection('breadcrumbs')
-                <div class="mb-2">
-                    @yield('breadcrumbs')
-                </div>
-            @endif
+            @include('admin.components.breadcrumbs', ['items' => admin_breadcrumbs(), 'global' => true])
 
             {{-- Flash message area (inline + toast source) --}}
             <div id="flash-messages" class="flash-area">
@@ -149,8 +140,20 @@
 @endphp
 {!! json_encode(array_filter($flashPayload)) !!}
 </script>
+<script id="admin-notify-data" type="application/json">
+{!! json_encode([
+    'feed' => route('admin.notifications.feed'),
+    'csrf' => csrf_token(),
+    'count' => (int) ($adminNotifyCount ?? 0),
+    'alerts' => collect($adminNotifyAlerts ?? [])->map->toFeed()->values()->all(),
+]) !!}
+</script>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="{{ asset('js/sweet-alerts.js') }}?v={{ filemtime(public_path('js/sweet-alerts.js')) }}"></script>
+<script src="{{ asset('js/input-masks.js') }}?v={{ filemtime(public_path('js/input-masks.js')) }}"></script>
+<script src="{{ asset('js/password-toggle.js') }}?v={{ filemtime(public_path('js/password-toggle.js')) }}"></script>
 <script src="{{ asset('js/admin.js') }}?v={{ filemtime(public_path('js/admin.js')) }}"></script>
 @stack('scripts')
 </body>

@@ -10,6 +10,7 @@ use App\Models\Warehouse;
 use App\Repositories\InventoryRepository;
 use App\Services\InventoryService;
 use Illuminate\Http\Request;
+use InvalidArgumentException;
 
 class InventoryController extends AdminController
 {
@@ -20,34 +21,97 @@ class InventoryController extends AdminController
 
     public function index(Request $request)
     {
-        $items = $this->repository->paginate($request->all());
-        $items->load(['product', 'warehouse', 'variant']);
-        $warehouses = Warehouse::orderBy('name')->get(['id', 'name']);
+        $items = $this->repository->paginateProducts($request->all());
 
-        return view('admin.inventory.index', compact('items', 'warehouses'));
+        return view('admin.inventory.index', compact('items'));
     }
 
-    public function adjustForm()
+    public function show(Product $product)
     {
+        $product->load('category:id,slug,name');
+        $inventories = Inventory::query()
+            ->with('warehouse')
+            ->where('product_id', $product->id)
+            ->get();
+
+        $stock = (int) $inventories->sum('available_stock');
+        $reserved = (int) $inventories->sum('reserved_stock');
+        $status = $stock <= 0 ? 'out' : ($stock <= 5 ? 'low' : 'in');
+        $statusLabel = $status === 'out' ? 'Out of stock' : ($status === 'low' ? 'Low stock' : 'In stock');
+        $badge = $status === 'out' ? 'inactive' : ($status === 'low' ? 'warning' : 'active');
+
+        $movements = StockMovement::query()
+            ->with('user')
+            ->where('product_id', $product->id)
+            ->latest()
+            ->limit(20)
+            ->get();
+
+        return view('admin.inventory.show', [
+            'item' => $product,
+            'inventories' => $inventories,
+            'stock' => $stock,
+            'reserved' => $reserved,
+            'statusLabel' => $statusLabel,
+            'badge' => $badge,
+            'movements' => $movements,
+        ]);
+    }
+
+    public function adjustForm(Request $request, ?Product $product = null)
+    {
+        if ($product === null && $request->filled('product_id')) {
+            $product = Product::query()->find($request->query('product_id'));
+            if ($product) {
+                return redirect()->route('admin.inventory.adjust', $product);
+            }
+        }
+
+        $products = Product::query()->with('category:id,slug')->orderBy('name')->get(['id', 'name', 'sku', 'main_image', 'gallery_images', 'category_id']);
+        if ($product) {
+            $product->loadMissing('category:id,slug');
+            if (! $products->contains('id', $product->id)) {
+                $products = $products->prepend($product)->unique('id')->values();
+            }
+        }
+
+        $currentStock = $product
+            ? $this->inventoryService->availableStockForProduct((int) $product->id)
+            : 0;
+
         return view('admin.inventory.adjust', [
-            'products' => Product::orderBy('name')->get(['id', 'name', 'sku']),
-            'warehouses' => Warehouse::orderBy('name')->get(['id', 'name']),
+            'products' => $products,
+            'selectedProduct' => $product,
+            'selectedProductId' => $product?->id,
+            'currentStock' => $currentStock,
         ]);
     }
 
     public function adjust(InventoryAdjustmentRequest $request)
     {
         $data = $request->validated();
-        $this->inventoryService->adjustStock(
-            (int) $data['product_id'],
-            $data['product_variant_id'] ?? null,
-            (int) $data['warehouse_id'],
-            (int) $data['quantity_change'],
-            $data['reason'],
-            $data['type'] ?? 'adjustment'
-        );
+        $productId = (int) $data['product_id'];
+        $newStock = (int) $data['stock'];
+        $currentStock = $this->inventoryService->availableStockForProduct($productId);
+        $change = $newStock - $currentStock;
 
-        return $this->success('Stock adjusted.', 'admin.inventory.index');
+        if ($change === 0) {
+            return $this->success('Stock is already '.$newStock.'.', 'admin.inventory.index');
+        }
+
+        try {
+            $this->inventoryService->adjustStock(
+                $productId,
+                null,
+                $this->inventoryService->defaultWarehouseId(),
+                $change,
+                'Stock update'
+            );
+        } catch (InvalidArgumentException $e) {
+            return $this->error($e->getMessage());
+        }
+
+        return $this->success('Stock updated to '.$newStock.'.', 'admin.inventory.index');
     }
 
     public function transferForm()

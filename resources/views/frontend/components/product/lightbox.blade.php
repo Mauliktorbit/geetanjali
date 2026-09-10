@@ -8,7 +8,7 @@
         <button type="button" class="lightbox-nav prev" data-lightbox-prev aria-label="Previous image">
             <i class="bi bi-chevron-left" aria-hidden="true"></i>
         </button>
-        <img src="{{ asset($product->images[0]->url ?? '') }}" alt="{{ $product->name }}" data-lightbox-image>
+        <img src="{{ storefront_image($product->images[0]->url ?? null) }}" alt="{{ $product->name }}" data-lightbox-image>
         <button type="button" class="lightbox-nav next" data-lightbox-next aria-label="Next image">
             <i class="bi bi-chevron-right" aria-hidden="true"></i>
         </button>

@@ -2,6 +2,9 @@
     $raw = strtolower(trim((string) ($status ?? 'default')));
     $normalized = str_replace([' ', '-'], '_', $raw);
     $map = [
+        'requested' => 'warning',
+        'approved' => 'info',
+        'rejected' => 'cancelled',
         'pending' => 'pending',
         'processing' => 'processing',
         'shipped' => 'shipped',

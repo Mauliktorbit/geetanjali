@@ -57,13 +57,20 @@ class CheckoutController extends Controller
     public function updateContact(Request $request): RedirectResponse
     {
         $user = $request->user();
+        $request->merge([
+            'mobile' => indian_mobile($request->input('mobile')),
+        ]);
+
         $data = $request->validate([
             'name' => ['required', 'string', 'max:120'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email,'.$user->id],
-            'mobile' => ['required', 'string', 'max:20'],
+            'mobile' => indian_mobile_rules(true),
+        ], [
+            'mobile.required' => 'Please enter your mobile number.',
+            'mobile.regex' => 'Enter a valid 10-digit mobile number.',
         ]);
 
-        $mobile = preg_replace('/\D+/', '', $data['mobile']);
+        $mobile = $data['mobile'];
 
         $user->update([
             'name' => $data['name'],
@@ -166,15 +173,25 @@ class CheckoutController extends Controller
      */
     private function addressPayload(Request $request): array
     {
+        $pincode = digits_only($request->input('pincode'));
+        $request->merge([
+            'phone' => indian_mobile($request->input('phone')),
+            'pincode' => $pincode === '' ? null : $pincode,
+        ]);
+
         $data = $request->validate([
             'label' => ['required', 'in:home,office,other'],
             'name' => ['required', 'string', 'max:120'],
-            'phone' => ['required', 'string', 'max:20'],
+            'phone' => indian_mobile_rules(true),
             'address_line1' => ['required', 'string', 'max:180'],
             'address_line2' => ['nullable', 'string', 'max:180'],
             'city' => ['required', 'string', 'max:80'],
             'state' => ['required', 'string', 'max:80'],
-            'pincode' => ['required', 'string', 'regex:/^\d{6}$/'],
+            'pincode' => indian_pincode_rules(true),
+        ], [
+            'phone.required' => 'Please enter a 10-digit mobile number.',
+            'phone.regex' => 'Enter a valid 10-digit mobile number.',
+            'pincode.regex' => 'Enter a valid 6-digit pincode.',
         ]);
 
         $data['is_default'] = $request->boolean('is_default');

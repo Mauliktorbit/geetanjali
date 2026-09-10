@@ -25,8 +25,9 @@ class ProductService extends BaseService
             $tags = $data['tags'] ?? [];
             $related = $data['related_products'] ?? [];
             $fbt = $data['frequently_bought_together'] ?? [];
+            $collections = $data['collections'] ?? [];
             $attributeMatrix = $data['attribute_matrix'] ?? [];
-            unset($data['variants'], $data['tags'], $data['related_products'], $data['frequently_bought_together'], $data['attribute_matrix']);
+            unset($data['variants'], $data['tags'], $data['related_products'], $data['frequently_bought_together'], $data['attribute_matrix'], $data['collections'], $data['highlights_text']);
 
             $data['slug'] = $this->uniqueSlug($data['slug'] ?? $data['name']);
             $data['sku'] = $data['sku'] ?? $this->generateSku($data['name']);
@@ -37,6 +38,8 @@ class ProductService extends BaseService
             if (! empty($tags)) {
                 $product->tags()->sync($tags);
             }
+
+            $product->collections()->sync($this->collectionSync($collections));
 
             $this->syncRelations($product, $related, 'related');
             $this->syncRelations($product, $fbt, 'fbt');
@@ -63,7 +66,8 @@ class ProductService extends BaseService
             $tags = $data['tags'] ?? null;
             $related = $data['related_products'] ?? null;
             $fbt = $data['frequently_bought_together'] ?? null;
-            unset($data['variants'], $data['tags'], $data['related_products'], $data['frequently_bought_together'], $data['attribute_matrix']);
+            $collections = $data['collections'] ?? null;
+            unset($data['variants'], $data['tags'], $data['related_products'], $data['frequently_bought_together'], $data['attribute_matrix'], $data['collections'], $data['highlights_text']);
 
             if (! empty($data['name']) && empty($data['slug'])) {
                 $data['slug'] = $this->uniqueSlug($data['name'], $product->id);
@@ -82,6 +86,9 @@ class ProductService extends BaseService
             if (is_array($fbt)) {
                 $this->syncRelations($product, $fbt, 'fbt');
             }
+            if (is_array($collections)) {
+                $product->collections()->sync($this->collectionSync($collections));
+            }
             if (is_array($variants)) {
                 $this->upsertVariants($product, $variants);
             }
@@ -93,7 +100,7 @@ class ProductService extends BaseService
     public function duplicate(Product $product): Product
     {
         return DB::transaction(function () use ($product) {
-            $product->load(['tags', 'variants.attributeValues', 'relatedProducts', 'frequentlyBoughtTogether']);
+            $product->load(['tags', 'variants.attributeValues', 'relatedProducts', 'frequentlyBoughtTogether', 'collections']);
 
             $data = $product->replicate([
                 'slug', 'sku', 'view_count', 'wishlist_count', 'avg_rating', 'review_count',
@@ -121,6 +128,7 @@ class ProductService extends BaseService
                 }
             }
 
+            $copy->collections()->sync($product->collections->pluck('id')->all());
             $this->syncRelations($copy, $product->relatedProducts->pluck('id')->all(), 'related');
             $this->syncRelations($copy, $product->frequentlyBoughtTogether->pluck('id')->all(), 'fbt');
 
@@ -300,6 +308,23 @@ class ProductService extends BaseService
         }
 
         $product->variants()->whereNotIn('id', $keep)->delete();
+    }
+
+    /**
+     * @param  list<int|string>  $ids
+     * @return array<int, array{sort_order: int}>
+     */
+    protected function collectionSync(array $ids): array
+    {
+        $sync = [];
+        foreach (array_values(array_unique(array_map('intval', $ids))) as $index => $id) {
+            if ($id < 1) {
+                continue;
+            }
+            $sync[$id] = ['sort_order' => $index];
+        }
+
+        return $sync;
     }
 
     protected function syncRelations(Product $product, array $ids, string $type): void

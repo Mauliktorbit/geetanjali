@@ -16,8 +16,15 @@
                 @endif
             </span>
             <span class="account-order__copy">
-                <strong>#{{ $row['number'] }}</strong>
-                <small>{{ $row['date'] }} · {{ $row['items'] }} {{ \Illuminate\Support\Str::plural('item', $row['items']) }}</small>
+                <strong>{{ $row['name'] ?: '#'.$row['number'] }}</strong>
+                <small>
+                    #{{ $row['number'] }} · {{ $row['date'] }} · {{ $row['items'] }} {{ \Illuminate\Support\Str::plural('item', $row['items']) }}
+                    @if ($order->canCancel())
+                        · You can cancel
+                    @elseif ($order->canRequestReturn())
+                        · You can return
+                    @endif
+                </small>
             </span>
             <span class="account-order__price">₹{{ number_format($row['total']) }}</span>
             <span class="account-status account-status--{{ $row['tone'] }}">{{ $row['status_label'] }}</span>

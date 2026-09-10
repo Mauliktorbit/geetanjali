@@ -12,6 +12,7 @@ use App\Services\Integrations\Contracts\WhatsAppGatewayInterface;
 use App\Services\Integrations\NullCourierAdapter;
 use App\Services\Integrations\NullPaymentGateway;
 use App\Services\WishlistService;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -58,12 +59,39 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        Auth::guard('web')->setRememberDuration(525600);
+
         View::share('brandName', config('brand.name'));
         View::share('brandTagline', config('brand.tagline'));
+
+        View::composer(['frontend.components.navbar', 'frontend.components.footer'], function ($view) {
+            $view->with('storefrontCollections', \App\Services\StorefrontCatalogService::navCollections());
+        });
 
         View::composer('frontend.components.navbar', function ($view) {
             $view->with('cartCount', app(CartService::class)->count());
             $view->with('wishlistCount', app(WishlistService::class)->count());
+            $view->with('navItems', \App\Services\StorefrontCatalogService::navMenuItems());
+        });
+
+        View::composer('admin.layouts.app', function ($view) {
+            $user = Auth::user();
+            if (! $user || ! $user->is_staff) {
+                $view->with([
+                    'adminNotifyCount' => 0,
+                    'adminNotifications' => collect(),
+                    'adminNotifyAlerts' => collect(),
+                ]);
+
+                return;
+            }
+
+            $notifications = app(\App\Services\NotificationService::class);
+            $view->with([
+                'adminNotifyCount' => $notifications->unreadCount($user->id),
+                'adminNotifications' => $notifications->latest($user->id, 8),
+                'adminNotifyAlerts' => $notifications->unreadAlerts($user->id),
+            ]);
         });
 
         Route::bind('staff', function (string $value) {

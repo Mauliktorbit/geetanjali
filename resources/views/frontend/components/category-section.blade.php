@@ -7,7 +7,7 @@
                 <a href="{{ $category['url'] ?? '#' }}" class="category-item reveal">
                     <div class="category-item__image">
                         <img
-                            src="{{ asset($category['image']) }}"
+                            src="{{ storefront_image($category['image'] ?? null) }}"
                             alt="{{ $category['name'] }}"
                             loading="lazy"
                             width="118"

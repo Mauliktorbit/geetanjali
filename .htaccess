@@ -1,3 +1,12 @@
+<IfModule mod_php.c>
+    php_value upload_max_filesize 16M
+    php_value post_max_size 48M
+</IfModule>
+<IfModule php_module>
+    php_value upload_max_filesize 16M
+    php_value post_max_size 48M
+</IfModule>
+
 <IfModule mod_rewrite.c>
     <IfModule mod_negotiation.c>
         Options -MultiViews -Indexes
@@ -22,6 +31,9 @@
     # XAMPP serves the app from the project root, so /assets maps to public/assets.
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^assets/(.*)$ public/assets/$1 [L]
+
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^storage/(.*)$ public/storage/$1 [L]
 
     # Admin theme CSS/JS live in public/css and public/js.
     RewriteCond %{REQUEST_FILENAME} !-f

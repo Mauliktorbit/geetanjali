@@ -25,15 +25,21 @@ class SettingController extends AdminController
 
     public function updateGeneral(Request $request)
     {
+        $pincode = digits_only($request->input('store_pincode'));
+        $request->merge([
+            'store_phone' => indian_mobile($request->input('store_phone')),
+            'store_pincode' => $pincode === '' ? null : $pincode,
+        ]);
+
         $data = $request->validate([
             'store_name' => ['nullable', 'string', 'max:255'],
             'store_email' => ['nullable', 'email'],
-            'store_phone' => ['nullable', 'string', 'max:30'],
+            'store_phone' => indian_mobile_rules(false),
             'store_address' => ['nullable', 'string'],
             'store_city' => ['nullable', 'string', 'max:100'],
             'store_state' => ['nullable', 'string', 'max:100'],
             'store_country' => ['nullable', 'string', 'max:100'],
-            'store_pincode' => ['nullable', 'string', 'max:20'],
+            'store_pincode' => indian_pincode_rules(false),
             'store_gstin' => ['nullable', 'string', 'max:20'],
             'currency' => ['nullable', 'string', 'max:10'],
             'timezone' => ['nullable', 'string', 'max:50'],

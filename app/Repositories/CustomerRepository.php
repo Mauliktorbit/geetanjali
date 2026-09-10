@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Builder;
 
 class CustomerRepository extends BaseRepository
 {
-    protected array $searchable = ['name', 'email', 'phone', 'company_name', 'gstin'];
+    protected array $searchable = ['name', 'email', 'phone'];
 
     public function __construct(Customer $model)
     {
@@ -18,16 +18,11 @@ class CustomerRepository extends BaseRepository
     {
         parent::applyFilters($query, $filters);
 
-        if (! empty($filters['customer_group_id'])) {
-            $query->where('customer_group_id', $filters['customer_group_id']);
-        }
-
-        if (isset($filters['is_blocked'])) {
-            $query->where('is_blocked', (bool) $filters['is_blocked']);
-        }
-
-        if (isset($filters['is_verified'])) {
-            $query->where('is_verified', (bool) $filters['is_verified']);
+        $status = (string) ($filters['status'] ?? '');
+        if ($status === 'blocked') {
+            $query->where('is_blocked', true);
+        } elseif ($status === 'active') {
+            $query->where('is_blocked', false);
         }
     }
 

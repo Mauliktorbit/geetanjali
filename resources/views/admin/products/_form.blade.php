@@ -1,201 +1,308 @@
-@php $item = $item ?? null; @endphp
-<div class="form-section">
-    <h3>Basic info</h3>
-    <div class="form-grid">
-        <div class="form-group"><label>Name *</label><input type="text" name="name" class="form-control" value="{{ old('name', $item->name ?? '') }}" required></div>
-        <div class="form-group"><label>Slug</label><input type="text" name="slug" class="form-control" value="{{ old('slug', $item->slug ?? '') }}"></div>
-        <div class="form-group"><label>SKU</label><input type="text" name="sku" class="form-control" value="{{ old('sku', $item->sku ?? '') }}"></div>
-        <div class="form-group"><label>Barcode</label><input type="text" name="barcode" class="form-control" value="{{ old('barcode', $item->barcode ?? '') }}"></div>
-        <div class="form-group">
-            <label>Product type *</label>
-            <select name="product_type" id="product_type" class="form-control" required>
-                @foreach(\App\Enums\ProductType::labels() as $key => $label)
-                    <option value="{{ $key }}" @selected(old('product_type', $item->product_type ?? 'simple')===$key)>{{ $label }}</option>
-                @endforeach
-            </select>
-        </div>
-        <div class="form-group">
-            <label>Category</label>
-            <select name="category_id" class="form-control">
-                <option value="">—</option>
-                @foreach($categories as $cat)
-                    <option value="{{ $cat->id }}" @selected(old('category_id', $item->category_id ?? '')==$cat->id)>{{ $cat->name }}</option>
-                @endforeach
-            </select>
-        </div>
-        <div class="form-group">
-            <label>Subcategory</label>
-            <select name="subcategory_id" class="form-control">
-                <option value="">—</option>
-                @foreach($categories as $cat)
-                    <option value="{{ $cat->id }}" @selected(old('subcategory_id', $item->subcategory_id ?? '')==$cat->id)>{{ $cat->name }}</option>
-                @endforeach
-            </select>
-        </div>
-        <div class="form-group">
-            <label>Brand</label>
-            <select name="brand_id" class="form-control">
-                <option value="">—</option>
-                @foreach($brands as $brand)
-                    <option value="{{ $brand->id }}" @selected(old('brand_id', $item->brand_id ?? '')==$brand->id)>{{ $brand->name }}</option>
-                @endforeach
-            </select>
-        </div>
-        <div class="form-group span-2"><label>Short description</label><textarea name="short_description" class="form-control" rows="2">{{ old('short_description', $item->short_description ?? '') }}</textarea></div>
-        <div class="form-group span-2"><label>Description</label><textarea name="description" class="form-control" rows="5">{{ old('description', $item->description ?? '') }}</textarea></div>
-    </div>
-</div>
+@php
+    $item = $item ?? null;
+    $selectedCollectionIds = collect(old('collections', $item?->collections?->pluck('id')->all() ?? []))
+        ->filter()
+        ->map(fn ($id) => (string) $id)
+        ->values();
+    $jewelleryCategories = $categories ?? collect();
+@endphp
 
-<div class="form-section">
-    <h3>Pricing & tax</h3>
-    <div class="form-grid">
-        <div class="form-group"><label>Regular price *</label><input type="number" step="0.01" name="regular_price" class="form-control" value="{{ old('regular_price', $item->regular_price ?? '') }}" required></div>
-        <div class="form-group"><label>Sale price</label><input type="number" step="0.01" name="sale_price" class="form-control" value="{{ old('sale_price', $item->sale_price ?? '') }}"></div>
-        <div class="form-group"><label>Cost price</label><input type="number" step="0.01" name="cost_price" class="form-control" value="{{ old('cost_price', $item->cost_price ?? '') }}"></div>
-        <div class="form-group">
-            <label>Tax rate</label>
-            <select name="tax_rate_id" class="form-control">
-                <option value="">—</option>
-                @foreach($taxRates as $tax)
-                    <option value="{{ $tax->id }}" @selected(old('tax_rate_id', $item->tax_rate_id ?? '')==$tax->id)>{{ $tax->name }}</option>
-                @endforeach
-            </select>
-        </div>
-        <div class="form-group"><label>HSN/SAC</label><input type="text" name="hsn_sac" class="form-control" value="{{ old('hsn_sac', $item->hsn_sac ?? '') }}"></div>
-        <div class="form-group"><label>Min order qty</label><input type="number" name="min_order_qty" class="form-control" value="{{ old('min_order_qty', $item->min_order_qty ?? 1) }}"></div>
-        <div class="form-group"><label>Max order qty</label><input type="number" name="max_order_qty" class="form-control" value="{{ old('max_order_qty', $item->max_order_qty ?? '') }}"></div>
-    </div>
-</div>
+<input type="hidden" name="product_type" value="simple">
+<input type="hidden" name="min_order_qty" value="1">
 
-<div class="form-section">
-    <h3>Shipping & dimensions</h3>
-    <div class="form-grid">
-        <div class="form-group"><label>Weight</label><input type="number" step="0.001" name="weight" class="form-control" value="{{ old('weight', $item->weight ?? '') }}"></div>
-        <div class="form-group"><label>Length</label><input type="number" step="0.01" name="length" class="form-control" value="{{ old('length', $item->length ?? '') }}"></div>
-        <div class="form-group"><label>Width</label><input type="number" step="0.01" name="width" class="form-control" value="{{ old('width', $item->width ?? '') }}"></div>
-        <div class="form-group"><label>Height</label><input type="number" step="0.01" name="height" class="form-control" value="{{ old('height', $item->height ?? '') }}"></div>
-        <div class="form-group">
-            <label>Shipping class</label>
-            <select name="shipping_class_id" class="form-control">
-                <option value="">—</option>
-                @foreach($shippingClasses as $sc)
-                    <option value="{{ $sc->id }}" @selected(old('shipping_class_id', $item->shipping_class_id ?? '')==$sc->id)>{{ $sc->name }}</option>
-                @endforeach
-            </select>
+<div class="product-form">
+    <div class="form-section">
+        <div class="form-section__head">
+            <h3>Photos</h3>
+            <p>Shown in the product gallery and “Click to Zoom”.</p>
         </div>
-        <div class="form-group"><label>Estimated delivery</label><input type="text" name="estimated_delivery" class="form-control" value="{{ old('estimated_delivery', $item->estimated_delivery ?? '') }}"></div>
-        <div class="form-group form-check"><label><input type="checkbox" name="cod_available" value="1" @checked(old('cod_available', $item->cod_available ?? true))> COD available</label></div>
-    </div>
-</div>
-
-<div class="form-section">
-    <h3>Media</h3>
-    <div class="form-grid">
-        <div class="form-group">
-            <label>Main image</label>
-            <input type="file" name="main_image" class="form-control" accept="image/*">
-            @if(!empty($item?->main_image))
-                <img src="{{ asset('storage/'.$item->main_image) }}" class="thumb-sm mt-2" alt="">
-            @endif
-        </div>
-        <div class="form-group">
-            <label>Gallery images</label>
-            <input type="file" name="gallery_images[]" class="form-control" accept="image/*" multiple>
-        </div>
-        <div class="form-group"><label>Video URL</label><input type="url" name="video_url" class="form-control" value="{{ old('video_url', $item->video_url ?? '') }}"></div>
-    </div>
-</div>
-
-<div class="form-section">
-    <h3>SEO & policies</h3>
-    <div class="form-grid">
-        <div class="form-group"><label>SEO title</label><input type="text" name="seo_title" class="form-control" value="{{ old('seo_title', $item->seo_title ?? '') }}"></div>
-        <div class="form-group"><label>SEO keywords</label><input type="text" name="seo_keywords" class="form-control" value="{{ old('seo_keywords', $item->seo_keywords ?? '') }}"></div>
-        <div class="form-group span-2"><label>SEO description</label><textarea name="seo_description" class="form-control" rows="2">{{ old('seo_description', $item->seo_description ?? '') }}</textarea></div>
-        <div class="form-group form-check"><label><input type="checkbox" name="return_eligible" value="1" @checked(old('return_eligible', $item->return_eligible ?? true))> Return eligible</label></div>
-        <div class="form-group"><label>Return days</label><input type="number" name="return_days" class="form-control" value="{{ old('return_days', $item->return_days ?? 7) }}"></div>
-        <div class="form-group"><label>Warranty</label><input type="text" name="warranty" class="form-control" value="{{ old('warranty', $item->warranty ?? '') }}"></div>
-        <div class="form-group"><label>Published at</label><input type="datetime-local" name="published_at" class="form-control" value="{{ old('published_at', optional($item->published_at ?? null)->format('Y-m-d\TH:i')) }}"></div>
-    </div>
-</div>
-
-<div class="form-section">
-    <h3>Flags & tags</h3>
-    <div class="form-grid">
-        <div class="form-group form-check"><label><input type="checkbox" name="is_active" value="1" @checked(old('is_active', $item->is_active ?? true))> Active</label></div>
-        <div class="form-group form-check"><label><input type="checkbox" name="is_featured" value="1" @checked(old('is_featured', $item->is_featured ?? false))> Featured</label></div>
-        <div class="form-group form-check"><label><input type="checkbox" name="is_new_arrival" value="1" @checked(old('is_new_arrival', $item->is_new_arrival ?? false))> New arrival</label></div>
-        <div class="form-group form-check"><label><input type="checkbox" name="is_bestseller" value="1" @checked(old('is_bestseller', $item->is_bestseller ?? false))> Bestseller</label></div>
-        <div class="form-group span-2">
-            <label>Tags</label>
-            <select name="tags[]" class="form-control" multiple size="5">
-                @foreach($tags as $tag)
-                    <option value="{{ $tag->id }}" @selected(collect(old('tags', $item?->tags?->pluck('id')->all() ?? []))->contains($tag->id))>{{ $tag->name }}</option>
-                @endforeach
-            </select>
-        </div>
-        <div class="form-group">
-            <label>Related products</label>
-            <select name="related_products[]" class="form-control" multiple size="6">
-                @foreach($products as $p)
-                    @if(!$item || $p->id !== $item->id)
-                        <option value="{{ $p->id }}" @selected(collect(old('related_products', $item?->relatedProducts?->pluck('id')->all() ?? []))->contains($p->id))>{{ $p->name }} ({{ $p->sku }})</option>
-                    @endif
-                @endforeach
-            </select>
-        </div>
-        <div class="form-group">
-            <label>Frequently bought together</label>
-            <select name="frequently_bought_together[]" class="form-control" multiple size="6">
-                @foreach($products as $p)
-                    @if(!$item || $p->id !== $item->id)
-                        <option value="{{ $p->id }}" @selected(collect(old('frequently_bought_together', $item?->frequentlyBoughtTogether?->pluck('id')->all() ?? []))->contains($p->id))>{{ $p->name }} ({{ $p->sku }})</option>
-                    @endif
-                @endforeach
-            </select>
-        </div>
-    </div>
-</div>
-
-<div class="form-section" id="variants-section">
-    <h3>Variants (variable products)</h3>
-    <p class="subtitle">Select attribute values, then generate combinations.</p>
-    <div id="attr-matrix" class="form-grid">
-        @foreach($attributes as $attr)
+        <div class="form-grid">
             <div class="form-group">
-                <label>{{ $attr->name }}</label>
-                <select class="form-control attr-values" data-attr="{{ $attr->id }}" multiple size="4">
-                    @foreach($attr->values as $val)
-                        <option value="{{ $val->id }}">{{ $val->value }}</option>
+                <label for="main_image">Main photo</label>
+                <input id="main_image" type="file" name="main_image" class="form-control @error('main_image') is-invalid @enderror" accept="image/jpeg,image/png,image/webp">
+                <span class="form-hint">JPG, PNG or WebP, up to 10 MB. This is the first large image on the product page.</span>
+                @error('main_image')<span class="invalid-feedback">{{ $message }}</span>@enderror
+                @if (!empty($item?->main_image))
+                    <img src="{{ storefront_image($item->main_image) }}" class="thumb-preview" alt="Current main photo">
+                @endif
+            </div>
+            <div class="form-group">
+                <label for="gallery_images">More photos</label>
+                <input id="gallery_images" type="file" name="gallery_images[]" class="form-control @error('gallery_images') is-invalid @enderror @error('gallery_images.0') is-invalid @enderror" accept="image/jpeg,image/png,image/webp" multiple>
+                <span class="form-hint">Optional extra photos (JPG, PNG or WebP, up to 10 MB each). They appear as thumbnails under the main photo.</span>
+                @error('gallery_images')<span class="invalid-feedback">{{ $message }}</span>@enderror
+                @error('gallery_images.0')<span class="invalid-feedback">{{ $message }}</span>@enderror
+                @if (!empty($item?->gallery_images))
+                    <div class="gallery-preview">
+                        @foreach ($item->gallery_images as $image)
+                            <img src="{{ storefront_image($image) }}" class="thumb-preview" alt="">
+                        @endforeach
+                    </div>
+                @endif
+            </div>
+        </div>
+    </div>
+
+    <div class="form-section">
+        <div class="form-section__head">
+            <h3>Name & description</h3>
+            <p>Title, short text under the price, and the Description tab.</p>
+        </div>
+        <div class="form-grid">
+            <div class="form-group full">
+                <label for="name">Product name *</label>
+                <input id="name" type="text" name="name" class="form-control @error('name') is-invalid @enderror" value="{{ old('name', $item->name ?? '') }}" required placeholder="Kundan Emerald Drop Earrings">
+                @error('name')<span class="invalid-feedback">{{ $message }}</span>@enderror
+            </div>
+            <div class="form-group">
+                <label for="sku">SKU</label>
+                <input id="sku" type="text" name="sku" class="form-control" value="{{ old('sku', $item->sku ?? '') }}" placeholder="GJ-KE-2201">
+                <span class="form-hint">Shown in the Product Details tab. Leave blank to auto-generate.</span>
+            </div>
+            <div class="form-group">
+                <label for="badge">Badge</label>
+                <input id="badge" type="text" name="badge" class="form-control" value="{{ old('badge', $item->badge ?? '') }}" placeholder="BEST SELLER">
+                <span class="form-hint">Ribbon on the photo, e.g. BEST SELLER, NEW, LIMITED.</span>
+            </div>
+            <div class="form-group full">
+                <label for="short_description">Short description</label>
+                <textarea id="short_description" name="short_description" class="form-control" rows="2" placeholder="Exquisite kundan earrings crafted in 22K gold with emerald drops...">{{ old('short_description', $item->short_description ?? '') }}</textarea>
+            </div>
+            <div class="form-group full">
+                <label for="description">Full description</label>
+                <textarea id="description" name="description" class="form-control" rows="4" placeholder="These earrings are a masterpiece of traditional craftsmanship...">{{ old('description', $item->description ?? '') }}</textarea>
+            </div>
+            <div class="form-group full">
+                <label for="highlights_text">Highlights</label>
+                <textarea id="highlights_text" name="highlights_text" class="form-control" rows="5" placeholder="Handcrafted in 22K Hallmarked Gold&#10;Studded with authentic Kundan stones and Emerald drops&#10;Secure screw-back closure for added comfort">{{ old('highlights_text', implode("\n", $item->highlights ?? [])) }}</textarea>
+                <span class="form-hint">One point per line. These become the green ticks under Description.</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-section">
+        <div class="form-section__head">
+            <h3>Price</h3>
+            <p>The amount shown on the product page.</p>
+        </div>
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="regular_price">Regular price (₹) *</label>
+                <input id="regular_price" type="number" step="0.01" min="0" name="regular_price" class="form-control @error('regular_price') is-invalid @enderror" value="{{ old('regular_price', $item->regular_price ?? '') }}" required placeholder="124500">
+                @error('regular_price')<span class="invalid-feedback">{{ $message }}</span>@enderror
+            </div>
+            <div class="form-group">
+                <label for="sale_price">Sale price (₹)</label>
+                <input id="sale_price" type="number" step="0.01" min="0" name="sale_price" class="form-control" value="{{ old('sale_price', $item->sale_price ?? '') }}" placeholder="Optional offer price">
+                <span class="form-hint">If filled, this is the big price and regular price is struck through.</span>
+            </div>
+            <div class="form-group">
+                <label for="tax_note">Tax note</label>
+                <input id="tax_note" type="text" name="tax_note" class="form-control" value="{{ old('tax_note', $item->tax_note ?? 'Inclusive of all taxes') }}">
+            </div>
+            <div class="form-group">
+                <label for="sold_count">Sold count</label>
+                <input id="sold_count" type="number" min="0" name="sold_count" class="form-control" value="{{ old('sold_count', $item->sold_count ?? 0) }}">
+                <span class="form-hint">Shown as “Sold 120+” next to reviews.</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-section">
+        <div class="form-section__head">
+            <h3>Product details</h3>
+            <p>These rows appear in the Product Details tab and beside the price.</p>
+        </div>
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="metal">Metal</label>
+                <input id="metal" type="text" name="metal" class="form-control" value="{{ old('metal', $item->metal ?? '') }}" placeholder="22K Yellow Gold">
+            </div>
+            <div class="form-group">
+                <label for="purity">Purity</label>
+                <input id="purity" type="text" name="purity" class="form-control" value="{{ old('purity', $item->purity ?? '') }}" placeholder="22K">
+            </div>
+            <div class="form-group">
+                <label for="stone">Stone</label>
+                <input id="stone" type="text" name="stone" class="form-control" value="{{ old('stone', $item->stone ?? '') }}" placeholder="Emerald, Kundan">
+            </div>
+            <div class="form-group">
+                <label for="style">Style</label>
+                <input id="style" type="text" name="style" class="form-control" value="{{ old('style', $item->style ?? '') }}" placeholder="Traditional">
+            </div>
+            <div class="form-group">
+                <label for="weight">Net weight (grams)</label>
+                <input id="weight" type="number" step="0.001" min="0" name="weight" class="form-control" value="{{ old('weight', $item->weight ?? '') }}" placeholder="18.350">
+            </div>
+            <div class="form-group">
+                <label for="dimensions_text">Dimensions</label>
+                <input id="dimensions_text" type="text" name="dimensions_text" class="form-control" value="{{ old('dimensions_text', $item->dimensions_text ?? '') }}" placeholder="Length 4.2 cm">
+            </div>
+            <div class="form-group">
+                <label for="occasion">Occasion</label>
+                <input id="occasion" type="text" name="occasion" class="form-control" value="{{ old('occasion', $item->occasion ?? '') }}" placeholder="Bridal, Festive">
+            </div>
+            <div class="form-group">
+                <label for="certification">Certification</label>
+                <input id="certification" type="text" name="certification" class="form-control" value="{{ old('certification', $item->certification ?? '') }}" placeholder="BIS Hallmarked">
+            </div>
+        </div>
+    </div>
+
+    <div class="form-section">
+        <div class="form-section__head">
+            <h3>Listing</h3>
+            <p>Where this product appears on the website.</p>
+        </div>
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="category_id">Category</label>
+                <select id="category_id" name="category_id" class="form-control" required>
+                    <option value="">Select category</option>
+                    @foreach ($jewelleryCategories as $cat)
+                        <option value="{{ $cat->id }}" @selected(old('category_id', $item->category_id ?? request('category_id')) == $cat->id)>{{ $cat->name }}</option>
                     @endforeach
                 </select>
+                <span class="form-hint">Choose a category from Admin → Categories.</span>
             </div>
-        @endforeach
-    </div>
-    <button type="button" class="btn btn-secondary" id="generate-variants">Generate variants</button>
-    <div class="table-responsive mt-3">
-        <table class="data-table" id="variants-table">
-            <thead><tr><th>Name</th><th>SKU</th><th>Price</th><th>Sale</th><th>Cost</th><th>Stock</th><th>Active</th></tr></thead>
-            <tbody>
-            @foreach(old('variants', $item?->variants ?? []) as $i => $variant)
-                @php $v = is_array($variant) ? (object)$variant : $variant; @endphp
-                <tr>
-                    <td>
-                        <input type="hidden" name="variants[{{ $i }}][id]" value="{{ $v->id ?? '' }}">
-                        <input type="text" name="variants[{{ $i }}][name]" class="form-control" value="{{ $v->name ?? '' }}">
-                        @foreach(($v->attribute_value_ids ?? ($v->attributeValues?->pluck('id')->all() ?? [])) as $avid)
-                            <input type="hidden" name="variants[{{ $i }}][attribute_value_ids][]" value="{{ $avid }}">
+            <div class="form-group">
+                <label id="collections-label">Show on Jewellery collection</label>
+                <div class="collection-picker" data-collection-picker>
+                    <button
+                        type="button"
+                        class="form-control collection-picker__toggle"
+                        data-collection-toggle
+                        aria-haspopup="true"
+                        aria-expanded="false"
+                        aria-labelledby="collections-label"
+                    >
+                        <span data-collection-label>Select collection</span>
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+                    </button>
+                    <div class="collection-picker__menu" data-collection-menu hidden>
+                        @foreach ($collections ?? [] as $collection)
+                            <label class="collection-picker__option">
+                                <input
+                                    type="checkbox"
+                                    name="collections[]"
+                                    value="{{ $collection->id }}"
+                                    data-label="{{ $collection->name }}"
+                                    @checked($selectedCollectionIds->contains((string) $collection->id))
+                                >
+                                <span>{{ $collection->name }}{{ isset($collection->is_active) && ! $collection->is_active ? ' (Inactive)' : '' }}</span>
+                            </label>
                         @endforeach
-                    </td>
-                    <td><input type="text" name="variants[{{ $i }}][sku]" class="form-control" value="{{ $v->sku ?? '' }}"></td>
-                    <td><input type="number" step="0.01" name="variants[{{ $i }}][price]" class="form-control" value="{{ $v->price ?? '' }}"></td>
-                    <td><input type="number" step="0.01" name="variants[{{ $i }}][sale_price]" class="form-control" value="{{ $v->sale_price ?? '' }}"></td>
-                    <td><input type="number" step="0.01" name="variants[{{ $i }}][cost]" class="form-control" value="{{ $v->cost ?? '' }}"></td>
-                    <td><input type="number" name="variants[{{ $i }}][stock]" class="form-control" value="{{ $v->stock ?? 0 }}"></td>
-                    <td><input type="checkbox" name="variants[{{ $i }}][is_active]" value="1" @checked($v->is_active ?? true)></td>
-                </tr>
-            @endforeach
-            </tbody>
-        </table>
+                    </div>
+                    <div class="collection-picker__chips" data-collection-chips></div>
+                </div>
+                <span class="form-hint">Tick one or more collections from Admin → Collections. Selected names appear below.</span>
+                @error('collections')
+                    <span class="form-hint" style="color: #b91c1c;">{{ $message }}</span>
+                @enderror
+            </div>
+            <div class="form-group">
+                <label for="estimated_delivery">Estimated delivery</label>
+                <input id="estimated_delivery" type="text" name="estimated_delivery" class="form-control" value="{{ old('estimated_delivery', $item->estimated_delivery ?? '3–5 business days') }}">
+            </div>
+            <div class="form-group form-check">
+                <input id="is_active" type="checkbox" name="is_active" value="1" @checked(old('is_active', $item->is_active ?? true))>
+                <label for="is_active">Publish on website</label>
+            </div>
+        </div>
     </div>
 </div>
+@push('scripts')
+<script>
+(function () {
+    var root = document.querySelector('[data-collection-picker]');
+    if (!root) {
+        return;
+    }
+
+    var toggle = root.querySelector('[data-collection-toggle]');
+    var label = root.querySelector('[data-collection-label]');
+    var menu = root.querySelector('[data-collection-menu]');
+    var chips = root.querySelector('[data-collection-chips]');
+    var checks = root.querySelectorAll('input[type="checkbox"][name="collections[]"]');
+
+    function selectedInputs() {
+        return Array.prototype.filter.call(checks, function (input) {
+            return input.checked;
+        });
+    }
+
+    function closeMenu() {
+        root.classList.remove('is-open');
+        toggle.setAttribute('aria-expanded', 'false');
+        menu.hidden = true;
+    }
+
+    function openMenu() {
+        root.classList.add('is-open');
+        toggle.setAttribute('aria-expanded', 'true');
+        menu.hidden = false;
+    }
+
+    function render() {
+        var selected = selectedInputs();
+        if (selected.length === 0) {
+            label.textContent = 'Select collection';
+        } else if (selected.length === 1) {
+            label.textContent = selected[0].getAttribute('data-label');
+        } else {
+            label.textContent = selected.length + ' collections selected';
+        }
+
+        chips.replaceChildren();
+        selected.forEach(function (input) {
+            var chip = document.createElement('span');
+            chip.className = 'collection-picker__chip';
+
+            var text = document.createElement('span');
+            text.textContent = input.getAttribute('data-label') || '';
+
+            var remove = document.createElement('button');
+            remove.type = 'button';
+            remove.setAttribute('aria-label', 'Remove ' + (input.getAttribute('data-label') || 'collection'));
+            remove.textContent = '×';
+            remove.addEventListener('click', function () {
+                input.checked = false;
+                render();
+            });
+
+            chip.appendChild(text);
+            chip.appendChild(remove);
+            chips.appendChild(chip);
+        });
+
+        chips.hidden = selected.length === 0;
+    }
+
+    toggle.addEventListener('click', function () {
+        if (root.classList.contains('is-open')) {
+            closeMenu();
+        } else {
+            openMenu();
+        }
+    });
+
+    document.addEventListener('click', function (event) {
+        if (!root.contains(event.target)) {
+            closeMenu();
+        }
+    });
+
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') {
+            closeMenu();
+        }
+    });
+
+    Array.prototype.forEach.call(checks, function (input) {
+        input.addEventListener('change', render);
+    });
+
+    render();
+})();
+</script>
+@endpush

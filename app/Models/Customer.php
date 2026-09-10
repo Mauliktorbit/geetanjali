@@ -128,6 +128,16 @@ class Customer extends Model
         return 'Member';
     }
 
+    public function statusLabel(): string
+    {
+        return $this->is_blocked ? 'Blocked' : 'Active';
+    }
+
+    public function statusBadge(): string
+    {
+        return $this->is_blocked ? 'inactive' : 'active';
+    }
+
     public function customerNotes(): HasMany
     {
         return $this->hasMany(CustomerNote::class);
@@ -136,5 +146,46 @@ class Customer extends Model
     public function communicationLogs(): HasMany
     {
         return $this->hasMany(CommunicationLog::class);
+    }
+
+    public static function forUser(User $user, bool $create = true): ?self
+    {
+        $match = static::query()
+            ->where(function ($query) use ($user) {
+                $query->where('user_id', $user->id);
+                if (filled($user->email)) {
+                    $query->orWhereRaw('LOWER(email) = ?', [strtolower((string) $user->email)]);
+                }
+            })
+            ->orderBy('id')
+            ->first();
+
+        if ($match) {
+            if (! $match->user_id) {
+                $match->update(['user_id' => $user->id]);
+            }
+            $user->setRelation('customer', $match);
+
+            return $match;
+        }
+
+        if (! $create) {
+            return null;
+        }
+
+        $customer = static::query()->firstOrCreate(
+            ['user_id' => $user->id],
+            [
+                'name' => $user->name,
+                'email' => $user->email,
+                'phone' => $user->mobile ?: $user->phone,
+                'is_verified' => true,
+                'acquisition_source' => 'website',
+            ]
+        );
+
+        $user->setRelation('customer', $customer);
+
+        return $customer;
     }
 }

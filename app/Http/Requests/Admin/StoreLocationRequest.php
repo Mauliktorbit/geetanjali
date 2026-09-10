@@ -18,8 +18,8 @@ class StoreLocationRequest extends FormRequest
             'address' => 'required',
             'city' => 'nullable',
             'state' => 'nullable',
-            'pincode' => 'nullable',
-            'phone' => 'nullable',
+            'pincode' => indian_pincode_rules(false),
+            'phone' => indian_mobile_rules(false),
             'email' => 'nullable|email',
             'is_active' => 'nullable|boolean',
         ];
@@ -33,8 +33,10 @@ class StoreLocationRequest extends FormRequest
                 $booleans[$key] = $this->boolean($key);
             }
         }
-        if ($booleans) {
-            $this->merge($booleans);
-        }
+        $pincode = digits_only($this->input('pincode'));
+        $booleans['phone'] = indian_mobile($this->input('phone'));
+        $booleans['pincode'] = $pincode === '' ? null : $pincode;
+
+        $this->merge($booleans);
     }
 }

@@ -51,14 +51,18 @@
                                 autocomplete="new-password"
                                 minlength="8"
                                 required
+                                data-password-input
                             >
+                            <button type="button" class="auth-eye" data-toggle-password aria-label="Show password">
+                                <i class="bi bi-eye-slash" aria-hidden="true"></i>
+                            </button>
                         </div>
                     </div>
                     <button type="submit" class="auth-btn">Update Password</button>
                 </form>
 
                 <p class="auth-switch">
-                    <a href="{{ route('login') }}">Back to Sign In</a>
+                    <a href="{{ $loginUrl }}">{{ $loginLabel }}</a>
                 </p>
             </div>
         </div>

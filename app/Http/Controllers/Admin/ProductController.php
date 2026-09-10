@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\ProductType;
 use App\Exports\ProductsExport;
+use App\Services\StorefrontCatalogService;
 use App\Http\Requests\Admin\ProductRequest;
 use App\Imports\ProductsImport;
 use App\Models\Attribute;
 use App\Models\Brand;
 use App\Models\Category;
+use App\Models\Collection;
 use App\Models\Product;
 use App\Models\ShippingClass;
 use App\Models\Tag;
@@ -30,10 +33,12 @@ class ProductController extends AdminController
     public function index(Request $request)
     {
         $items = $this->service->paginate($request->all());
-        $categories = Category::orderBy('name')->get(['id', 'name']);
-        $brands = Brand::orderBy('name')->get(['id', 'name']);
+        $categories = Category::query()
+            ->orderBy('name')
+            ->get(['id', 'name']);
+        $collections = StorefrontCatalogService::adminCollections();
 
-        return view('admin.products.index', compact('items', 'categories', 'brands'));
+        return view('admin.products.index', compact('items', 'categories', 'collections'));
     }
 
     public function create()
@@ -54,6 +59,7 @@ class ProductController extends AdminController
         $product->load([
             'category', 'subcategory', 'brand', 'taxRate', 'shippingClass',
             'tags', 'variants.attributeValues', 'inventories.warehouse',
+            'collections',
             'relatedProducts', 'frequentlyBoughtTogether',
         ]);
 
@@ -62,9 +68,15 @@ class ProductController extends AdminController
 
     public function edit(Product $product)
     {
-        $product->load(['tags', 'variants.attributeValues', 'relatedProducts', 'frequentlyBoughtTogether']);
+        $product->load(['tags', 'variants.attributeValues', 'relatedProducts', 'frequentlyBoughtTogether', 'collections']);
 
-        return view('admin.products.edit', array_merge($this->formData(), ['item' => $product]));
+        $data = $this->formData();
+        if ($product->category_id && ! $data['categories']->contains('id', $product->category_id)) {
+            $current = Category::query()->whereKey($product->category_id)->get(['id', 'name', 'slug']);
+            $data['categories'] = $data['categories']->concat($current);
+        }
+
+        return view('admin.products.edit', array_merge($data, ['item' => $product]));
     }
 
     public function update(ProductRequest $request, Product $product)
@@ -148,7 +160,14 @@ class ProductController extends AdminController
             return $this->error('Invalid bulk action.');
         }
 
-        return $this->success('Bulk action applied.');
+        $message = match ($action) {
+            'delete' => 'Selected products deleted.',
+            'activate' => 'Selected products published.',
+            'deactivate' => 'Selected products unpublished.',
+            default => 'Bulk action applied.',
+        };
+
+        return $this->success($message);
     }
 
     public function import(Request $request)
@@ -178,11 +197,14 @@ class ProductController extends AdminController
     protected function formData(): array
     {
         return [
-            'categories' => Category::orderBy('name')->get(['id', 'name', 'parent_id']),
+            'categories' => Category::query()
+                ->orderBy('name')
+                ->get(['id', 'name', 'slug']),
             'brands' => Brand::orderBy('name')->get(['id', 'name']),
             'taxRates' => TaxRate::orderBy('name')->get(['id', 'name']),
             'shippingClasses' => ShippingClass::orderBy('name')->get(['id', 'name']),
             'tags' => Tag::orderBy('name')->get(['id', 'name']),
+            'collections' => StorefrontCatalogService::adminCollections(),
             'attributes' => Attribute::with('values')->orderBy('name')->get(),
             'products' => Product::where('is_archived', false)->orderBy('name')->get(['id', 'name', 'sku']),
             'warehouses' => Warehouse::orderBy('name')->get(['id', 'name']),
@@ -193,7 +215,33 @@ class ProductController extends AdminController
     {
         $data = $request->validated();
 
-        if ($request->hasFile('main_image')) {
+        $data['product_type'] = $data['product_type'] ?? ProductType::SIMPLE;
+        $data['min_order_qty'] = $data['min_order_qty'] ?? 1;
+        $data['tax_note'] = filled($data['tax_note'] ?? null) ? $data['tax_note'] : 'Inclusive of all taxes';
+        $data['estimated_delivery'] = filled($data['estimated_delivery'] ?? null) ? $data['estimated_delivery'] : '3–5 business days';
+        $data['return_eligible'] = true;
+        $data['return_days'] = $data['return_days'] ?? 15;
+        $data['cod_available'] = $data['cod_available'] ?? true;
+        if ($product === null) {
+            $data['published_at'] = $data['published_at'] ?? now();
+        } else {
+            unset($data['published_at']);
+        }
+
+        $badge = strtoupper((string) ($data['badge'] ?? ''));
+        if ($badge !== '') {
+            $data['is_bestseller'] = str_contains($badge, 'BEST');
+            $data['is_new_arrival'] = str_contains($badge, 'NEW');
+            $data['is_featured'] = str_contains($badge, 'LIMITED') || ($data['is_bestseller'] ?? false);
+        }
+
+        $collectionIds = array_values(array_filter(array_map('intval', $data['collections'] ?? [])));
+        if ($collectionIds !== []) {
+            $slugs = Collection::query()->whereIn('id', $collectionIds)->pluck('slug');
+            $data['is_new_arrival'] = $slugs->contains('new-arrivals') || ($data['is_new_arrival'] ?? false);
+        }
+
+        if ($request->hasFile('main_image') && $request->file('main_image')->isValid()) {
             if ($product?->main_image) {
                 Storage::disk('public')->delete($product->main_image);
             }
@@ -203,9 +251,11 @@ class ProductController extends AdminController
         }
 
         if ($request->hasFile('gallery_images')) {
-            $gallery = $product?->gallery_images ?? [];
-            foreach ($request->file('gallery_images') as $file) {
-                $gallery[] = $file->store('uploads/products/gallery', 'public');
+            $gallery = array_values(array_filter($product?->gallery_images ?? []));
+            foreach ((array) $request->file('gallery_images') as $file) {
+                if ($file && $file->isValid()) {
+                    $gallery[] = $file->store('uploads/products/gallery', 'public');
+                }
             }
             $data['gallery_images'] = $gallery;
         } else {

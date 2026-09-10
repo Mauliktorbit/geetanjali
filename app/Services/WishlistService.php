@@ -224,22 +224,7 @@ class WishlistService
             return null;
         }
 
-        if ($user->customer) {
-            return $user->customer;
-        }
-
-        if (! $create) {
-            return null;
-        }
-
-        return Customer::create([
-            'user_id' => $user->id,
-            'name' => $user->name,
-            'email' => $user->email,
-            'phone' => $user->mobile ?: $user->phone,
-            'is_verified' => true,
-            'acquisition_source' => 'website',
-        ]);
+        return Customer::forUser($user, $create);
     }
 
     /**

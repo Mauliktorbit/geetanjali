@@ -18,3 +18,47 @@
 @import url('contact.css');
 @import url('pages.css');
 @import url('responsive.css');
+
+.password-field {
+    position: relative;
+    display: block;
+    width: 100%;
+}
+
+.password-field input {
+    width: 100%;
+    padding-right: 2.6rem;
+}
+
+.password-field__toggle {
+    position: absolute;
+    top: 50%;
+    right: 6px;
+    transform: translateY(-50%);
+    width: 32px;
+    height: 32px;
+    border: 0;
+    background: transparent;
+    color: #777;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: 6px;
+}
+
+.password-field__toggle:hover {
+    color: #c9912e;
+}
+
+.password-field__toggle .password-toggle__icon--hide {
+    display: none;
+}
+
+.password-field__toggle.is-visible .password-toggle__icon--show {
+    display: none;
+}
+
+.password-field__toggle.is-visible .password-toggle__icon--hide {
+    display: block;
+}

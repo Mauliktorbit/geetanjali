@@ -36,10 +36,14 @@ class StaffController extends AdminController
 
     public function store(Request $request)
     {
+        $request->merge([
+            'phone' => indian_mobile($request->input('phone')),
+        ]);
+
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'unique:users,email'],
-            'phone' => ['nullable', 'string', 'max:30'],
+            'phone' => indian_mobile_rules(false),
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'is_active' => ['nullable', 'boolean'],
             'roles' => ['nullable', 'array'],
@@ -76,10 +80,14 @@ class StaffController extends AdminController
     {
         abort_unless($staff->is_staff, 404);
 
+        $request->merge([
+            'phone' => indian_mobile($request->input('phone')),
+        ]);
+
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', Rule::unique('users', 'email')->ignore($staff->id)],
-            'phone' => ['nullable', 'string', 'max:30'],
+            'phone' => indian_mobile_rules(false),
             'password' => ['nullable', 'string', 'min:8', 'confirmed'],
             'is_active' => ['nullable', 'boolean'],
             'roles' => ['nullable', 'array'],

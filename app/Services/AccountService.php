@@ -124,10 +124,10 @@ class AccountService
             'items' => (int) $order->items->sum('quantity'),
             'total' => (float) $order->grand_total,
             'status' => $order->status,
-            'status_label' => OrderStatus::label((string) $order->status),
+            'status_label' => OrderStatus::customerLabel((string) $order->status),
             'tone' => $this->orderStatusTone((string) $order->status),
             'thumb' => $this->orderThumb($order),
-            'name' => $order->items->first()?->product_name,
+            'name' => (($summary = $order->productSummary()) === '—' ? '' : $summary),
         ];
     }
 }

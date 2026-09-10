@@ -16,7 +16,7 @@ class AffiliateRequest extends FormRequest
         return [
             'name' => 'required',
             'email' => 'nullable|email',
-            'phone' => 'nullable',
+            'phone' => indian_mobile_rules(false),
             'code' => 'required',
             'commission_percent' => 'nullable|numeric',
             'is_active' => 'nullable|boolean',
@@ -31,8 +31,8 @@ class AffiliateRequest extends FormRequest
                 $booleans[$key] = $this->boolean($key);
             }
         }
-        if ($booleans) {
-            $this->merge($booleans);
-        }
+        $booleans['phone'] = indian_mobile($this->input('phone'));
+
+        $this->merge($booleans);
     }
 }

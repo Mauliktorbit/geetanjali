@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
+use App\Models\LoginHistory;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -24,8 +25,28 @@ class AuthController extends Controller
     public function login(LoginRequest $request): RedirectResponse
     {
         $credentials = $request->only('email', 'password');
+        $email = (string) $credentials['email'];
+        $user = User::query()->where('email', $email)->first();
 
-        if (! Auth::attempt($credentials, $request->boolean('remember'))) {
+        if ($user?->is_staff && $user->isLocked()) {
+            $this->logStaffAttempt($user->id, $email, false, $request, 'Account locked');
+
+            return back()
+                ->withInput($request->only('email'))
+                ->withErrors(['email' => 'Your account is temporarily locked. Please try again later.']);
+        }
+
+        if (! Auth::attempt($credentials, true)) {
+            if ($user?->is_staff) {
+                $attempts = (int) $user->failed_login_attempts + 1;
+                $updates = ['failed_login_attempts' => $attempts];
+                if ($attempts >= 5) {
+                    $updates['locked_until'] = now()->addMinutes(30);
+                }
+                $user->update($updates);
+                $this->logStaffAttempt($user->id, $email, false, $request, 'Invalid password');
+            }
+
             return back()
                 ->withInput($request->only('email'))
                 ->withErrors(['email' => 'Invalid email or password.']);
@@ -50,12 +71,22 @@ class AuthController extends Controller
                 ->withErrors(['email' => 'Your account is temporarily locked. Please try again later.']);
         }
 
+        if ($user->is_staff && ! empty($user->allowed_ips) && ! in_array($request->ip(), $user->allowed_ips, true)) {
+            Auth::logout();
+            $this->logStaffAttempt($user->id, $email, false, $request, 'IP not allowed');
+
+            return back()
+                ->withInput($request->only('email'))
+                ->withErrors(['email' => 'Login is not allowed from this IP address.']);
+        }
+
         $guestCart = $request->session()->get('cart');
         $guestWishlist = $request->session()->get('wishlist');
         $guestCoupon = $request->session()->get('cart_coupon');
         $guestGift = $request->session()->get('cart_gift_message');
 
         $request->session()->regenerate();
+        Auth::login($user, true);
 
         $user->update([
             'failed_login_attempts' => 0,
@@ -65,6 +96,10 @@ class AuthController extends Controller
         ]);
 
         $this->mergeGuestBags($user, $guestCart, $guestWishlist, $guestCoupon, $guestGift);
+
+        if ($user->is_staff) {
+            $this->logStaffAttempt($user->id, $email, true, $request);
+        }
 
         return $this->redirectAfterLogin($user);
     }
@@ -94,8 +129,8 @@ class AuthController extends Controller
         $guestCoupon = $request->session()->get('cart_coupon');
         $guestGift = $request->session()->get('cart_gift_message');
 
-        Auth::login($user);
         $request->session()->regenerate();
+        Auth::login($user, true);
 
         app(\App\Services\CheckoutService::class)->ensureCustomer($user);
         $this->mergeGuestBags($user, $guestCart, $guestWishlist, $guestCoupon, $guestGift);
@@ -137,5 +172,22 @@ class AuthController extends Controller
 
         app(\App\Services\CartService::class)->importGuest($guestCart, $guestCoupon, $guestGift);
         app(\App\Services\WishlistService::class)->importGuest($guestWishlist);
+    }
+
+    private function logStaffAttempt(
+        ?int $userId,
+        string $email,
+        bool $successful,
+        Request $request,
+        ?string $failureReason = null,
+    ): void {
+        LoginHistory::create([
+            'user_id' => $userId,
+            'email' => $email,
+            'successful' => $successful,
+            'ip_address' => (string) $request->ip(),
+            'user_agent' => (string) $request->userAgent(),
+            'failure_reason' => $failureReason,
+        ]);
     }
 }

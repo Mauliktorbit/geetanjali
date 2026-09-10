@@ -77,8 +77,8 @@
                     @endif
                 </span>
                 <span class="account-order__copy">
-                    <strong>#{{ $order['number'] }}</strong>
-                    <small>{{ $order['date'] }} · {{ $order['items'] }} {{ \Illuminate\Support\Str::plural('item', $order['items']) }}</small>
+                    <strong>{{ $order['name'] !== '—' && $order['name'] ? $order['name'] : '#'.$order['number'] }}</strong>
+                    <small>#{{ $order['number'] }} · {{ $order['date'] }} · {{ $order['items'] }} {{ \Illuminate\Support\Str::plural('item', $order['items']) }}</small>
                 </span>
                 <span class="account-order__price">₹{{ number_format($order['total']) }}</span>
                 <span class="account-status account-status--{{ $order['tone'] }}">{{ $order['status_label'] }}</span>

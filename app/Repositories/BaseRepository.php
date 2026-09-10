@@ -78,7 +78,12 @@ abstract class BaseRepository
                 foreach ($this->searchable as $column) {
                     if (str_contains($column, '.')) {
                         [$relation, $relColumn] = explode('.', $column, 2);
-                        $q->orWhereHas($relation, fn (Builder $rq) => $rq->where($relColumn, 'like', "%{$search}%"));
+                        if (str_contains($relColumn, '.')) {
+                            [$nestedRelation, $nestedColumn] = explode('.', $relColumn, 2);
+                            $q->orWhereHas($relation.'.'.$nestedRelation, fn (Builder $rq) => $rq->where($nestedColumn, 'like', "%{$search}%"));
+                        } else {
+                            $q->orWhereHas($relation, fn (Builder $rq) => $rq->where($relColumn, 'like', "%{$search}%"));
+                        }
                     } else {
                         $q->orWhere($column, 'like', "%{$search}%");
                     }

@@ -10,12 +10,13 @@
         data-product-id="{{ $product->id }}"
         data-product-name="{{ $product->name }}"
         data-product-price="{{ $product->sale_price ?: $product->price }}"
-        data-product-image="{{ $product->images[0]->url ?? $product->image ?? '' }}"
+        data-product-image="{{ storefront_image($product->images[0]->url ?? $product->image ?? null) }}"
         data-product-url="{{ url()->current() }}"
         data-product-slug="{{ $product->slug }}"
         data-product-metal="{{ $product->metal ?? '' }}"
         data-product-weight="{{ $product->weight ?? '' }}"
         data-stock="{{ $product->stock }}"
+        @if (($product->stock_status ?? '') === 'out_of_stock' || (int) $product->stock <= 0) data-out-of-stock="1" @endif
         data-cart-url="{{ route('cart.add') }}"
         data-checkout-url="{{ route('checkout.index') }}"
     >
@@ -40,7 +41,7 @@
             '@context' => 'https://schema.org/',
             '@type' => 'Product',
             'name' => $product->name,
-            'image' => collect($product->images)->map(fn ($img) => url(asset($img->url)))->values()->all(),
+            'image' => collect($product->images)->map(fn ($img) => storefront_image($img->url ?? null))->values()->all(),
             'description' => $product->short_description,
             'sku' => $product->sku,
             'brand' => [
@@ -51,7 +52,7 @@
                 '@type' => 'Offer',
                 'priceCurrency' => 'INR',
                 'price' => $product->sale_price ?: $product->price,
-                'availability' => ($product->stock_status ?? 'in_stock') === 'in_stock'
+                'availability' => (($product->stock_status ?? 'in_stock') === 'in_stock' && (int) $product->stock > 0)
                     ? 'https://schema.org/InStock'
                     : 'https://schema.org/OutOfStock',
             ],

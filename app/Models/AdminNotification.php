@@ -42,4 +42,56 @@ class AdminNotification extends Model
             'read_at' => now(),
         ]);
     }
+
+    public function isAlert(): bool
+    {
+        return in_array((string) $this->type, \App\Services\NotificationService::alertTypes(), true);
+    }
+
+    public function url(): string
+    {
+        $data = is_array($this->data) ? $this->data : [];
+
+        try {
+            if (! empty($data['order_id']) && \Illuminate\Support\Facades\Route::has('admin.orders.show')) {
+                return route('admin.orders.show', $data['order_id']);
+            }
+            if (! empty($data['return_id']) && \Illuminate\Support\Facades\Route::has('admin.returns.show')) {
+                return route('admin.returns.show', $data['return_id']);
+            }
+        } catch (\Throwable) {
+            // fall through
+        }
+
+        if ($this->link) {
+            return str_starts_with((string) $this->link, 'http')
+                ? (string) $this->link
+                : url(ltrim((string) $this->link, '/'));
+        }
+
+        return route('admin.notifications.index');
+    }
+
+    public function timeAgo(): string
+    {
+        return $this->created_at?->diffForHumans() ?: '';
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function toFeed(): array
+    {
+        return [
+            'id' => $this->id,
+            'type' => (string) $this->type,
+            'title' => (string) $this->title,
+            'message' => (string) ($this->message ?: ''),
+            'url' => $this->url(),
+            'read' => (bool) $this->is_read,
+            'alert' => $this->isAlert(),
+            'time' => $this->timeAgo(),
+            'read_url' => route('admin.notifications.read', $this),
+        ];
+    }
 }

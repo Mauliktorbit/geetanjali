@@ -7,10 +7,12 @@ use App\Models\CustomerNote;
 use App\Models\RewardPointTransaction;
 use App\Models\User;
 use App\Models\WalletTransaction;
+use App\Models\Wishlist;
 use App\Repositories\CustomerRepository;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
 
@@ -24,27 +26,72 @@ class CustomerService extends BaseService
     public function create(array $data): Customer
     {
         return DB::transaction(function () use ($data) {
-            $password = $data['password'] ?? Str::random(12);
-            unset($data['password']);
+            $password = filled($data['password'] ?? null) ? $data['password'] : Str::random(12);
+            $payload = [
+                'name' => $data['name'],
+                'email' => $data['email'],
+                'phone' => $data['phone'] ?? null,
+                'is_blocked' => false,
+                'is_verified' => true,
+            ];
 
-            if (! empty($data['email']) && empty($data['user_id'])) {
-                $user = User::firstOrCreate(
-                    ['email' => $data['email']],
-                    [
-                        'name' => $data['name'],
-                        'password' => Hash::make($password),
-                        'phone' => $data['phone'] ?? null,
-                        'is_active' => true,
-                        'is_staff' => false,
-                    ]
-                );
-                $data['user_id'] = $user->id;
+            $user = User::query()->where('email', $payload['email'])->first();
+            if (! $user) {
+                $user = User::create([
+                    'name' => $payload['name'],
+                    'email' => $payload['email'],
+                    'password' => $password,
+                    'phone' => $payload['phone'],
+                    'is_active' => true,
+                    'is_staff' => false,
+                ]);
+            } else {
+                $user->update([
+                    'name' => $payload['name'],
+                    'phone' => $payload['phone'] ?: $user->phone,
+                    'is_active' => true,
+                ]);
             }
 
-            /** @var Customer $customer */
-            $customer = parent::create($data);
+            $payload['user_id'] = $user->id;
 
-            return $customer->fresh(['group', 'addresses']);
+            /** @var Customer $customer */
+            $customer = parent::create($payload);
+
+            return $customer->fresh();
+        });
+    }
+
+    public function update(Model $model, array $data): Customer
+    {
+        /** @var Customer $model */
+        return DB::transaction(function () use ($model, $data) {
+            $password = $data['password'] ?? null;
+            $payload = [
+                'name' => $data['name'],
+                'email' => $data['email'],
+                'phone' => $data['phone'] ?? null,
+            ];
+            if (array_key_exists('is_blocked', $data)) {
+                $payload['is_blocked'] = (bool) $data['is_blocked'];
+            }
+
+            $model = parent::update($model, $payload);
+
+            if ($model->user) {
+                $userData = [
+                    'name' => $model->name,
+                    'email' => $model->email,
+                    'phone' => $model->phone,
+                    'is_active' => ! $model->is_blocked,
+                ];
+                if (filled($password)) {
+                    $userData['password'] = $password;
+                }
+                $model->user->update($userData);
+            }
+
+            return $model->fresh();
         });
     }
 
@@ -93,7 +140,7 @@ class CustomerService extends BaseService
         $password ??= Str::password(12);
 
         $customer->user->update([
-            'password' => Hash::make($password),
+            'password' => $password,
             'failed_login_attempts' => 0,
             'locked_until' => null,
         ]);
@@ -171,13 +218,7 @@ class CustomerService extends BaseService
         }
 
         return DB::transaction(function () use ($primary, $secondary) {
-            $secondary->addresses()->update(['customer_id' => $primary->id]);
-            $secondary->orders()->update(['customer_id' => $primary->id]);
-            $secondary->walletTransactions()->update(['customer_id' => $primary->id]);
-            $secondary->rewardPointTransactions()->update(['customer_id' => $primary->id]);
-            $secondary->wishlists()->update(['customer_id' => $primary->id]);
-            $secondary->customerNotes()->update(['customer_id' => $primary->id]);
-            $secondary->communicationLogs()->update(['customer_id' => $primary->id]);
+            $this->moveCustomerRecords($secondary, $primary);
 
             $primary->update([
                 'wallet_balance' => (float) $primary->wallet_balance + (float) $secondary->wallet_balance,
@@ -193,16 +234,44 @@ class CustomerService extends BaseService
                 ]);
             }
 
-            CustomerNote::create([
-                'customer_id' => $primary->id,
-                'user_id' => Auth::id(),
-                'note' => 'Merged customer #' . $secondary->id . ' (' . $secondary->email . ')',
-            ]);
-
             $secondary->delete();
 
             return $primary->fresh();
         });
+    }
+
+    public function collapseDuplicates(): void
+    {
+        $userIds = Customer::query()
+            ->whereNotNull('user_id')
+            ->select('user_id')
+            ->groupBy('user_id')
+            ->havingRaw('COUNT(*) > 1')
+            ->pluck('user_id');
+
+        foreach ($userIds as $userId) {
+            $rows = Customer::query()->where('user_id', $userId)->orderBy('id')->get();
+            $primary = $rows->shift();
+            foreach ($rows as $extra) {
+                $this->mergeCustomers($primary, $extra);
+            }
+        }
+
+        $emails = Customer::query()
+            ->whereNotNull('email')
+            ->where('email', '!=', '')
+            ->selectRaw('LOWER(email) as email_key')
+            ->groupBy('email_key')
+            ->havingRaw('COUNT(*) > 1')
+            ->pluck('email_key');
+
+        foreach ($emails as $email) {
+            $rows = Customer::query()->whereRaw('LOWER(email) = ?', [$email])->orderBy('id')->get();
+            $primary = $rows->shift();
+            foreach ($rows as $extra) {
+                $this->mergeCustomers($primary, $extra);
+            }
+        }
     }
 
     public function assignGroup(Customer $customer, ?int $groupId): Customer
@@ -210,5 +279,44 @@ class CustomerService extends BaseService
         $customer->update(['customer_group_id' => $groupId]);
 
         return $customer->fresh(['group']);
+    }
+
+    private function moveCustomerRecords(Customer $from, Customer $to): void
+    {
+        $fromId = $from->id;
+        $toId = $to->id;
+
+        $ownedProductIds = Wishlist::query()->where('customer_id', $toId)->pluck('product_id');
+        Wishlist::query()
+            ->where('customer_id', $fromId)
+            ->whereIn('product_id', $ownedProductIds)
+            ->delete();
+
+        $tables = [
+            'customer_addresses',
+            'orders',
+            'wallet_transactions',
+            'reward_point_transactions',
+            'wishlists',
+            'customer_notes',
+            'communication_logs',
+            'customer_payment_methods',
+            'returns',
+            'carts',
+            'cart_items',
+            'abandoned_carts',
+            'reviews',
+            'refunds',
+            'payments',
+            'support_tickets',
+            'product_questions',
+            'price_alerts',
+        ];
+
+        foreach ($tables as $table) {
+            if (Schema::hasTable($table) && Schema::hasColumn($table, 'customer_id')) {
+                DB::table($table)->where('customer_id', $fromId)->update(['customer_id' => $toId]);
+            }
+        }
     }
 }

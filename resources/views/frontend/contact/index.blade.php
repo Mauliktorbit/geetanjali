@@ -125,9 +125,11 @@
                                 id="contact-phone"
                                 type="tel"
                                 name="phone"
-                                placeholder="Your Phone"
+                                placeholder="10-digit mobile number"
                                 value="{{ old('phone') }}"
-                                maxlength="20"
+                                maxlength="10"
+                                inputmode="numeric"
+                                pattern="[6-9][0-9]{9}"
                                 autocomplete="tel"
                             >
                             @error('phone') <p class="contact-error">{{ $message }}</p> @enderror

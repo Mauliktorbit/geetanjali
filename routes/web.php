@@ -37,6 +37,7 @@ Route::post('/newsletter', [PageController::class, 'newsletter'])->name('newslet
 Route::get('/kundan', [CollectionController::class, 'kundan'])->name('collections.kundan');
 Route::get('/bridal-collection', [BridalCollectionController::class, 'index'])->name('collections.bridal');
 Route::get('/new-arrivals', [NewArrivalsController::class, 'index'])->name('products.new-arrivals');
+Route::get('/collection/{slug}', [CollectionController::class, 'show'])->name('collections.show');
 Route::get('/offers', [OfferController::class, 'index'])->name('offers.index');
 
 Route::get('/product/{slug}', [ProductController::class, 'show'])->name('products.show');
@@ -60,6 +61,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/my-account', [AccountController::class, 'index'])->name('account.index');
     Route::get('/my-account/orders', [AccountController::class, 'orders'])->name('account.orders');
     Route::get('/my-account/orders/{orderNumber}', [AccountController::class, 'showOrder'])->name('account.orders.show');
+    Route::post('/my-account/orders/{orderNumber}/cancel', [AccountController::class, 'cancelOrder'])->name('account.orders.cancel');
+    Route::post('/my-account/orders/{orderNumber}/return', [AccountController::class, 'storeReturn'])->name('account.returns.store');
     Route::get('/my-account/addresses', [AccountController::class, 'addresses'])->name('account.addresses');
     Route::post('/my-account/addresses', [AccountController::class, 'storeAddress'])->name('account.addresses.store');
     Route::put('/my-account/addresses/{address}', [AccountController::class, 'updateAddress'])->name('account.addresses.update');
@@ -73,6 +76,7 @@ Route::middleware('auth')->group(function () {
     Route::put('/my-account/notifications', [AccountController::class, 'updateNotifications'])->name('account.notifications.update');
     Route::get('/my-account/coupons', [AccountController::class, 'coupons'])->name('account.coupons');
     Route::get('/my-account/returns', [AccountController::class, 'returns'])->name('account.returns');
+    Route::get('/my-account/returns/{returnNumber}', [AccountController::class, 'showReturn'])->name('account.returns.show');
     Route::get('/my-account/rewards', [AccountController::class, 'rewards'])->name('account.rewards');
     Route::get('/my-account/help', [AccountController::class, 'help'])->name('account.help');
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');

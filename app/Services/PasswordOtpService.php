@@ -37,7 +37,7 @@ class PasswordOtpService
         ]);
 
         try {
-            Mail::to($user->email)->send(new PasswordOtpMail($otp, $user->name ?: 'Customer'));
+            Mail::to($user->email)->send(new PasswordOtpMail($otp, $user->name ?: 'there'));
         } catch (\Throwable $e) {
             $record->delete();
             throw $e;

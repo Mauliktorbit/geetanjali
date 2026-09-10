@@ -1,37 +1,105 @@
 @extends('admin.layouts.app')
-@section('title',$item->name)
+@section('title', $item->name)
 @section('content')
-<div class="page-header"><div><h1>{{ $item->name }}</h1></div>
-<div class="page-actions">
-<a href="{{ route('admin.customers.edit',$item) }}" class="btn btn-primary">Edit</a>
-@if($item->is_blocked)
-<form method="POST" action="{{ route('admin.customers.unblock',$item) }}">@csrf<button class="btn btn-secondary" onclick="return confirm('Unblock?')">Unblock</button></form>
-@else
-<form method="POST" action="{{ route('admin.customers.block',$item) }}">@csrf<input name="reason" class="form-control" placeholder="Reason"><button class="btn btn-danger" onclick="return confirm('Block?')">Block</button></form>
-@endif
-</div></div>
+@php
+    $address = $item->addresses->firstWhere('is_default', true) ?: $item->addresses->first();
+    $addressText = $address
+        ? implode(', ', array_filter([
+            $address->address_line1,
+            $address->address_line2,
+            $address->city,
+            $address->state,
+            $address->pincode,
+        ]))
+        : '';
+@endphp
+<div class="page-header">
+    <div>
+        <h1>{{ $item->name }}</h1>
+        <p class="subtitle">Customer details</p>
+    </div>
+    <div class="page-actions">
+        <a href="{{ route('admin.customers.index') }}" class="btn btn-ghost">Back</a>
+    </div>
+</div>
 @include('admin.components.alerts')
-<div class="card"><p>{{ $item->email }} · {{ $item->phone }} · Group: {{ $item->group?->name }}</p>
-<p>Wallet {{ money($item->wallet_balance) }} · Points {{ $item->reward_points }} · Orders {{ $item->total_orders }} · Spent {{ money($item->total_spent) }}</p>
-<div class="filters-bar">
-<form method="POST" action="{{ route('admin.customers.reset-password',$item) }}">@csrf<button class="btn btn-secondary" onclick="return confirm('Reset password?')">Reset password</button></form>
-<form method="POST" action="{{ route('admin.customers.assign-group',$item) }}">@csrf<select name="customer_group_id" class="form-control">@foreach($groups as $g)<option value="{{ $g->id }}" @selected($item->customer_group_id==$g->id)>{{ $g->name }}</option>@endforeach</select><button class="btn btn-ghost">Assign group</button></form>
-<form method="POST" action="{{ route('admin.customers.store-credit',$item) }}">@csrf<input type="number" step="0.01" name="amount" class="form-control" placeholder="Credit +/-" required><input name="reason" class="form-control" placeholder="Reason"><button class="btn btn-secondary">Wallet</button></form>
-<form method="POST" action="{{ route('admin.customers.reward-points',$item) }}">@csrf<input type="number" name="points" class="form-control" placeholder="Points +/-" required><button class="btn btn-secondary">Points</button></form>
+
+<div class="card">
+    <div class="detail-list">
+        <div class="detail-item">
+            <span class="label">Name</span>
+            <span class="value">{{ $item->name }}</span>
+        </div>
+        <div class="detail-item">
+            <span class="label">Email</span>
+            <span class="value">
+                @if ($item->email)
+                    <a href="mailto:{{ $item->email }}">{{ $item->email }}</a>
+                @else
+                    —
+                @endif
+            </span>
+        </div>
+        <div class="detail-item">
+            <span class="label">Phone</span>
+            <span class="value">
+                @if ($item->phone)
+                    <a href="tel:{{ preg_replace('/\s+/', '', $item->phone) }}">{{ $item->phone }}</a>
+                @else
+                    —
+                @endif
+            </span>
+        </div>
+        <div class="detail-item">
+            <span class="label">Status</span>
+            <span class="value">@include('admin.components.status-badge', ['status' => $item->statusBadge(), 'label' => $item->statusLabel()])</span>
+        </div>
+        <div class="detail-item">
+            <span class="label">Orders</span>
+            <span class="value">{{ number_format((int) $item->total_orders) }}</span>
+        </div>
+        <div class="detail-item">
+            <span class="label">Spent</span>
+            <span class="value">{{ money($item->total_spent) }}</span>
+        </div>
+        <div class="detail-item">
+            <span class="label">Address</span>
+            <span class="value">{{ $addressText !== '' ? $addressText : '—' }}</span>
+        </div>
+    </div>
 </div>
-<form method="POST" action="{{ route('admin.customers.merge',$item) }}" class="filters-bar mt-2">@csrf
-<select name="secondary_id" class="form-control" required>@foreach($customers as $c)<option value="{{ $c->id }}">{{ $c->name }} ({{ $c->email }})</option>@endforeach</select>
-<button class="btn btn-danger" onclick="return confirm('Merge selected into this customer?')">Merge</button>
-</form>
+
+<div class="card category-products-card">
+    <div class="category-products-card__head">
+        <h2>Orders</h2>
+    </div>
+    @if ($item->orders->isNotEmpty())
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Order</th>
+                        <th>Product</th>
+                        <th>Date</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach ($item->orders as $order)
+                        <tr>
+                            <td>
+                                <a href="{{ route('admin.orders.show', $order) }}" class="orders-table__number">{{ $order->order_number }}</a>
+                            </td>
+                            <td>{{ $order->productSummary() }}</td>
+                            <td>{{ optional($order->created_at)->format('d M Y') ?: '—' }}</td>
+                            <td class="orders-table__total">{{ money($order->grand_total) }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    @else
+        <p class="category-product-empty">No orders yet.</p>
+    @endif
 </div>
-<div class="grid-2 mt-4">
-<div class="card"><h3>Orders</h3><ul>@forelse($item->orders as $o)<li><a href="{{ route('admin.orders.show',$o) }}">{{ $o->order_number }}</a> — {{ money($o->grand_total) }}</li>@empty<li>None</li>@endforelse</ul></div>
-<div class="card"><h3>Addresses</h3><ul>@forelse($item->addresses as $a)<li>{{ $a->address_line1 ?? '' }} {{ $a->city ?? '' }} {{ $a->pincode ?? '' }}</li>@empty<li>None</li>@endforelse</ul>
-<h3>Wishlist</h3><ul>@forelse($item->wishlists as $w)<li>{{ $w->product?->name }}</li>@empty<li>None</li>@endforelse</ul></div>
-<div class="card"><h3>Wallet</h3><ul>@forelse($item->walletTransactions as $t)<li>{{ $t->type }} {{ money($t->amount) }} — {{ $t->reason }}</li>@empty<li>None</li>@endforelse</ul>
-<h3>Points</h3><ul>@forelse($item->rewardPointTransactions as $t)<li>{{ $t->type }} {{ $t->points }} — {{ $t->reason }}</li>@empty<li>None</li>@endforelse</ul></div>
-<div class="card"><h3>Notes</h3>
-<form method="POST" action="{{ route('admin.customers.notes',$item) }}">@csrf<textarea name="note" class="form-control" required></textarea><button class="btn btn-secondary mt-2">Add note</button></form>
-@foreach($item->customerNotes as $n)<p><em>{{ $n->user?->name }}</em>: {{ $n->note }}</p>@endforeach
-</div></div>
 @endsection

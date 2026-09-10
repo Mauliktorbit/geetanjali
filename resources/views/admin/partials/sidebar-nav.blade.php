@@ -80,59 +80,9 @@
     <div class="nav-section-label">Store</div>
 
     <div class="nav-item">
-        <a href="{{ $adminRoute('admin.banners.index') }}" class="nav-link {{ $isActive('admin.banners.*') ? 'active' : '' }}">
-            <span class="nav-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></span>
-            <span class="nav-label">Banners</span>
-        </a>
-    </div>
-
-    <div class="nav-item">
-        <a href="{{ $adminRoute('admin.store-locations.index') }}" class="nav-link {{ $isActive('admin.store-locations.*') ? 'active' : '' }}">
-            <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></span>
-            <span class="nav-label">Store Locations</span>
-        </a>
-    </div>
-
-    <div class="nav-item">
         <a href="{{ $adminRoute('admin.enquiries.index') }}" class="nav-link {{ $isActive('admin.enquiries.*') ? 'active' : '' }}">
             <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path d="m22 6-10 7L2 6"/></svg></span>
             <span class="nav-label">Enquiries</span>
-        </a>
-    </div>
-
-    <div class="nav-section-label">Insights</div>
-
-    <div class="nav-item">
-        <a href="{{ $adminRoute('admin.reports.index') }}" class="nav-link {{ $isActive('admin.reports.*') ? 'active' : '' }}">
-            <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 2 5-6"/></svg></span>
-            <span class="nav-label">Reports</span>
-        </a>
-    </div>
-
-    <div class="nav-section-label">Content</div>
-
-    <div class="nav-item {{ $isActive('admin.pages.*', 'admin.blogs.*', 'admin.faqs.*', 'admin.testimonials.*', 'admin.menus.*', 'admin.homepage-sections.*') ? 'open' : '' }}">
-        <button type="button" class="nav-link {{ $isActive('admin.pages.*', 'admin.blogs.*', 'admin.faqs.*', 'admin.testimonials.*', 'admin.menus.*', 'admin.homepage-sections.*') ? 'active' : '' }}" data-nav-toggle>
-            <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg></span>
-            <span class="nav-label">Website Content</span>
-            <svg class="nav-chevron" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6" fill="none" stroke="currentColor" stroke-width="2"/></svg>
-        </button>
-        <div class="nav-submenu">
-            <a href="{{ $adminRoute('admin.pages.index') }}" class="nav-sublink {{ $isActive('admin.pages.*') ? 'active' : '' }}">Pages</a>
-            <a href="{{ $adminRoute('admin.blogs.index') }}" class="nav-sublink {{ $isActive('admin.blogs.*') ? 'active' : '' }}">Blogs</a>
-            <a href="{{ $adminRoute('admin.faqs.index') }}" class="nav-sublink {{ $isActive('admin.faqs.*') ? 'active' : '' }}">FAQs</a>
-            <a href="{{ $adminRoute('admin.testimonials.index') }}" class="nav-sublink {{ $isActive('admin.testimonials.*') ? 'active' : '' }}">Testimonials</a>
-            <a href="{{ $adminRoute('admin.menus.index') }}" class="nav-sublink {{ $isActive('admin.menus.*') ? 'active' : '' }}">Menus</a>
-            <a href="{{ $adminRoute('admin.homepage-sections.index') }}" class="nav-sublink {{ $isActive('admin.homepage-sections.*') ? 'active' : '' }}">Homepage Sections</a>
-        </div>
-    </div>
-
-    <div class="nav-section-label">System</div>
-
-    <div class="nav-item">
-        <a href="{{ $adminRoute('admin.settings.index') }}" class="nav-link {{ $isActive('admin.settings.*') ? 'active' : '' }}">
-            <span class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
-            <span class="nav-label">Settings</span>
         </a>
     </div>
 </nav>

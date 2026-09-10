@@ -166,6 +166,9 @@ function initCartActions(root) {
     const checkoutUrl = root.dataset.checkoutUrl || '/';
 
     const addToCart = async () => {
+        if (Number(root.dataset.stock || 0) <= 0 || root.hasAttribute('data-out-of-stock')) {
+            throw new Error('This product is out of stock.');
+        }
         const quantity = Number(qtyInput?.value || 1);
         const response = await fetch(cartUrl, {
             method: 'POST',

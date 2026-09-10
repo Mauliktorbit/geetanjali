@@ -14,30 +14,24 @@ class CategoryRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'parent_id' => 'nullable|numeric',
-            'name' => 'required',
-            'slug' => 'required',
-            'image' => 'nullable|file',
-            'banner' => 'nullable|file',
-            'description' => 'nullable',
-            'seo_title' => 'nullable',
-            'seo_description' => 'nullable',
-            'seo_keywords' => 'nullable',
-            'display_order' => 'nullable|numeric',
-            'is_active' => 'nullable|boolean',
+            'name' => ['required', 'string', 'max:120'],
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'name.required' => 'Please enter a category name.',
+            'image.image' => 'Please upload a valid image file.',
+            'image.max' => 'The image must be 4 MB or smaller.',
         ];
     }
 
     protected function prepareForValidation(): void
     {
-        $booleans = [];
-        foreach ($this->rules() as $key => $rule) {
-            if (is_string($rule) && str_contains($rule, 'boolean')) {
-                $booleans[$key] = $this->boolean($key);
-            }
-        }
-        if ($booleans) {
-            $this->merge($booleans);
-        }
+        $this->merge([
+            'name' => trim((string) $this->input('name')),
+        ]);
     }
 }

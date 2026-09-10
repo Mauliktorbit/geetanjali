@@ -1,10 +1,21 @@
 @extends('frontend.layouts.app')
 
-@section('title', 'Bridal Jewellery Collection | Geetanjali Jewellers')
-@section('meta_description', "Explore Geetanjali Jewellers' bridal jewellery collection featuring Kundan bridal sets, gold necklaces, earrings, bangles, rings and traditional wedding jewellery.")
+@php
+    $listingUrl = $listingUrl ?? route('collections.bridal');
+    $canonicalUrl = $canonicalUrl ?? url('/bridal-collection');
+    $pageTitle = $pageTitle ?? 'Bridal Jewellery Collection | Geetanjali Jewellers';
+    $metaDescription = $metaDescription ?? "Explore Geetanjali Jewellers' bridal jewellery collection featuring Kundan bridal sets, gold necklaces, earrings, bangles, rings and traditional wedding jewellery.";
+    $introHeading = $introHeading ?? 'Bridal Jewellery Collection';
+    $introText = $introText ?? 'Discover our stunning range of bridal jewellery including necklaces, earrings, bangles, rings and complete bridal sets.';
+    $emptyMessage = $emptyMessage ?? 'No bridal products match your filters.';
+    $showBridalSets = $showBridalSets ?? true;
+@endphp
+
+@section('title', $pageTitle)
+@section('meta_description', $metaDescription)
 
 @push('styles')
-    <link rel="canonical" href="{{ url('/bridal-collection') }}">
+    <link rel="canonical" href="{{ $canonicalUrl }}">
 @endpush
 
 @section('content')
@@ -20,15 +31,19 @@
 
         <section class="bridal-intro" aria-labelledby="bridal-intro-heading">
             <div class="site-container">
-                <h2 id="bridal-intro-heading" class="font-heading">Bridal Jewellery Collection</h2>
+                <h2 id="bridal-intro-heading" class="font-heading">{{ $introHeading }}</h2>
                 @include('frontend.components.gold-divider', ['align' => 'center'])
-                <p>Discover our stunning range of bridal jewellery including necklaces, earrings, bangles, rings and complete bridal sets.</p>
+                <p>{{ $introText }}</p>
             </div>
         </section>
 
-        <section class="bridal-listing" id="bridal-products" aria-label="Bridal products">
+        <section class="bridal-listing" id="bridal-products" aria-label="{{ $introHeading }} products">
             <div class="site-container">
-                @include('frontend.components.collection.bridal-toolbar', ['filters' => $filters])
+                @include('frontend.components.collection.bridal-toolbar', [
+                    'filters' => $filters,
+                    'listingUrl' => $listingUrl,
+                    'showBridalSets' => $showBridalSets,
+                ])
 
                 <div class="bridal-listing__meta">
                     <p class="bridal-listing__count">
@@ -55,8 +70,8 @@
                     </div>
                 @else
                     <div class="bridal-empty">
-                        <p>No bridal products match your filters.</p>
-                        <a href="{{ route('collections.bridal') }}" class="bridal-btn">Clear Filters</a>
+                        <p>{{ $emptyMessage }}</p>
+                        <a href="{{ $listingUrl }}" class="bridal-btn">Clear Filters</a>
                     </div>
                 @endif
             </div>
@@ -70,7 +85,6 @@
         ])
     </div>
 
-    {{-- Mobile filter drawer --}}
     <div class="bridal-filter-drawer" id="bridalFilterDrawer" data-bridal-drawer hidden>
         <div class="bridal-filter-drawer__backdrop" data-bridal-drawer-close tabindex="-1"></div>
         <div class="bridal-filter-drawer__panel" role="dialog" aria-modal="true" aria-labelledby="bridal-drawer-title">
@@ -86,6 +100,8 @@
                     'formId' => 'bridal-filter-form-mobile',
                     'showSort' => true,
                     'compact' => false,
+                    'listingUrl' => $listingUrl,
+                    'showBridalSets' => $showBridalSets,
                 ])
             </div>
         </div>

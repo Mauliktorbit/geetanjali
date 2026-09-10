@@ -225,9 +225,15 @@ class PageController extends Controller
         };
 
         if ($request->isMethod('post')) {
+            $request->merge([
+                'phone' => indian_mobile($request->input('phone')),
+            ]);
+
             $validated = $request->validate([
                 'order_id' => ['required', 'string', 'max:50'],
-                'phone' => ['nullable', 'string', 'max:20'],
+                'phone' => indian_mobile_rules(false),
+            ], [
+                'phone.regex' => 'Enter a valid 10-digit mobile number.',
             ]);
 
             $orderId = $validated['order_id'];

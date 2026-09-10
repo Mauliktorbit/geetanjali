@@ -38,11 +38,11 @@
             </div>
             <div class="form-group">
                 <label>Pincode</label>
-                <input type="text" name="pincode" class="form-control" value="{{ old('pincode', $item->pincode ?? '') }}" >
+                <input type="text" name="pincode" class="form-control" value="{{ old('pincode', $item->pincode ?? '') }}" maxlength="6" inputmode="numeric" pattern="[0-9]{6}">
             </div>
             <div class="form-group">
                 <label>Phone</label>
-                <input type="text" name="phone" class="form-control" value="{{ old('phone', $item->phone ?? '') }}" >
+                <input type="tel" name="phone" class="form-control" value="{{ old('phone', $item->phone ?? '') }}" maxlength="10" inputmode="numeric" pattern="[6-9][0-9]{9}" autocomplete="tel">
             </div>
             <div class="form-group">
                 <label>Priority</label>
