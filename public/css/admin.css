@@ -700,6 +700,7 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
 .notify-item__icon--order { background: #ecfdf5; color: #059669; }
 .notify-item__icon--return { background: #f5f3ff; color: #7c3aed; }
 .notify-item__icon--info { background: var(--slate-100); color: var(--slate-600); }
+.notify-item__icon--enquiry { background: #f0f9ff; color: #0284c7; }
 .notify-item__copy { min-width: 0; display: grid; gap: 0.12rem; }
 .notify-item__copy strong {
   font-size: 0.82rem;
@@ -2669,3 +2670,44 @@ textarea.form-control {
   .return-journey__step p,
   .return-journey__step time { grid-column: 2; }
 }
+
+.inbox-tabs {
+  display: flex;
+  gap: 0.45rem;
+  margin: 0 0 1rem;
+  flex-wrap: wrap;
+}
+.inbox-tabs__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 0.95rem;
+  border-radius: 999px;
+  background: #fff;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+.inbox-tabs__link span {
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  background: var(--brand-100);
+  color: var(--brand-700);
+  font-size: 0.7rem;
+  display: grid;
+  place-items: center;
+}
+.inbox-tabs__link.is-active {
+  background: var(--brand-600);
+  border-color: var(--brand-600);
+  color: #fff;
+}
+.inbox-tabs__link.is-active span {
+  background: rgba(255,255,255,0.2);
+  color: #fff;
+}
+.data-table tr.is-unread-row td { font-weight: 550; }

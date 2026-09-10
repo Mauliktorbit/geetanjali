@@ -17,7 +17,7 @@ class NotificationService
      */
     public static function alertTypes(): array
     {
-        return ['order_created', 'return_requested'];
+        return ['order_created', 'return_requested', 'enquiry_created', 'newsletter_subscribed'];
     }
 
     public function notifyAdmins(
@@ -104,6 +104,32 @@ class NotificationService
             $detail,
             $this->returnLink($return->id),
             ['return_id' => $return->id]
+        );
+    }
+
+    public function notifyNewEnquiry(\App\Models\Enquiry $enquiry): void
+    {
+        $this->notifyAdmins(
+            'enquiry_created',
+            'New enquiry',
+            trim($enquiry->name.' sent a message'.($enquiry->phone ? ' · '.$enquiry->phone : '')),
+            Route::has('admin.enquiries.show')
+                ? route('admin.enquiries.show', $enquiry)
+                : url('admin/enquiries/'.$enquiry->id),
+            ['enquiry_id' => $enquiry->id]
+        );
+    }
+
+    public function notifyNewSubscriber(\App\Models\NewsletterSubscriber $subscriber): void
+    {
+        $this->notifyAdmins(
+            'newsletter_subscribed',
+            'New subscriber',
+            $subscriber->email.' joined the newsletter.',
+            Route::has('admin.enquiries.index')
+                ? route('admin.enquiries.index', ['tab' => 'subscriptions'])
+                : url('admin/enquiries?tab=subscriptions'),
+            ['subscriber_id' => $subscriber->id]
         );
     }
 

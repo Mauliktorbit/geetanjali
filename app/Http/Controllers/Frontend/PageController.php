@@ -255,11 +255,23 @@ class PageController extends Controller
         ]);
     }
 
-    public function newsletter(Request $request): RedirectResponse
+    public function newsletter(Request $request, \App\Services\NewsletterSubscriberService $subscribers): RedirectResponse
     {
-        $request->validate([
+        $data = $request->validate([
             'email' => ['required', 'email', 'max:150'],
         ]);
+
+        $email = strtolower(trim($data['email']));
+        $already = \App\Models\NewsletterSubscriber::query()
+            ->where('email', $email)
+            ->where('is_active', true)
+            ->exists();
+
+        $subscribers->subscribe($email, 'website');
+
+        if ($already) {
+            return back()->with('success', 'You are already subscribed to our offers.');
+        }
 
         return back()->with('success', 'Thank you for subscribing. Enjoy 10% off on your first order!');
     }

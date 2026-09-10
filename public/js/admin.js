@@ -550,7 +550,7 @@
         }
         list.innerHTML = items
           .map((item) => {
-            const kind = item.type === 'return_requested' ? 'return' : item.type === 'order_created' ? 'order' : 'info';
+        const kind = item.type === 'return_requested' ? 'return' : item.type === 'order_created' ? 'order' : (item.type === 'enquiry_created' || item.type === 'newsletter_subscribed' ? 'enquiry' : 'info');
             return `<form method="POST" action="${item.read_url}" data-no-loading>
               <input type="hidden" name="_token" value="${csrf}">
               <button type="submit" class="notify-item${item.read ? '' : ' is-unread'}">

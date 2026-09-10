@@ -59,6 +59,9 @@ class AdminNotification extends Model
             if (! empty($data['return_id']) && \Illuminate\Support\Facades\Route::has('admin.returns.show')) {
                 return route('admin.returns.show', $data['return_id']);
             }
+            if (! empty($data['enquiry_id']) && \Illuminate\Support\Facades\Route::has('admin.enquiries.show')) {
+                return route('admin.enquiries.show', $data['enquiry_id']);
+            }
         } catch (\Throwable) {
             // fall through
         }

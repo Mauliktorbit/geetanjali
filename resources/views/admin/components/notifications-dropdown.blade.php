@@ -13,7 +13,7 @@
             <form method="POST" action="{{ route('admin.notifications.read', $note) }}" data-no-loading>
                 @csrf
                 <button type="submit" class="notify-item{{ $note->is_read ? '' : ' is-unread' }}">
-                    <span class="notify-item__icon notify-item__icon--{{ $note->type === 'return_requested' ? 'return' : ($note->type === 'order_created' ? 'order' : 'info') }}">
+                    <span class="notify-item__icon notify-item__icon--{{ $note->type === 'return_requested' ? 'return' : ($note->type === 'order_created' ? 'order' : ($note->type === 'enquiry_created' || $note->type === 'newsletter_subscribed' ? 'enquiry' : 'info')) }}">
                         @if ($note->type === 'return_requested')
                             <svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
                         @elseif ($note->type === 'order_created')

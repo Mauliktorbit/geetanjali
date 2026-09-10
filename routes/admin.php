@@ -107,8 +107,10 @@ Route::name('admin.')->group(function () {
         Route::resource('collections', CollectionController::class);
 
         // Enquiries
-        Route::post('enquiries/bulk', [EnquiryController::class, 'bulk'])->name('enquiries.bulk');
-        Route::resource('enquiries', EnquiryController::class)->only(['index', 'show', 'update', 'destroy']);
+        Route::get('enquiries', [EnquiryController::class, 'index'])->name('enquiries.index');
+        Route::get('enquiries/{enquiry}', [EnquiryController::class, 'show'])->name('enquiries.show');
+        Route::delete('enquiries/{enquiry}', [EnquiryController::class, 'destroy'])->name('enquiries.destroy');
+        Route::delete('subscribers/{subscriber}', [EnquiryController::class, 'destroySubscriber'])->name('subscribers.destroy');
 
         // Inventory
         Route::get('inventory', [InventoryController::class, 'index'])->name('inventory.index');

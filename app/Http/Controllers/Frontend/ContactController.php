@@ -3,13 +3,15 @@
 namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
-use App\Models\Enquiry;
+use App\Services\EnquiryService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class ContactController extends Controller
 {
+    public function __construct(private readonly EnquiryService $enquiries) {}
+
     public function index(): View
     {
         return view('frontend.contact.index', [
@@ -46,7 +48,7 @@ class ContactController extends Controller
             'phone.regex' => 'Enter a valid 10-digit mobile number.',
         ]);
 
-        Enquiry::create($data);
+        $this->enquiries->submit($data);
 
         return back()->with('success', 'Thank you for contacting us. We will get back to you shortly.');
     }
