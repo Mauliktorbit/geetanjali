@@ -65,9 +65,9 @@
                             <li><a href="{{ route('pages.privacy') }}">Privacy Policy</a></li>
                             @auth
                                 <li>
-                                    <form action="{{ route('logout') }}" method="post" class="d-inline">
+                                    <form action="{{ route('logout') }}" method="post" class="d-inline" data-confirm="Log out? You will need to sign in again to view your account.">
                                         @csrf
-                                        <button type="submit" class="footer-logout-link">Logout</button>
+                                        <button type="submit" class="footer-logout-link" data-confirm="Log out? You will need to sign in again to view your account.">Logout</button>
                                     </form>
                                 </li>
                             @else

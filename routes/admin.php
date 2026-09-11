@@ -29,6 +29,7 @@ use App\Http\Controllers\Admin\InventoryController;
 use App\Http\Controllers\Admin\MenuController;
 use App\Http\Controllers\Admin\MenuItemController;
 use App\Http\Controllers\Admin\NotificationController;
+use App\Http\Controllers\Admin\OfferController;
 use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\PageController;
 use App\Http\Controllers\Admin\PaymentController;
@@ -112,6 +113,8 @@ Route::name('admin.')->group(function () {
         Route::delete('enquiries/{enquiry}', [EnquiryController::class, 'destroy'])->name('enquiries.destroy');
         Route::delete('subscribers/{subscriber}', [EnquiryController::class, 'destroySubscriber'])->name('subscribers.destroy');
 
+        Route::resource('offers', OfferController::class);
+
         // Inventory
         Route::get('inventory', [InventoryController::class, 'index'])->name('inventory.index');
         Route::get('inventory/view/{product}', [InventoryController::class, 'show'])->name('inventory.show');
@@ -148,9 +151,7 @@ Route::name('admin.')->group(function () {
         // Reviews & Q&A
         Route::post('reviews/{review}/approve', [ReviewController::class, 'approve'])->name('reviews.approve');
         Route::post('reviews/{review}/reject', [ReviewController::class, 'reject'])->name('reviews.reject');
-        Route::post('reviews/{review}/reply', [ReviewController::class, 'reply'])->name('reviews.reply');
-        Route::post('reviews/{review}/feature', [ReviewController::class, 'feature'])->name('reviews.feature');
-        Route::post('reviews/{review}/hide', [ReviewController::class, 'hide'])->name('reviews.hide');
+        Route::get('reviews/{review}', [ReviewController::class, 'show'])->name('reviews.show');
         Route::get('reviews', [ReviewController::class, 'index'])->name('reviews.index');
 
         Route::post('product-questions/{productQuestion}/answer', [ProductQuestionController::class, 'answer'])->name('product-questions.answer');

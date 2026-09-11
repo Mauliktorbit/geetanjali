@@ -154,6 +154,30 @@ class CouponService extends BaseService
         $coupon->increment('usage_count');
     }
 
+    public function save(array $data, ?Coupon $coupon = null): Coupon
+    {
+        $payload = [
+            'code' => strtoupper(trim((string) $data['code'])),
+            'name' => trim((string) $data['name']),
+            'discount_type' => ($data['discount_type'] ?? 'percent') === 'fixed' ? 'fixed' : 'percent',
+            'discount_value' => $data['discount_value'],
+            'starts_at' => parse_dmy($data['starts_at'] ?? null),
+            'ends_at' => parse_dmy($data['ends_at'] ?? null, true),
+            'minimum_cart' => $data['minimum_cart'] ?? null,
+            'is_active' => (bool) ($data['is_active'] ?? false),
+        ];
+
+        if ($coupon) {
+            return $this->update($coupon, $payload);
+        }
+
+        $payload['new_customers_only'] = false;
+        $payload['is_stackable'] = false;
+        $payload['usage_count'] = 0;
+
+        return $this->create($payload);
+    }
+
     protected function fail(string $message): array
     {
         return [

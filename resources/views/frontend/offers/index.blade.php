@@ -40,8 +40,6 @@
             </div>
         </section>
 
-        @include('frontend.components.offers.gold-club', ['goldClub' => $goldClub])
-
         @include('frontend.components.offers.terms', ['terms' => $terms])
     </div>
 @endsection

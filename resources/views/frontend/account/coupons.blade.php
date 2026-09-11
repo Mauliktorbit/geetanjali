@@ -11,13 +11,9 @@
                 <strong>{{ $coupon->code }}</strong>
                 <p>{{ $coupon->name }}</p>
                 <small>
-                    @if ($coupon->discount_type === 'percent')
-                        {{ rtrim(rtrim(number_format((float) $coupon->discount_value, 2), '0'), '.') }}% off
-                    @else
-                        ₹{{ number_format((float) $coupon->discount_value) }} off
-                    @endif
+                    {{ $coupon->discountLabel() }} off
                     @if ($coupon->ends_at)
-                        · till {{ $coupon->ends_at->format('d M Y') }}
+                        · till {{ $coupon->ends_at->format('d/m/Y') }}
                     @endif
                 </small>
             </article>

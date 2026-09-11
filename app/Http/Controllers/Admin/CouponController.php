@@ -13,7 +13,8 @@ class CouponController extends AdminController
 
     public function index(Request $request)
     {
-        $items = $this->service->paginate($request->all());
+        $items = $this->service->paginate($request->only(['search', 'status']));
+
         return view('admin.coupons.index', compact('items'));
     }
 
@@ -24,19 +25,16 @@ class CouponController extends AdminController
 
     public function store(CouponRequest $request)
     {
-        $data = $request->validated();
-        foreach (['logo','image','banner','avatar','attachment','og_image','mobile_image'] as $fileField) {
-            if ($request->hasFile($fileField)) {
-                $data[$fileField] = $request->file($fileField)->store('uploads/coupons', 'public');
-            }
-        }
-        $this->service->create($data);
-        return $this->success('Coupon created successfully.', 'admin.coupons.index');
+        $this->service->save($request->validated());
+
+        return $this->success('Coupon saved.', 'admin.coupons.index');
     }
 
     public function show(Coupon $coupon)
     {
-        return view('admin.coupons.show', ['item' => $coupon]);
+        return view('admin.coupons.show', [
+            'item' => $coupon->load(['offers', 'offersWithCode']),
+        ]);
     }
 
     public function edit(Coupon $coupon)
@@ -46,41 +44,15 @@ class CouponController extends AdminController
 
     public function update(CouponRequest $request, Coupon $coupon)
     {
-        $data = $request->validated();
-        foreach (['logo','image','banner','avatar','attachment','og_image','mobile_image'] as $fileField) {
-            if ($request->hasFile($fileField)) {
-                $data[$fileField] = $request->file($fileField)->store('uploads/coupons', 'public');
-            }
-        }
-        $this->service->update($coupon, $data);
-        return $this->success('Coupon updated successfully.', 'admin.coupons.index');
+        $this->service->save($request->validated(), $coupon);
+
+        return $this->success('Coupon updated.', 'admin.coupons.index');
     }
 
     public function destroy(Coupon $coupon)
     {
         $this->service->delete($coupon);
-        return $this->success('Coupon deleted successfully.');
-    }
 
-    public function bulk(Request $request)
-    {
-        $ids = $request->input('ids', []);
-        $action = $request->input('action');
-        if (!$ids) {
-            return $this->error('Please select at least one item.');
-        }
-        if ($action === 'delete') {
-            $this->service->bulkDelete($ids);
-            return $this->success('Selected items deleted.');
-        }
-        if ($action === 'activate') {
-            $this->service->bulkUpdate($ids, ['is_active' => true]);
-            return $this->success('Selected items activated.');
-        }
-        if ($action === 'deactivate') {
-            $this->service->bulkUpdate($ids, ['is_active' => false]);
-            return $this->success('Selected items deactivated.');
-        }
-        return $this->error('Invalid bulk action.');
+        return $this->success('Coupon removed.', 'admin.coupons.index');
     }
 }

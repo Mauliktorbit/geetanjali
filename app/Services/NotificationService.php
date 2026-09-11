@@ -17,7 +17,7 @@ class NotificationService
      */
     public static function alertTypes(): array
     {
-        return ['order_created', 'return_requested', 'enquiry_created', 'newsletter_subscribed'];
+        return ['order_created', 'return_requested', 'enquiry_created', 'newsletter_subscribed', 'review_created'];
     }
 
     public function notifyAdmins(
@@ -104,6 +104,23 @@ class NotificationService
             $detail,
             $this->returnLink($return->id),
             ['return_id' => $return->id]
+        );
+    }
+
+    public function notifyNewReview(\App\Models\Review $review, ?string $productName = null): void
+    {
+        $product = $productName ?: $review->product?->name ?: 'a product';
+        $who = $review->displayName();
+        $stars = (int) $review->rating;
+
+        $this->notifyAdmins(
+            'review_created',
+            'New product review',
+            $who.' rated '.$product.' '.$stars.'/5',
+            Route::has('admin.reviews.show')
+                ? route('admin.reviews.show', $review)
+                : url('admin/reviews/'.$review->id),
+            ['review_id' => $review->id]
         );
     }
 

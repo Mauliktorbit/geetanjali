@@ -12,12 +12,15 @@
     @stack('styles')
 </head>
 <body>
+    @include('frontend.components.page-loader')
     @include('frontend.components.navbar')
 
     <main id="main-content">
         @include('frontend.components.flash')
         @yield('content')
     </main>
+
+    @include('frontend.components.delivery-review-modal')
 
     @hasSection('newsletter')
         @yield('newsletter')

@@ -9,6 +9,7 @@ use App\Services\AccountService;
 use App\Services\CheckoutService;
 use App\Services\OrderService;
 use App\Services\ReturnService;
+use App\Services\ReviewService;
 use App\Support\IndianStates;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -21,6 +22,7 @@ class AccountController extends Controller
         private readonly CheckoutService $checkout,
         private readonly ReturnService $returns,
         private readonly OrderService $orders,
+        private readonly ReviewService $reviews,
     ) {}
 
     public function index(Request $request): View|RedirectResponse
@@ -66,6 +68,7 @@ class AccountController extends Controller
 
         return $this->page('frontend.account.order-show', $user, 'orders', [
             'order' => $order,
+            'reviewProducts' => $this->reviews->unreviewedProducts($customer, $order),
             'breadcrumb' => [
                 ['label' => 'Home', 'url' => route('home')],
                 ['label' => 'My Account', 'url' => route('account.index')],

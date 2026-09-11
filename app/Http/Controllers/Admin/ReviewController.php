@@ -3,56 +3,41 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Models\Review;
-use App\Repositories\ReviewRepository;
+use App\Services\ReviewService;
 use Illuminate\Http\Request;
 
 class ReviewController extends AdminController
 {
-    public function __construct(protected ReviewRepository $repository) {}
+    public function __construct(protected ReviewService $service) {}
 
     public function index(Request $request)
     {
-        $items = $this->repository->paginate($request->all());
+        $items = $this->service->paginate($request->only(['search', 'status', 'rating']));
 
-        return view('admin.reviews.index', compact('items'));
+        return view('admin.reviews.index', [
+            'items' => $items,
+            'statuses' => Review::statuses(),
+        ]);
+    }
+
+    public function show(Review $review)
+    {
+        $review->load(['product', 'customer', 'order']);
+
+        return view('admin.reviews.show', ['item' => $review]);
     }
 
     public function approve(Review $review)
     {
-        $review->update(['status' => 'approved']);
+        $this->service->approve($review);
 
-        return $this->success('Review approved.');
+        return $this->success('Review approved. It will now show on the product page.');
     }
 
     public function reject(Review $review)
     {
-        $review->update(['status' => 'rejected']);
+        $this->service->reject($review);
 
         return $this->success('Review rejected.');
-    }
-
-    public function reply(Request $request, Review $review)
-    {
-        $request->validate(['admin_reply' => ['required', 'string']]);
-        $review->update([
-            'admin_reply' => $request->input('admin_reply'),
-            'replied_at' => now(),
-        ]);
-
-        return $this->success('Reply saved.');
-    }
-
-    public function feature(Review $review)
-    {
-        $review->update(['is_featured' => ! $review->is_featured]);
-
-        return $this->success($review->is_featured ? 'Review featured.' : 'Review unfeatured.');
-    }
-
-    public function hide(Review $review)
-    {
-        $review->update(['status' => 'hidden']);
-
-        return $this->success('Review hidden.');
     }
 }

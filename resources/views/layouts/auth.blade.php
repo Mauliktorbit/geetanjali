@@ -13,6 +13,7 @@
     @stack('styles')
 </head>
 <body class="auth-body">
+    @include('frontend.components.page-loader')
     <div class="auth-shell">
         <div class="auth-card">
             @include('auth.components.header')

@@ -35,7 +35,7 @@
             >
         </a>
 
-        <form class="navbar-search" action="{{ route('products.new-arrivals') }}" method="get" role="search">
+        <form class="navbar-search" action="{{ route('search') }}" method="get" role="search">
             <label class="visually-hidden" for="site-search">Search jewellery</label>
             <input
                 id="site-search"
@@ -44,6 +44,9 @@
                 value="{{ request('q') }}"
                 placeholder="Search for exquisite jewellery..."
                 autocomplete="off"
+                minlength="2"
+                maxlength="80"
+                required
             >
             <button type="submit" aria-label="Search">
                 <i class="bi bi-search" aria-hidden="true"></i>
@@ -83,7 +86,7 @@
     </div>
 
     <div class="mobile-search">
-        <form class="navbar-search" action="{{ route('products.new-arrivals') }}" method="get" role="search">
+        <form class="navbar-search" action="{{ route('search') }}" method="get" role="search">
             <label class="visually-hidden" for="mobile-search">Search jewellery</label>
             <input
                 id="mobile-search"
@@ -92,6 +95,9 @@
                 value="{{ request('q') }}"
                 placeholder="Search for exquisite jewellery..."
                 autocomplete="off"
+                minlength="2"
+                maxlength="80"
+                required
             >
             <button type="submit" aria-label="Search">
                 <i class="bi bi-search" aria-hidden="true"></i>
@@ -104,11 +110,16 @@
             <ul class="primary-nav__list">
                 @foreach ($navItems as $item)
                     @if (!empty($item['dropdown']))
+                        @php
+                            $childUrls = collect($item['dropdown'])->pluck('url')->filter()->all();
+                            $groupActive = in_array(url()->current(), $childUrls, true)
+                                || (! empty($item['route']) && request()->routeIs($item['route']));
+                        @endphp
                         <li class="dropdown">
                             <button
-                                class="dropdown-toggle"
+                                class="dropdown-toggle{{ $groupActive ? ' is-active' : '' }}"
                                 type="button"
-                                data-bs-toggle="dropdown"
+                                aria-haspopup="true"
                                 aria-expanded="false"
                             >
                                 {{ $item['label'] }}
@@ -116,8 +127,9 @@
                             </button>
                             <ul class="dropdown-menu">
                                 @foreach ($item['dropdown'] as $child)
+                                    @php $childUrl = $child['url'] ?? '#'; @endphp
                                     <li>
-                                        <a class="dropdown-item" href="{{ $child['url'] ?? '#' }}">{{ $child['label'] ?? $child }}</a>
+                                        <a class="dropdown-item{{ url()->current() === $childUrl ? ' is-active' : '' }}" href="{{ $childUrl }}">{{ $child['label'] ?? $child }}</a>
                                     </li>
                                 @endforeach
                             </ul>
@@ -162,9 +174,26 @@
         <nav class="offcanvas-nav__menu" aria-label="Mobile">
             @foreach ($navItems as $item)
                 @if (! empty($item['dropdown']))
-                    @foreach ($item['dropdown'] as $child)
-                        <a class="nav-link" href="{{ $child['url'] ?? '#' }}">{{ $child['label'] ?? $child }}</a>
-                    @endforeach
+                    @php
+                        $childUrls = collect($item['dropdown'])->pluck('url')->filter()->all();
+                        $groupOpen = in_array(url()->current(), $childUrls, true)
+                            || (! empty($item['route']) && request()->routeIs($item['route']))
+                            || (! empty($item['href']) && url()->current() === $item['href']);
+                    @endphp
+                    <details class="offcanvas-nav__details"@if ($groupOpen) open @endif>
+                        <summary class="nav-link offcanvas-nav__summary{{ $groupOpen ? ' is-active' : '' }}">
+                            <span>{{ $item['label'] }}</span>
+                            <i class="bi bi-chevron-down" aria-hidden="true"></i>
+                        </summary>
+                        <div class="offcanvas-nav__sub">
+                            @foreach ($item['dropdown'] as $child)
+                                @php $childUrl = $child['url'] ?? '#'; @endphp
+                                <a class="nav-link{{ url()->current() === $childUrl ? ' is-active' : '' }}" href="{{ $childUrl }}">
+                                    {{ $child['label'] ?? $child }}
+                                </a>
+                            @endforeach
+                        </div>
+                    </details>
                 @else
                     @php
                         $href = ! empty($item['route']) ? route($item['route']) : ($item['href'] ?? '#');

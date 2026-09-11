@@ -2,30 +2,24 @@
 
 @php
     $theme = $offer['theme'] ?? 'dark';
-    $code = $offer['promo_code'] ?? '';
+    $image = storefront_image($offer['image'] ?? null);
 @endphp
 
 <article class="offer-card offer-card--{{ $theme }}">
     <div class="offer-card__body">
         <div class="offer-card__copy">
-            <span class="offer-card__label">{{ $offer['label'] ?? '' }}</span>
+            @if (! empty($offer['label']))
+                <span class="offer-card__label">{{ $offer['label'] }}</span>
+            @endif
             <div class="offer-card__discount font-heading">
                 <span class="offer-card__value">{{ $offer['discount_value'] ?? '' }}</span>
                 <span class="offer-card__suffix">{{ $offer['discount_suffix'] ?? 'Off' }}</span>
             </div>
             <p class="offer-card__title">{!! nl2br(e($offer['title'] ?? '')) !!}</p>
-            <button
-                type="button"
-                class="offer-card__code"
-                data-copy-code="{{ $code }}"
-                aria-label="Copy promo code {{ $code }}"
-            >
-                Use Code: <strong>{{ $code }}</strong>
-            </button>
         </div>
         <div class="offer-card__media">
             <img
-                src="{{ asset($offer['image'] ?? '') }}"
+                src="{{ $image }}"
                 alt="{{ $offer['image_alt'] ?? ($offer['title'] ?? 'Offer') }}"
                 loading="lazy"
                 width="280"
@@ -36,7 +30,7 @@
     <div class="offer-card__footer">
         <span>
             <i class="bi bi-clock" aria-hidden="true"></i>
-            Valid Till: {{ $offer['valid_until'] ?? '' }}
+            Valid Till: {{ $offer['valid_until'] ?? 'Limited period' }}
         </span>
         <span>
             <i class="bi bi-info-circle" aria-hidden="true"></i>

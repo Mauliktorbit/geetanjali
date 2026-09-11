@@ -74,6 +74,7 @@
   }
 
   function confirmButtonLabel(message, danger) {
+    if (/\blog ?out\b/i.test(message) || /\bsign out\b/i.test(message)) return 'Yes, logout';
     if (/\bremove\b/i.test(message)) return 'Yes, remove';
     if (/\bdelete\b/i.test(message)) return 'Yes, delete';
     if (/\bcancel\b/i.test(message)) return 'Yes, cancel';

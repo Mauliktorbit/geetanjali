@@ -122,6 +122,11 @@ class Order extends Model
         return $this->belongsTo(Coupon::class);
     }
 
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(Review::class);
+    }
+
     public function warehouse(): BelongsTo
     {
         return $this->belongsTo(Warehouse::class);

@@ -340,6 +340,24 @@
     color: #16352d;
 }
 
+.search-page__head {
+    margin: 0 0 1.35rem;
+}
+
+.search-page__head h1 {
+    margin: 0 0 0.35rem;
+    font-size: clamp(26px, 4vw, 34px);
+    color: #16352d;
+}
+
+.search-page__head p {
+    margin: 0;
+    color: #666;
+    font-size: 14px;
+}
+
+.search-page__head strong { color: #16352d; }
+
 .na-empty {
     text-align: center;
     padding: 3.5rem 1rem;

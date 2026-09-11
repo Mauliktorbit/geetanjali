@@ -10,8 +10,6 @@
     $compareAt = $product['compare_at_price'] ?? null;
     $discount = $product['discount_label'] ?? null;
     $badge = $product['badge'] ?? null;
-    $rating = $product['rating'] ?? null;
-    $reviewCount = $product['review_count'] ?? null;
     $productId = $product['id'] ?? null;
     $url = $product['url'] ?? (! empty($product['slug']) ? route('products.show', $product['slug']) : null);
     $outOfStock = ($product['stock_status'] ?? 'in_stock') === 'out_of_stock'
@@ -80,16 +78,6 @@
                 @endif
                 @if ($discount)
                     <div class="price-discount">{{ $discount }}</div>
-                @endif
-                @if ($rating !== null)
-                    <div class="product-card__rating" aria-label="Rated {{ $rating }} out of 5">
-                        @for ($i = 1; $i <= 5; $i++)
-                            <i class="bi {{ $i <= round($rating) ? 'bi-star-fill' : 'bi-star' }}" aria-hidden="true"></i>
-                        @endfor
-                        @if ($reviewCount !== null)
-                            <span>({{ $reviewCount }})</span>
-                        @endif
-                    </div>
                 @endif
             </div>
             @if ($showCart && ! $outOfStock)

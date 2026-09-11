@@ -170,8 +170,10 @@ class StorefrontCatalogService
             ['label' => 'Home', 'route' => 'home'],
         ];
 
+        $extra = [];
+
         foreach (self::navCollections() as $collection) {
-            $items[] = [
+            $entry = [
                 'label' => $collection->name,
                 'href' => self::storefrontUrl($collection),
                 'route' => match ($collection->slug) {
@@ -181,6 +183,43 @@ class StorefrontCatalogService
                     default => null,
                 },
             ];
+
+            if (self::isProtectedSlug($collection->slug)) {
+                $items[] = $entry;
+                continue;
+            }
+
+            $extra[] = [
+                'label' => $collection->name,
+                'url' => $entry['href'],
+            ];
+        }
+
+        if ($extra !== []) {
+            $attached = false;
+            foreach ($items as $index => $item) {
+                if (($item['route'] ?? null) !== 'products.new-arrivals') {
+                    continue;
+                }
+
+                $items[$index]['label'] = 'New Collection';
+                $items[$index]['dropdown'] = array_merge([
+                    ['label' => 'New Arrivals', 'url' => $item['href']],
+                ], $extra);
+                $attached = true;
+                break;
+            }
+
+            if (! $attached) {
+                $items[] = [
+                    'label' => 'New Collection',
+                    'route' => 'products.new-arrivals',
+                    'href' => url('/new-arrivals'),
+                    'dropdown' => array_merge([
+                        ['label' => 'New Arrivals', 'url' => url('/new-arrivals')],
+                    ], $extra),
+                ];
+            }
         }
 
         return array_merge($items, [
@@ -287,6 +326,43 @@ class StorefrontCatalogService
         $this->applySort($query, $filters['sort'] ?? 'popularity');
 
         return $query->paginate(self::PER_PAGE)->withQueryString();
+    }
+
+    public function paginateSearch(string $term): LengthAwarePaginator
+    {
+        $query = Product::query()->storefront()->with(['category', 'inventories']);
+        $this->applySearch($query, $term);
+        $this->applySort($query, 'popularity');
+
+        return $query->paginate(self::PER_PAGE)->withQueryString();
+    }
+
+    public function applySearch(Builder $query, string $term): void
+    {
+        $term = trim(preg_replace('/\s+/', ' ', $term) ?? '');
+        if ($term === '') {
+            $query->whereRaw('1 = 0');
+
+            return;
+        }
+
+        $like = '%'.addcslashes($term, '%_\\').'%';
+
+        $query->where(function (Builder $q) use ($like) {
+            $q->where('name', 'like', $like)
+                ->orWhere('sku', 'like', $like)
+                ->orWhere('short_description', 'like', $like)
+                ->orWhere('metal', 'like', $like)
+                ->orWhere('stone', 'like', $like)
+                ->orWhere('style', 'like', $like)
+                ->orWhere('occasion', 'like', $like)
+                ->orWhereHas('category', function (Builder $category) use ($like) {
+                    $category->where('name', 'like', $like)->orWhere('slug', 'like', $like);
+                })
+                ->orWhereHas('collections', function (Builder $collection) use ($like) {
+                    $collection->where('name', 'like', $like)->orWhere('slug', 'like', $like);
+                });
+        });
     }
 
     /**

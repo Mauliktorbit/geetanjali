@@ -74,6 +74,41 @@ class AppServiceProvider extends ServiceProvider
             $view->with('navItems', \App\Services\StorefrontCatalogService::navMenuItems());
         });
 
+        View::composer('frontend.layouts.app', function ($view) {
+            $prompt = null;
+            $user = Auth::user();
+
+            if ($user && ! $user->is_staff && $user->customer) {
+                $skip = request()->routeIs(
+                    'checkout.index',
+                    'account.reviews',
+                    'login',
+                    'register',
+                    'password.request',
+                    'password.email',
+                    'password.reset',
+                    'password.update',
+                    'password.otp',
+                    'password.otp.verify',
+                    'password.otp.resend',
+                );
+
+                if (! $skip) {
+                    $prompt = app(\App\Services\ReviewService::class)->pendingPrompt(
+                        $user->customer,
+                        (array) session('review_prompt_later', [])
+                    );
+                }
+            }
+
+            if (is_array($prompt)) {
+                $prompt['store_url'] = route('account.reviews.store');
+                $prompt['later_url'] = route('account.reviews.later');
+            }
+
+            $view->with('deliveryReviewPrompt', $prompt);
+        });
+
         View::composer('admin.layouts.app', function ($view) {
             $user = Auth::user();
             if (! $user || ! $user->is_staff) {

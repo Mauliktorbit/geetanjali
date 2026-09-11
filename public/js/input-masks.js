@@ -172,6 +172,19 @@
             return;
         }
 
+        if (kind === 'datedmy') {
+            limitLength(el, 10);
+            var day = digits(el.value, 8);
+            if (day.length > 4) {
+                el.value = day.slice(0, 2) + '/' + day.slice(2, 4) + '/' + day.slice(4);
+            } else if (day.length > 2) {
+                el.value = day.slice(0, 2) + '/' + day.slice(2);
+            } else {
+                el.value = day;
+            }
+            return;
+        }
+
         if (kind === 'integer' || kind === 'decimal') {
             sanitizeNumberValue(el, kind === 'decimal');
         }
@@ -197,7 +210,7 @@
             return;
         }
 
-        if (kind === 'phone' || kind === 'pincode' || kind === 'otp' || kind === 'digits4' || kind === 'digits' || kind === 'integer') {
+        if (kind === 'phone' || kind === 'pincode' || kind === 'otp' || kind === 'digits4' || kind === 'digits' || kind === 'integer' || kind === 'datedmy') {
             if (kind === 'integer' && event.key === '-' && allowsMinus(el)) {
                 return;
             }

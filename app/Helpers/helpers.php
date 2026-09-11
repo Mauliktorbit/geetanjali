@@ -131,3 +131,60 @@ if (! function_exists('indian_pincode_rules')) {
         ];
     }
 }
+
+if (! function_exists('parse_dmy')) {
+    function parse_dmy(mixed $value, bool $endOfDay = false): ?\Carbon\Carbon
+    {
+        $value = trim((string) $value);
+        if ($value === '' || ! preg_match('/^(\d{2})\/(\d{2})\/(\d{4})$/', $value, $parts)) {
+            return null;
+        }
+
+        $day = (int) $parts[1];
+        $month = (int) $parts[2];
+        $year = (int) $parts[3];
+
+        if ($year < 2000 || $year > 2100 || ! checkdate($month, $day, $year)) {
+            return null;
+        }
+
+        $date = \Carbon\Carbon::create($year, $month, $day);
+
+        return $endOfDay ? $date->endOfDay() : $date->startOfDay();
+    }
+}
+
+if (! function_exists('dmy_date_rules')) {
+    /**
+     * @return list<mixed>
+     */
+    function dmy_date_rules(bool $required = false, ?string $afterOrEqual = null): array
+    {
+        $rules = [
+            $required ? 'required' : 'nullable',
+            'regex:/^\d{2}\/\d{2}\/\d{4}$/',
+            function (string $attribute, mixed $value, \Closure $fail): void {
+                if ($value === null || trim((string) $value) === '') {
+                    return;
+                }
+
+                if (parse_dmy($value) === null) {
+                    $fail('Enter a valid date as DD/MM/YYYY, for example 26/12/2026.');
+                }
+            },
+        ];
+
+        if ($afterOrEqual) {
+            $rules[] = function (string $attribute, mixed $value, \Closure $fail) use ($afterOrEqual): void {
+                $end = parse_dmy($value);
+                $start = parse_dmy(request()->input($afterOrEqual));
+
+                if ($end && $start && $end->lt($start)) {
+                    $fail('End date must be on or after the start date.');
+                }
+            };
+        }
+
+        return $rules;
+    }
+}

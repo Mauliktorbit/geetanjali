@@ -14,6 +14,8 @@ use App\Http\Controllers\Frontend\NewArrivalsController;
 use App\Http\Controllers\Frontend\OfferController;
 use App\Http\Controllers\Frontend\PageController;
 use App\Http\Controllers\Frontend\ProductController;
+use App\Http\Controllers\Frontend\ReviewController;
+use App\Http\Controllers\Frontend\SearchController;
 use App\Http\Controllers\Frontend\WishlistController;
 use Illuminate\Support\Facades\Route;
 
@@ -37,6 +39,7 @@ Route::post('/newsletter', [PageController::class, 'newsletter'])->name('newslet
 Route::get('/kundan', [CollectionController::class, 'kundan'])->name('collections.kundan');
 Route::get('/bridal-collection', [BridalCollectionController::class, 'index'])->name('collections.bridal');
 Route::get('/new-arrivals', [NewArrivalsController::class, 'index'])->name('products.new-arrivals');
+Route::get('/search', [SearchController::class, 'index'])->name('search');
 Route::get('/collection/{slug}', [CollectionController::class, 'show'])->name('collections.show');
 Route::get('/offers', [OfferController::class, 'index'])->name('offers.index');
 
@@ -75,6 +78,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/my-account/notifications', [AccountController::class, 'notifications'])->name('account.notifications');
     Route::put('/my-account/notifications', [AccountController::class, 'updateNotifications'])->name('account.notifications.update');
     Route::get('/my-account/coupons', [AccountController::class, 'coupons'])->name('account.coupons');
+    Route::get('/my-account/reviews', [ReviewController::class, 'index'])->name('account.reviews');
+    Route::post('/my-account/reviews', [ReviewController::class, 'store'])->name('account.reviews.store');
+    Route::post('/my-account/reviews/later', [ReviewController::class, 'later'])->name('account.reviews.later');
     Route::get('/my-account/returns', [AccountController::class, 'returns'])->name('account.returns');
     Route::get('/my-account/returns/{returnNumber}', [AccountController::class, 'showReturn'])->name('account.returns.show');
     Route::get('/my-account/rewards', [AccountController::class, 'rewards'])->name('account.rewards');

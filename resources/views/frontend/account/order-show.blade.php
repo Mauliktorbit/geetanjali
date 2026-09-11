@@ -52,6 +52,9 @@
 
     <div class="account-order-actions">
         <a class="account-ghost-btn" href="{{ route('pages.track-order') }}?order={{ $order->order_number }}">Track Order</a>
+        @if (($reviewProducts ?? collect())->isNotEmpty())
+            <a class="account-ghost-btn" href="{{ route('account.reviews') }}">Write a review</a>
+        @endif
         <a class="account-text-link" href="{{ route('account.orders') }}">Back to orders</a>
     </div>
 </section>

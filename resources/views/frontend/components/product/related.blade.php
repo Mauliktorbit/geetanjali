@@ -22,10 +22,6 @@
                 <div class="related-card__body">
                     <h3>{{ $card['name'] }}</h3>
                     <div class="price">₹{{ number_format($card['price'] ?? 0) }}</div>
-                    <div class="meta">
-                        <span class="stars" aria-hidden="true">★★★★★</span>
-                        ({{ $card['review_count'] ?? 0 }})
-                    </div>
                 </div>
             </a>
         @endforeach

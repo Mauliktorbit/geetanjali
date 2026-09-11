@@ -64,9 +64,16 @@
     <div class="nav-section-label">Marketing</div>
 
     <div class="nav-item">
-        <a href="{{ $adminRoute('admin.coupons.index') }}" class="nav-link {{ $isActive('admin.coupons.*', 'admin.offers.*', 'admin.flash-sales.*') ? 'active' : '' }}">
+        <a href="{{ $adminRoute('admin.offers.index') }}" class="nav-link {{ $isActive('admin.offers.*') ? 'active' : '' }}">
+            <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M20 12v10H4V12"/><path d="M2 7h20v5H2z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg></span>
+            <span class="nav-label">Offers</span>
+        </a>
+    </div>
+
+    <div class="nav-item">
+        <a href="{{ $adminRoute('admin.coupons.index') }}" class="nav-link {{ $isActive('admin.coupons.*', 'admin.flash-sales.*') ? 'active' : '' }}">
             <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><circle cx="7" cy="7" r="1.5"/></svg></span>
-            <span class="nav-label">Offers &amp; Coupons</span>
+            <span class="nav-label">Coupons</span>
         </a>
     </div>
 

@@ -8,6 +8,7 @@ window.Geetanjali = Object.assign(window.Geetanjali || {}, {
         wishlistToggle: @json(\Illuminate\Support\Facades\Route::has('wishlist.toggle') ? route('wishlist.toggle') : ''),
         checkout: @json(route('checkout.index')),
     },
+    deliveryReview: @json($deliveryReviewPrompt ?? null),
 });
 </script>
 <script src="{{ asset('public/assets/js/bootstrap.bundle.min.js') }}"></script>
@@ -15,7 +16,8 @@ window.Geetanjali = Object.assign(window.Geetanjali || {}, {
 <script src="{{ asset('js/sweet-alerts.js') }}?v={{ filemtime(public_path('js/sweet-alerts.js')) }}"></script>
 <script src="{{ asset('js/input-masks.js') }}?v={{ filemtime(public_path('js/input-masks.js')) }}"></script>
 <script src="{{ asset('js/password-toggle.js') }}?v={{ filemtime(public_path('js/password-toggle.js')) }}"></script>
-<script src="{{ asset('public/assets/js/app.js') }}"></script>
+<script src="{{ asset('js/delivery-review.js') }}?v={{ filemtime(public_path('js/delivery-review.js')) }}"></script>
+<script src="{{ asset('public/assets/js/app.js') }}?v=20260911a"></script>
 <script src="{{ asset('public/assets/js/storefront.js') }}?v=20260910a"></script>
 <script src="{{ asset('public/assets/js/home.js') }}"></script>
 <script src="{{ asset('public/assets/js/product.js') }}?v=20260910a"></script>

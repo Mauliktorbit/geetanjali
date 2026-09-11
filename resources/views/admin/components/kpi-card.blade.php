@@ -6,9 +6,11 @@
     $trendText = $trendText ?? null;
     $variant = $variant ?? 'default'; // default|success|warning|danger|info
     $icon = $icon ?? null;
+    $url = $url ?? null;
     $variantClass = $variant !== 'default' ? 'kpi-' . $variant : '';
+    $tag = $url ? 'a' : 'div';
 @endphp
-<div class="kpi-card {{ $variantClass }}">
+<{{ $tag }} @if ($url) href="{{ $url }}" @endif class="kpi-card {{ $url ? 'kpi-card--link' : '' }} {{ $variantClass }}">
     @if ($icon)
         <div class="kpi-icon">{!! $icon !!}</div>
     @endif
@@ -28,4 +30,4 @@
             @endif
         </div>
     @endif
-</div>
+</{{ $tag }}>

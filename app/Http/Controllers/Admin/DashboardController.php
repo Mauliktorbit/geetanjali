@@ -3,41 +3,26 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Services\DashboardService;
-use App\Services\ReportService;
 use Illuminate\Http\Request;
 
 class DashboardController extends AdminController
 {
     public function __construct(
-        protected DashboardService $dashboardService,
-        protected ReportService $reportService
+        protected DashboardService $dashboardService
     ) {}
 
     public function index(Request $request)
     {
-        $kpis = $this->dashboardService->getKpis();
+        $overview = $this->dashboardService->overview();
 
-        $salesChart = $this->reportService->salesReport([
-            'date_from' => now()->subDays(29)->toDateString(),
-            'date_to' => now()->toDateString(),
-            'group_by' => 'day',
-        ]);
-
-        $orderStatusChart = collect($kpis['order_status_counts'] ?? [])
-            ->map(fn ($total, $status) => ['status' => $status, 'total' => (int) $total])
-            ->values();
-
-        $paymentMethodChart = $kpis['revenue_by_payment_method'] ?? collect();
-        $bestSellers = $kpis['best_sellers'] ?? collect();
-        $recentOrders = $kpis['recent_orders'] ?? collect();
+        $hour = now()->hour;
+        $greeting = $hour < 12 ? 'Good morning' : ($hour < 17 ? 'Good afternoon' : 'Good evening');
+        $adminName = trim((string) strtok((string) (auth()->user()?->name ?? 'Admin'), ' ')) ?: 'Admin';
 
         return view('admin.dashboard.index', compact(
-            'kpis',
-            'salesChart',
-            'orderStatusChart',
-            'paymentMethodChart',
-            'bestSellers',
-            'recentOrders'
+            'overview',
+            'greeting',
+            'adminName'
         ));
     }
 }

@@ -12,6 +12,9 @@
 
     <link rel="icon" type="image/png" href="{{ asset('public/assets/images/logo/geetanjali-logo-header.png') }}">
     <link rel="stylesheet" href="{{ asset('css/admin.css') }}?v={{ filemtime(public_path('css/admin.css')) }}">
+    <style>
+      .page-loader{position:fixed;inset:0;z-index:5000;display:grid;place-items:center;background:rgba(250,248,242,.92)}
+    </style>
     @stack('styles')
 </head>
 <body>
@@ -99,9 +102,9 @@
                     <div class="dropdown-menu" data-dropdown-menu>
                         <a href="{{ $adminRoute('admin.profile.edit') }}">Profile</a>
                         <div class="dropdown-divider"></div>
-                        <form method="POST" action="{{ $adminRoute('admin.logout') }}" data-no-loading>
+                        <form method="POST" action="{{ $adminRoute('admin.logout') }}" data-no-loading data-confirm="Log out? You will need to sign in again to open the admin panel.">
                             @csrf
-                            <button type="submit">Sign out</button>
+                            <button type="submit" data-confirm="Log out? You will need to sign in again to open the admin panel.">Sign out</button>
                         </form>
                     </div>
                 </div>
@@ -123,8 +126,16 @@
 
 @include('admin.components.confirm-modal')
 
-<div class="page-loader" aria-hidden="true">
-    <div class="spinner spinner-lg"></div>
+<div class="page-loader is-active" id="admin-page-loader" role="status" aria-live="polite" aria-busy="true">
+    <div class="page-loader__bar" aria-hidden="true"></div>
+    <div class="page-loader__inner">
+        <div class="page-loader__spinner" aria-hidden="true">
+            <span class="page-loader__orbit"></span>
+            <span class="page-loader__orbit page-loader__orbit--inner"></span>
+            <span class="page-loader__dot"></span>
+        </div>
+        <p class="page-loader__text">Loading<span>.</span><span>.</span><span>.</span></p>
+    </div>
 </div>
 
 <script id="admin-flash-data" type="application/json">
