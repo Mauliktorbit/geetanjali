@@ -194,7 +194,7 @@
     font-size: 13.5px;
     color: #333;
     background: #fff;
-    transition: border-color 0.25s ease, box-shadow 0.25s ease;
+    transition: border-color 0.25s ease, box-shadow 0.25s ease, background-color 0.22s ease;
 }
 
 .auth-input input:focus {

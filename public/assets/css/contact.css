@@ -200,7 +200,7 @@
     font-family: var(--font-body);
     background: #fff;
     color: #17201d;
-    transition: border-color 0.25s ease, box-shadow 0.25s ease;
+    transition: border-color 0.25s ease, box-shadow 0.25s ease, background-color 0.22s ease;
 }
 
 .contact-form textarea {

@@ -55,6 +55,7 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="{{ asset('js/sweet-alerts.js') }}?v={{ filemtime(public_path('js/sweet-alerts.js')) }}"></script>
 <script src="{{ asset('js/input-masks.js') }}?v={{ filemtime(public_path('js/input-masks.js')) }}"></script>
+<script src="{{ asset('js/input-filled.js') }}?v={{ filemtime(public_path('js/input-filled.js')) }}"></script>
 <script src="{{ asset('js/password-toggle.js') }}?v={{ filemtime(public_path('js/password-toggle.js')) }}"></script>
 <script src="{{ asset('js/admin.js') }}"></script>
 @stack('scripts')
