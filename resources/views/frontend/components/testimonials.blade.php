@@ -2,9 +2,10 @@
 
 <section class="section testimonials" aria-labelledby="testimonials-heading">
     <div class="site-container">
-        <h2 id="testimonials-heading" class="section-title reveal">What Our Customers Say</h2>
+        <h2 id="testimonials-heading" class="section-title reveal">{{ count($testimonials) > 0 ? 'What Our Customers Say' : 'The Geetanjali Promise' }}</h2>
         <div class="section-divider reveal" aria-hidden="true"></div>
 
+        @if (count($testimonials) > 0)
         <div class="testimonial-grid">
             @foreach ($testimonials as $index => $item)
                 <article class="testimonial-card reveal" data-testimonial-card>
@@ -33,5 +34,21 @@
                 ></button>
             @endforeach
         </div>
+        @else
+        <div class="testimonial-grid">
+            <article class="testimonial-card reveal">
+                <strong>BIS Hallmarked Gold</strong>
+                <p>Every gold piece is hallmarked for purity, so you know exactly what you are taking home.</p>
+            </article>
+            <article class="testimonial-card reveal">
+                <strong>Made in Our Workshop</strong>
+                <p>Kundan jewellery crafted by our artisans in Ahmedabad, from design to the final setting.</p>
+            </article>
+            <article class="testimonial-card reveal">
+                <strong>Visit the Showroom</strong>
+                <p>Try on bridal and daily-wear pieces at PNTC Tower, Vejalpur. Mon–Sat, 10 AM to 7 PM.</p>
+            </article>
+        </div>
+        @endif
     </div>
 </section>

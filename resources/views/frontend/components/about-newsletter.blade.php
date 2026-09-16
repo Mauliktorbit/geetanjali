@@ -1,6 +1,6 @@
 @props([
-    'heading' => 'Stay Updated with Our Latest Collections & Offers',
-    'description' => 'Be the first to know about new arrivals, exclusive offers and more.',
+    'heading' => 'Stay Updated with Our Latest Collections',
+    'description' => 'Be the first to know about new arrivals and jewellery stories.',
     'image' => 'public/assets/images/about/newsletter-gift.jpg',
 ])
 

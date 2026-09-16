@@ -48,7 +48,7 @@
             <input type="hidden" name="view" value="{{ $filters['view'] ?? 'grid' }}" data-view-input>
 
             <label for="na-sort" class="na-sort-label">Sort by:</label>
-            <select id="na-sort" name="sort" class="na-select" data-auto-submit>
+            <select id="na-sort" name="sort" class="na-select" data-auto-submit onchange="this.form.dataset.listingSubmitting='1'; this.form.submit()">
                 <option value="newest" @selected(($filters['sort'] ?? '') === 'newest')>Newest First</option>
                 <option value="price_low" @selected(($filters['sort'] ?? '') === 'price_low')>Price: Low to High</option>
                 <option value="price_high" @selected(($filters['sort'] ?? '') === 'price_high')>Price: High to Low</option>

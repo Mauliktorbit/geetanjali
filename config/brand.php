@@ -13,8 +13,8 @@ return [
     'logo' => 'public/assets/images/logo/geetanjali-logo-header.png',
 
     'promo' => [
-        'message' => 'FLAT 10% OFF ON DIAMOND JEWELLERY | Use Code: GEET10',
-        'code' => 'GEET10',
+        'message' => 'HANDCRAFTED KUNDAN, GOLD & DIAMOND JEWELLERY',
+        'code' => '',
     ],
 
     'contact' => [

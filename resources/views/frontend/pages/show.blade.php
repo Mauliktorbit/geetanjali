@@ -29,9 +29,6 @@
                         Get Directions
                     </a>
                     <a href="{{ route('contact') }}" class="static-page__btn">Contact Us</a>
-                @elseif (($slug ?? '') === 'compare')
-                    <a href="{{ route('wishlist.index') }}" class="static-page__btn static-page__btn--primary">Go to Wishlist</a>
-                    <a href="{{ route('products.new-arrivals') }}" class="static-page__btn">Browse New Arrivals</a>
                 @elseif (($slug ?? '') === 'help')
                     <a href="{{ route('pages.faq') }}" class="static-page__btn static-page__btn--primary">View FAQs</a>
                     <a href="{{ route('contact') }}" class="static-page__btn">Contact Us</a>

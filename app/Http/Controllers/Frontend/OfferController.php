@@ -3,23 +3,20 @@
 namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
-use App\Models\OfferCategory;
 use App\Services\OfferService;
-use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class OfferController extends Controller
 {
     public function __construct(protected OfferService $offers) {}
 
-    public function index(Request $request): View
+    public function index(): View
     {
-        $category = OfferCategory::normalize($request->input('category', 'all'));
-
         return view('frontend.offers.index', [
-            'offers' => $this->offers->forStorefront($category),
-            'activeCategory' => $category,
-            'filterTabs' => OfferCategory::tabs(),
+            'offers' => $this->offers->forStorefront(),
+            'highlights' => $this->highlights(),
+            'activeCategory' => 'all',
+            'filterTabs' => [],
             'benefits' => $this->benefits(),
             'terms' => $this->terms(),
             'hero' => [
@@ -61,6 +58,43 @@ class OfferController extends Controller
             ['icon' => 'bi-truck', 'text' => "Discounts are applied\non MRP"],
             ['icon' => 'bi-clock-history', 'text' => "Offers valid for limited\nperiod only"],
             ['icon' => 'bi-bag-check', 'text' => "Geetanjali Jewellers\nreserves the right to\nmodify/withdraw offers"],
+        ];
+    }
+
+    /**
+     * @return list<array<string, string>>
+     */
+    private function highlights(): array
+    {
+        return [
+            [
+                'title' => 'Kundan Collection',
+                'text' => 'Handcrafted kundan sets, earrings and bridal pieces made in our workshop.',
+                'cta' => 'Explore Kundan',
+                'url' => route('collections.kundan'),
+                'image' => 'public/assets/images/offers/kundan.jpg',
+            ],
+            [
+                'title' => 'Bridal Jewellery',
+                'text' => 'Complete bridal jewellery for the wedding day, from necklace sets to bangles.',
+                'cta' => 'View Bridal',
+                'url' => route('collections.bridal'),
+                'image' => 'public/assets/images/occasions/wedding.jpg',
+            ],
+            [
+                'title' => 'New Arrivals',
+                'text' => 'See the latest gold, kundan and diamond pieces added to the store.',
+                'cta' => 'Shop New Arrivals',
+                'url' => route('products.new-arrivals'),
+                'image' => 'public/assets/images/offers/gold.jpg',
+            ],
+            [
+                'title' => 'Visit Our Showroom',
+                'text' => 'Try pieces in person at our Ahmedabad showroom. Mon–Sat, 10 AM to 7 PM.',
+                'cta' => 'Get Directions',
+                'url' => route('contact'),
+                'image' => 'public/assets/images/offers/diamond.jpg',
+            ],
         ];
     }
 }

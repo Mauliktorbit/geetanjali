@@ -6,16 +6,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const page = document.querySelector('[data-new-arrivals-page]');
     if (!page) return;
 
-    initAutoSubmit(page);
     initViewToggle(page);
     initDrawer();
 });
-
-function initAutoSubmit(page) {
-    page.querySelectorAll('[data-auto-submit]').forEach((el) => {
-        el.addEventListener('change', () => el.closest('form')?.submit());
-    });
-}
 
 function initViewToggle(page) {
     const grid = page.querySelector('[data-na-grid]');

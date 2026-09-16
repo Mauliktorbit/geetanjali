@@ -50,12 +50,25 @@ class WishlistService
 
     public function count(): int
     {
+        return count($this->productIds());
+    }
+
+    /**
+     * @return list<int>
+     */
+    public function productIds(): array
+    {
         $customer = $this->customer();
         if ($customer) {
-            return Wishlist::query()->where('customer_id', $customer->id)->count();
+            return Wishlist::query()
+                ->where('customer_id', $customer->id)
+                ->pluck('product_id')
+                ->map(fn ($id) => (int) $id)
+                ->values()
+                ->all();
         }
 
-        return count($this->sessionMap());
+        return array_values(array_map('intval', array_keys($this->sessionMap())));
     }
 
     public function add(int $productId, array $snapshot = []): bool
@@ -78,7 +91,7 @@ class WishlistService
 
         $list = $this->sessionMap();
         $list[(string) $productId] = $product;
-            Session::put(self::SESSION_KEY, $list);
+        $this->putSession($list);
 
         return true;
     }
@@ -97,7 +110,7 @@ class WishlistService
 
         $list = $this->sessionMap();
         unset($list[(string) $productId]);
-        Session::put(self::SESSION_KEY, $list);
+        $this->putSession($list);
     }
 
     /**
@@ -151,7 +164,7 @@ class WishlistService
 
     public function clear(): void
     {
-        Session::put(self::SESSION_KEY, []);
+        $this->putSession([]);
         $customer = $this->customer();
         if ($customer) {
             Wishlist::query()->where('customer_id', $customer->id)->delete();
@@ -251,6 +264,14 @@ class WishlistService
         $raw = Session::get(self::SESSION_KEY, []);
 
         return is_array($raw) ? $raw : [];
+    }
+
+    /**
+     * @param  array<string, array<string, mixed>>  $list
+     */
+    private function putSession(array $list): void
+    {
+        Session::put(self::SESSION_KEY, $list);
     }
 
     private function forgetSession(): void

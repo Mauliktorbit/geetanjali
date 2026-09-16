@@ -69,7 +69,7 @@
 .na-hero__content h1 {
     margin: 0;
     font-size: 42px;
-    font-weight: 600;
+    font-weight: 700;
     color: #16352d;
     line-height: 1.1;
 }
@@ -82,7 +82,8 @@
 
 .na-hero__content p {
     margin: 18px 0 0;
-    font-size: 13px;
+    font-size: 16px;
+    font-weight: 600;
     color: #333;
 }
 
@@ -105,7 +106,8 @@
 
 .na-toolbar__count {
     margin: 0;
-    font-size: 12.5px;
+    font-size: 14px;
+    font-weight: 600;
     color: #333;
     text-align: center;
     white-space: nowrap;
@@ -272,8 +274,8 @@
 }
 
 .new-arrivals-page .product-card__name {
-    font-size: 13.5px;
-    font-weight: 600;
+    font-size: 16px;
+    font-weight: 700;
     color: #222;
     min-height: 2.5em;
     margin-bottom: 0.35rem;
@@ -284,8 +286,8 @@
 }
 
 .new-arrivals-page .price-current {
-    font-size: 13.5px;
-    font-weight: 600;
+    font-size: 16.5px;
+    font-weight: 700;
     color: #111;
 }
 
@@ -300,7 +302,13 @@
 }
 
 .new-arrivals-page .product-card__pricing {
-    justify-content: flex-start;
+    justify-content: space-between;
+}
+
+.na-grid--list .product-card__actions {
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
 }
 
 /* ----- Pagination ----- */
@@ -347,13 +355,15 @@
 .search-page__head h1 {
     margin: 0 0 0.35rem;
     font-size: clamp(26px, 4vw, 34px);
+    font-weight: 700;
     color: #16352d;
 }
 
 .search-page__head p {
     margin: 0;
     color: #666;
-    font-size: 14px;
+    font-size: 16px;
+    font-weight: 600;
 }
 
 .search-page__head strong { color: #16352d; }
@@ -368,13 +378,15 @@
 .na-empty h2 {
     margin: 0 0 0.5rem;
     font-size: 28px;
+    font-weight: 700;
     color: #16352d;
 }
 
 .na-empty p {
     margin: 0 0 1.25rem;
     color: #666;
-    font-size: 13.5px;
+    font-size: 16px;
+    font-weight: 600;
 }
 
 .na-btn {
@@ -680,11 +692,13 @@
     }
 
     .new-arrivals-page .product-card__name {
-        font-size: 12.5px;
+        font-size: 15px;
+        font-weight: 700;
     }
 
     .new-arrivals-page .price-current {
-        font-size: 12.5px;
+        font-size: 15.5px;
+        font-weight: 700;
     }
 
     .new-arrivals-page .product-card__rating {

@@ -13,7 +13,7 @@
 
         @include('frontend.components.new-arrivals.hero', ['hero' => $hero])
 
-        <section class="na-listing" aria-label="New arrival products">
+        <section class="na-listing" id="collection-products" aria-label="New arrival products">
             <div class="na-container">
                 @include('frontend.components.new-arrivals.toolbar', [
                     'filters' => $filters,
@@ -23,15 +23,12 @@
                 @if ($products->count() > 0)
                     <div class="na-grid {{ $viewMode === 'list' ? 'na-grid--list' : '' }}" data-na-grid>
                         @foreach ($products as $product)
-                            @include('frontend.components.product-card', [
-                                'product' => $product,
-                                'showCart' => false,
-                            ])
+                            @include('frontend.components.product-card', ['product' => $product])
                         @endforeach
                     </div>
 
                     <div class="na-pagination">
-                        {{ $products->links('pagination::bootstrap-5') }}
+                        {{ $products->fragment('collection-products')->links('pagination::bootstrap-5') }}
                     </div>
                 @else
                     <div class="na-empty">

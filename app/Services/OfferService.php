@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Offer;
 use App\Models\OfferCategory;
+use App\Models\Coupon;
 use App\Repositories\OfferRepository;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
@@ -18,23 +19,12 @@ class OfferService extends BaseService
 
     public function forStorefront(?string $category = 'all'): Collection
     {
-        $category = OfferCategory::normalize($category);
-        $now = now();
-
-        return Offer::query()
-            ->with('coupon:id,code')
-            ->where('is_active', true)
-            ->where(function ($query) use ($now) {
-                $query->whereNull('starts_at')->orWhere('starts_at', '<=', $now);
-            })
-            ->where(function ($query) use ($now) {
-                $query->whereNull('ends_at')->orWhere('ends_at', '>=', $now);
-            })
-            ->when($category !== 'all', fn ($query) => $query->where('category', $category))
-            ->orderBy('sort_order')
-            ->orderByDesc('id')
+        return Coupon::query()
+            ->available()
+            ->latest('id')
             ->get()
-            ->map(fn (Offer $offer) => $offer->toCardArray());
+            ->values()
+            ->map(fn (Coupon $coupon, int $index) => $coupon->toStorefrontCard($index));
     }
 
     public function save(array $data, ?Offer $offer = null): Offer

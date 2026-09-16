@@ -69,9 +69,24 @@ class AppServiceProvider extends ServiceProvider
         });
 
         View::composer('frontend.components.navbar', function ($view) {
+            $wishlist = app(WishlistService::class);
+            $ids = $wishlist->productIds();
             $view->with('cartCount', app(CartService::class)->count());
-            $view->with('wishlistCount', app(WishlistService::class)->count());
+            $view->with('wishlistCount', count($ids));
+            $view->with('wishlistProductIds', $ids);
             $view->with('navItems', \App\Services\StorefrontCatalogService::navMenuItems());
+        });
+
+        View::composer([
+            'frontend.components.product-card',
+            'frontend.components.product.gallery',
+            'frontend.components.asset-scripts',
+        ], function ($view) {
+            static $ids;
+            if ($ids === null) {
+                $ids = app(WishlistService::class)->productIds();
+            }
+            $view->with('wishlistProductIds', $ids);
         });
 
         View::composer('frontend.layouts.app', function ($view) {

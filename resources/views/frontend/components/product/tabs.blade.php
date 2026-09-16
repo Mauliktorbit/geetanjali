@@ -29,7 +29,7 @@
                     <ul>
                         <li><i class="bi bi-award" aria-hidden="true"></i><span>100% Hallmarked & Certified Jewellery</span></li>
                         <li><i class="bi bi-stars" aria-hidden="true"></i><span>Exquisite Craftsmanship</span></li>
-                        <li><i class="bi bi-people" aria-hidden="true"></i><span>Trusted by 1L+ Happy Customers</span></li>
+                        <li><i class="bi bi-geo-alt" aria-hidden="true"></i><span>Visit our Ahmedabad showroom</span></li>
                         <li><i class="bi bi-headset" aria-hidden="true"></i><span>Lifetime Maintenance & Support</span></li>
                     </ul>
                 </aside>

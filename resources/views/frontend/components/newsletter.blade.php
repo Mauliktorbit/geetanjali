@@ -2,8 +2,8 @@
     <div class="site-container">
         <div class="newsletter__inner">
             <div class="newsletter__copy">
-                <h2 id="newsletter-heading" class="font-heading">Get 10% Off on Your First Order!</h2>
-                <p>Subscribe for jewellery tips, latest arrivals and exclusive offers.</p>
+                <h2 id="newsletter-heading" class="font-heading">Stay Close to Geetanjali</h2>
+                <p>Subscribe for new arrivals, jewellery stories and collection updates.</p>
             </div>
 
             <form class="newsletter__form" action="{{ route('newsletter.subscribe') }}" method="post" aria-label="Newsletter subscription">

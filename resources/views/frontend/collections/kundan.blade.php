@@ -17,7 +17,7 @@
 
         @include('frontend.components.collection.intro')
 
-        <section class="kundan-listing" aria-label="Kundan products">
+        <section class="kundan-listing" id="collection-products" aria-label="Kundan products">
             <div class="site-container">
                 <div class="kundan-listing__toolbar d-lg-none">
                     <button type="button" class="kundan-filter-toggle" data-filter-open aria-controls="kundanFilterDrawer" aria-expanded="false">
@@ -40,7 +40,7 @@
                             <input type="hidden" name="category" value="{{ $filters['category'] }}">
                         @endif
                         <label class="visually-hidden" for="kundan-sort-mobile">Sort by</label>
-                        <select id="kundan-sort-mobile" name="sort" class="kundan-sort-select" data-auto-submit>
+                        <select id="kundan-sort-mobile" name="sort" class="kundan-sort-select" data-auto-submit onchange="this.form.dataset.listingSubmitting='1'; this.form.submit()">
                             <option value="popularity" @selected($filters['sort'] === 'popularity')>Popularity</option>
                             <option value="newest" @selected($filters['sort'] === 'newest')>Newest</option>
                             <option value="price_low" @selected($filters['sort'] === 'price_low')>Price Low to High</option>
@@ -87,7 +87,7 @@
                                     <input type="hidden" name="category" value="{{ $filters['category'] }}">
                                 @endif
                                 <label for="kundan-sort">Sort by:</label>
-                                <select id="kundan-sort" name="sort" class="kundan-sort-select" data-auto-submit>
+                                <select id="kundan-sort" name="sort" class="kundan-sort-select" data-auto-submit onchange="this.form.dataset.listingSubmitting='1'; this.form.submit()">
                                     <option value="popularity" @selected($filters['sort'] === 'popularity')>Popularity</option>
                                     <option value="newest" @selected($filters['sort'] === 'newest')>Newest</option>
                                     <option value="price_low" @selected($filters['sort'] === 'price_low')>Price Low to High</option>
@@ -105,7 +105,7 @@
                             </div>
 
                             <div class="kundan-pagination">
-                                {{ $products->links('pagination::bootstrap-5') }}
+                                {{ $products->fragment('collection-products')->links('pagination::bootstrap-5') }}
                             </div>
                         @else
                             <div class="kundan-empty">

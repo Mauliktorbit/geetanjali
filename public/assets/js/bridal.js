@@ -6,18 +6,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const page = document.querySelector('[data-bridal-page]');
     if (!page) return;
 
-    initAutoSubmit();
     initViewToggle(page);
     initDrawer();
 });
-
-function initAutoSubmit() {
-    document.querySelectorAll('[data-bridal-page] [data-auto-submit], [data-bridal-drawer] [data-auto-submit]').forEach((el) => {
-        el.addEventListener('change', () => {
-            el.closest('form')?.submit();
-        });
-    });
-}
 
 function initViewToggle(page) {
     const grid = page.querySelector('[data-bridal-grid]');

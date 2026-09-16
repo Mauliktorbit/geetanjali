@@ -61,7 +61,6 @@
                             <li><a href="{{ auth()->check() ? route('account.index') : route('login') }}">My Account</a></li>
                             <li><a href="{{ auth()->check() ? route('account.orders') : route('login') }}">My Orders</a></li>
                             <li><a href="{{ route('wishlist.index') }}">Wishlist</a></li>
-                            <li><a href="{{ route('pages.compare') }}">Compare</a></li>
                             <li><a href="{{ route('pages.privacy') }}">Privacy Policy</a></li>
                             @auth
                                 <li>

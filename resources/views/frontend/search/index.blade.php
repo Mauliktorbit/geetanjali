@@ -7,7 +7,7 @@
 <div class="new-arrivals-page search-page">
     @include('frontend.components.breadcrumb', ['items' => $breadcrumb])
 
-    <section class="na-listing" aria-label="Search results">
+    <section class="na-listing" id="collection-products" aria-label="Search results">
         <div class="na-container">
             <header class="search-page__head">
                 <h1 class="font-heading">
@@ -37,14 +37,11 @@
             @elseif ($products->count() > 0)
                 <div class="na-grid">
                     @foreach ($products as $product)
-                        @include('frontend.components.product-card', [
-                            'product' => $product,
-                            'showCart' => false,
-                        ])
+                        @include('frontend.components.product-card', ['product' => $product])
                     @endforeach
                 </div>
                 <div class="na-pagination">
-                    {{ $products->links('pagination::bootstrap-5') }}
+                    {{ $products->fragment('collection-products')->links('pagination::bootstrap-5') }}
                 </div>
             @else
                 <div class="na-empty">

@@ -374,7 +374,7 @@ class StorefrontCatalogService
 
         $type = [];
         foreach (self::jewelleryTypeSlugs() as $key) {
-            $type[$key] = $catalog->filter(fn (Product $p) => $this->typeKey($p) === $key)->count();
+            $type[$key] = $catalog->filter(fn (Product $p) => $this->matchesType($p, $key))->count();
         }
 
         $metal = [];
@@ -551,7 +551,19 @@ class StorefrontCatalogService
     public function applyFilters(Builder $query, array $filters): void
     {
         if (! empty($filters['type'])) {
-            $query->whereHas('category', fn (Builder $q) => $q->whereIn('slug', $filters['type']));
+            $slugs = $this->expandTypeSlugs($filters['type']);
+            $wantSets = collect($filters['type'])->contains(
+                fn ($type) => in_array((string) $type, ['sets', 'bridal-sets'], true)
+            );
+
+            $query->where(function (Builder $q) use ($slugs, $wantSets) {
+                if ($slugs !== []) {
+                    $q->whereHas('category', fn (Builder $category) => $category->whereIn('slug', $slugs));
+                }
+                if ($wantSets) {
+                    $q->orWhere('name', 'like', '%set%');
+                }
+            });
         }
 
         if (! empty($filters['metal'])) {
@@ -700,6 +712,52 @@ class StorefrontCatalogService
         return filled($slug) ? $slug : null;
     }
 
+    /**
+     * @param  list<string>  $types
+     * @return list<string>
+     */
+    private function expandTypeSlugs(array $types): array
+    {
+        $slugs = [];
+        foreach ($types as $type) {
+            $key = strtolower(trim((string) $type));
+            if ($key === '') {
+                continue;
+            }
+
+            $slugs[] = $key;
+            if ($key === 'earrings') {
+                $slugs[] = 'jhumkas';
+            } elseif ($key === 'jhumkas') {
+                $slugs[] = 'earrings';
+            } elseif ($key === 'sets' || $key === 'bridal-sets') {
+                $slugs[] = 'sets';
+                $slugs[] = 'bridal';
+            }
+        }
+
+        return array_values(array_unique($slugs));
+    }
+
+    private function matchesType(Product $product, string $key): bool
+    {
+        $slug = $this->typeKey($product);
+        if ($slug === $key) {
+            return true;
+        }
+        if ($key === 'earrings' && $slug === 'jhumkas') {
+            return true;
+        }
+        if ($key === 'jhumkas' && $slug === 'earrings') {
+            return true;
+        }
+        if (in_array($key, ['sets', 'bridal-sets'], true)) {
+            return $slug === 'sets' || $slug === 'bridal' || str_contains(strtolower($product->name), 'set');
+        }
+
+        return false;
+    }
+
     private function metalKey(Product $product): ?string
     {
         $haystack = strtolower(($product->purity ?? '').' '.($product->metal ?? ''));
@@ -774,7 +832,7 @@ class StorefrontCatalogService
                 ? $details
                 : 'Discover our stunning range of jewellery crafted in gold, kundan and diamonds.',
             'cta_label' => 'Explore Collection',
-            'cta_url' => $listingUrl.'#bridal-products',
+            'cta_url' => $listingUrl.'#collection-products',
             'image' => $collection->image
                 ? storefront_image($collection->image)
                 : asset('public/assets/images/collections/bridal/hero.jpg'),

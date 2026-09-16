@@ -103,23 +103,89 @@ function initRemove(page) {
 function initCoupon(page, couponUrl, csrf) {
     const form = page.querySelector('[data-coupon-form]');
     const msg = page.querySelector('[data-coupon-msg]');
+    const input = form?.querySelector('[name="coupon"]');
+    const list = page.querySelector('[data-coupon-list]');
+    const toggle = page.querySelector('[data-coupon-toggle]');
     if (!form) return;
+
+    const setMessage = (text, ok) => {
+        if (!msg) return;
+        msg.textContent = text || '';
+        if (ok == null) {
+            delete msg.dataset.success;
+            return;
+        }
+        msg.dataset.success = ok ? '1' : '0';
+    };
+
+    const markApplied = (code) => {
+        const applied = String(code || '').toUpperCase();
+        page.querySelectorAll('[data-coupon-card]').forEach((card) => {
+            const cardCode = (card.dataset.couponCode || '').toUpperCase();
+            const isOn = applied !== '' && cardCode === applied;
+            card.classList.toggle('is-applied', isOn);
+            const btn = card.querySelector('[data-coupon-apply], [data-coupon-remove]');
+            if (!btn || btn.disabled) return;
+            if (isOn) {
+                btn.textContent = 'Remove';
+                btn.removeAttribute('data-coupon-apply');
+                btn.setAttribute('data-coupon-remove', '');
+            } else {
+                btn.textContent = 'Apply';
+                btn.removeAttribute('data-coupon-remove');
+                btn.setAttribute('data-coupon-apply', card.dataset.couponCode || '');
+            }
+        });
+    };
+
+    const submitCode = async (code) => {
+        try {
+            const data = await postJson(couponUrl, { coupon: code }, csrf);
+            setMessage(data.message || '', Boolean(data.success));
+            if (data.cart) applySummary(page, data.cart);
+            if (input) input.value = data.code || code || '';
+            if (data.success) {
+                markApplied(data.code || code);
+            }
+            return data;
+        } catch {
+            setMessage('Unable to apply coupon. Please try again.', false);
+            return null;
+        }
+    };
+
+    toggle?.addEventListener('click', () => {
+        if (!list) return;
+        const open = list.hasAttribute('hidden');
+        if (open) {
+            list.removeAttribute('hidden');
+        } else {
+            list.setAttribute('hidden', '');
+        }
+        toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        const label = toggle.querySelector('[data-coupon-toggle-label]');
+        if (label) label.textContent = open ? 'Hide coupons' : 'View all coupons';
+    });
 
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const code = form.querySelector('[name="coupon"]')?.value || '';
-        try {
-            const data = await postJson(couponUrl, { coupon: code }, csrf);
-            if (msg) {
-                msg.textContent = data.message || '';
-                msg.dataset.success = data.success ? '1' : '0';
-            }
-            if (data.cart) applySummary(page, data.cart);
-        } catch {
-            if (msg) {
-                msg.textContent = 'Unable to apply coupon. Please try again.';
-                msg.dataset.success = '0';
-            }
+        await submitCode(input?.value || '');
+    });
+
+    page.querySelector('[data-cart-coupons]')?.addEventListener('click', async (event) => {
+        const applyBtn = event.target.closest('[data-coupon-apply]');
+        if (applyBtn) {
+            const code = applyBtn.getAttribute('data-coupon-apply') || '';
+            if (input) input.value = code;
+            await submitCode(code);
+            return;
+        }
+
+        const removeBtn = event.target.closest('[data-coupon-remove]');
+        if (removeBtn) {
+            if (input) input.value = '';
+            await submitCode('');
+            markApplied('');
         }
     });
 }

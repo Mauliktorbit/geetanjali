@@ -140,4 +140,73 @@ class Coupon extends Model
             default => 'active',
         };
     }
+
+    public function scopeAvailable($query)
+    {
+        $now = now();
+
+        return $query
+            ->where('is_active', true)
+            ->where(function ($inner) use ($now) {
+                $inner->whereNull('starts_at')->orWhere('starts_at', '<=', $now);
+            })
+            ->where(function ($inner) use ($now) {
+                $inner->whereNull('ends_at')->orWhere('ends_at', '>=', $now);
+            });
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function toCartListItem(float $subtotal = 0, ?string $appliedCode = null): array
+    {
+        $code = strtoupper((string) $this->code);
+        $min = (float) ($this->minimum_cart ?? 0);
+        $eligible = $min <= 0 || $subtotal >= $min;
+        $need = (! $eligible && $min > 0) ? max(0, $min - $subtotal) : 0;
+
+        return [
+            'code' => $code,
+            'name' => $this->name,
+            'discount' => $this->discountLabel(),
+            'valid_until' => $this->ends_at?->format('d M Y'),
+            'min_order' => $min > 0 ? money($min) : null,
+            'eligible' => $eligible,
+            'need_more' => $need > 0 ? money($need) : null,
+            'applied' => strtoupper((string) $appliedCode) === $code,
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function toStorefrontCard(int $index = 0): array
+    {
+        $images = [
+            'public/assets/images/offers/diamond.jpg',
+            'public/assets/images/offers/gold.jpg',
+            'public/assets/images/offers/kundan.jpg',
+            'public/assets/images/offers/prepaid.jpg',
+            'public/assets/images/occasions/festival.jpg',
+        ];
+
+        $percent = $this->typeKey() === 'percent';
+        $value = (float) $this->discount_value;
+        $clean = rtrim(rtrim(number_format($value, 2, '.', ''), '0'), '.');
+
+        return [
+            'id' => $this->id,
+            'theme' => $index % 2 === 0 ? 'dark' : 'light',
+            'category' => 'all',
+            'label' => 'Flat',
+            'discount_value' => $percent ? $clean.'%' : money($value),
+            'discount_suffix' => 'Off',
+            'title' => $this->name,
+            'promo_code' => strtoupper((string) $this->code),
+            'image' => $images[$index % count($images)],
+            'image_alt' => $this->name,
+            'valid_until' => $this->ends_at?->format('d M Y') ?: 'Limited period',
+            'min_order' => $this->minimum_cart ? 'Min. order '.money((float) $this->minimum_cart) : null,
+        ];
+    }
 }

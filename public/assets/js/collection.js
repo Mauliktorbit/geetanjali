@@ -3,12 +3,13 @@
  */
 
 document.addEventListener('DOMContentLoaded', () => {
+    initAutoSubmitFilters();
+
     const page = document.querySelector('[data-kundan-page]');
     if (!page) return;
 
     initPriceSliders();
     initFilterDrawer();
-    initAutoSubmitSort();
 });
 
 function formatInr(value) {
@@ -85,10 +86,19 @@ function initFilterDrawer() {
     });
 }
 
-function initAutoSubmitSort() {
-    document.querySelectorAll('[data-auto-submit]').forEach((select) => {
-        select.addEventListener('change', () => {
-            select.closest('form')?.submit();
+function initAutoSubmitFilters() {
+    document.querySelectorAll('[data-filter-form]').forEach((form) => {
+        let timer = null;
+        const submitForm = () => {
+            clearTimeout(timer);
+            timer = setTimeout(() => form.submit(), 280);
+        };
+
+        form.querySelectorAll('input[type="checkbox"], input[type="number"]').forEach((el) => {
+            el.addEventListener('change', submitForm);
+        });
+        form.querySelectorAll('input[type="range"]').forEach((el) => {
+            el.addEventListener('change', submitForm);
         });
     });
 }

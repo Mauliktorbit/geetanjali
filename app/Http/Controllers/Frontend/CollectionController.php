@@ -117,7 +117,7 @@ class CollectionController extends Controller
                 'label' => $category->name,
                 'image' => StorefrontCatalogService::categoryImage($key, $category->image ?? null),
                 'active' => $active === $key,
-                'url' => route('collections.kundan', ['category' => $key]),
+                'url' => route('collections.kundan', ['category' => $key]).'#collection-products',
             ];
         })->all();
     }

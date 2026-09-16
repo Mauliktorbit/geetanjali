@@ -90,17 +90,17 @@ class AboutController extends Controller
     }
 
     /**
-     * Placeholder trust metrics — easy to replace from CMS/database later.
+     * Real showroom and workshop facts — not placeholder metrics.
      *
      * @return list<array<string, string>>
      */
     private function stats(): array
     {
         return [
-            ['icon' => 'bi-shield-check', 'value' => '30+', 'label' => 'Years of Trust'],
-            ['icon' => 'bi-people', 'value' => '1,00,000+', 'label' => 'Happy Customers'],
-            ['icon' => 'bi-gem', 'value' => '10,000+', 'label' => 'Unique Designs'],
-            ['icon' => 'bi-geo-alt', 'value' => '25+', 'label' => 'Stores Across India'],
+            ['icon' => 'bi-geo-alt', 'value' => 'Ahmedabad', 'label' => 'Showroom at PNTC Tower, Vejalpur'],
+            ['icon' => 'bi-hammer', 'value' => 'Workshop', 'label' => 'Kundan jewellery crafted in-house'],
+            ['icon' => 'bi-patch-check', 'value' => 'Hallmarked', 'label' => 'BIS-certified gold in every piece'],
+            ['icon' => 'bi-clock', 'value' => 'Mon–Sat', 'label' => '10:00 AM – 7:00 PM'],
         ];
     }
 

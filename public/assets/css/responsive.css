@@ -171,27 +171,6 @@ iframe {
         ) !important;
     }
 
-    /* Home categories scroll on tablet too */
-    .category-track {
-        display: flex;
-        overflow-x: auto;
-        gap: 1rem;
-        padding-bottom: 8px;
-        scroll-snap-type: x mandatory;
-        -ms-overflow-style: none;
-        scrollbar-width: none;
-    }
-
-    .category-track::-webkit-scrollbar {
-        display: none;
-    }
-
-    .category-item {
-        flex: 0 0 auto;
-        width: 112px;
-        scroll-snap-align: start;
-    }
-
     .newsletter__form {
         width: 100%;
         max-width: 520px;

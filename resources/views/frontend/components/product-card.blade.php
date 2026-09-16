@@ -14,6 +14,7 @@
     $url = $product['url'] ?? (! empty($product['slug']) ? route('products.show', $product['slug']) : null);
     $outOfStock = ($product['stock_status'] ?? 'in_stock') === 'out_of_stock'
         || (isset($product['stock']) && (int) $product['stock'] <= 0);
+    $inWishlist = $productId && in_array((int) $productId, $wishlistProductIds ?? [], true);
 @endphp
 
 <article
@@ -58,9 +59,40 @@
                 height="400"
             >
         @endif
-        <button type="button" class="product-card__wishlist" aria-label="Add {{ $name }} to wishlist" data-wishlist-toggle>
-            <i class="bi bi-heart" aria-hidden="true"></i>
+        <button
+            type="button"
+            class="product-card__wishlist{{ $inWishlist ? ' is-active' : '' }}"
+            aria-label="{{ $inWishlist ? 'Remove '.$name.' from wishlist' : 'Add '.$name.' to wishlist' }}"
+            aria-pressed="{{ $inWishlist ? 'true' : 'false' }}"
+            data-wishlist-toggle
+            @if ($productId) data-product-id="{{ $productId }}" @endif
+        >
+            <i class="bi {{ $inWishlist ? 'bi-heart-fill' : 'bi-heart' }}" aria-hidden="true"></i>
         </button>
+        <div class="product-card__actions">
+            <button
+                type="button"
+                class="product-card__action product-card__action--view"
+                data-quick-view
+                data-no-loading
+            >
+                <i class="bi bi-eye" aria-hidden="true"></i>
+                <span>Quick View</span>
+            </button>
+            @if (! $outOfStock)
+                <button
+                    type="button"
+                    class="product-card__action product-card__action--cart"
+                    aria-label="Add {{ $name }} to cart"
+                    data-add-to-cart
+                    data-no-loading
+                    @if ($productId) data-product-id="{{ $productId }}" @endif
+                >
+                    <i class="bi bi-bag" aria-hidden="true"></i>
+                    <span>Add to Cart</span>
+                </button>
+            @endif
+        </div>
     </div>
     <div class="product-card__body">
         <h3 class="product-card__name">

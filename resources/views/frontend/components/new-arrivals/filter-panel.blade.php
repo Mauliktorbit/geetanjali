@@ -33,6 +33,7 @@
     class="na-filter-panel"
     method="get"
     action="{{ route('products.new-arrivals') }}"
+    data-filter-form
 >
     <input type="hidden" name="sort" value="{{ $filters['sort'] ?? 'newest' }}">
     <input type="hidden" name="view" value="{{ $filters['view'] ?? 'grid' }}">

@@ -33,7 +33,7 @@
 }
 
 html {
-    scroll-behavior: smooth;
+    scroll-behavior: auto;
 }
 
 body {
@@ -81,6 +81,7 @@ h1, h2, h3, h4, h5, .font-heading {
 
 .section-title {
     font-size: clamp(28px, 3.2vw, 42px);
+    font-weight: 700;
     letter-spacing: 0.04em;
     text-align: center;
     text-transform: uppercase;

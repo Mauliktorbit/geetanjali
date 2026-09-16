@@ -16,6 +16,14 @@
                 <span class="offer-card__suffix">{{ $offer['discount_suffix'] ?? 'Off' }}</span>
             </div>
             <p class="offer-card__title">{!! nl2br(e($offer['title'] ?? '')) !!}</p>
+            @if (! empty($offer['min_order']))
+                <p class="offer-card__min">{{ $offer['min_order'] }}</p>
+            @endif
+            @if (! empty($offer['promo_code']))
+                <button type="button" class="offer-card__code" data-copy-code="{{ $offer['promo_code'] }}">
+                    Use Code: <strong>{{ $offer['promo_code'] }}</strong>
+                </button>
+            @endif
         </div>
         <div class="offer-card__media">
             <img

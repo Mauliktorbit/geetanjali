@@ -2,6 +2,7 @@
 
 @php
     $images = $product->images ?? [];
+    $inWishlist = in_array((int) ($product->id ?? 0), $wishlistProductIds ?? [], true);
 @endphp
 
 <div class="product-gallery" data-product-gallery>
@@ -12,12 +13,13 @@
 
         <button
             type="button"
-            class="product-wish"
+            class="product-wish{{ $inWishlist ? ' is-active' : '' }}"
             data-wishlist-toggle
-            aria-label="Add {{ $product->name }} to wishlist"
-            aria-pressed="false"
+            data-product-id="{{ $product->id }}"
+            aria-label="{{ $inWishlist ? 'Remove '.$product->name.' from wishlist' : 'Add '.$product->name.' to wishlist' }}"
+            aria-pressed="{{ $inWishlist ? 'true' : 'false' }}"
         >
-            <i class="bi bi-heart" aria-hidden="true"></i>
+            <i class="bi {{ $inWishlist ? 'bi-heart-fill' : 'bi-heart' }}" aria-hidden="true"></i>
         </button>
 
         <img

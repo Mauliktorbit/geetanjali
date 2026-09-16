@@ -167,17 +167,6 @@ class PageController extends Controller
                     ],
                 ],
             ],
-            'compare' => [
-                'title' => 'Compare',
-                'heading' => 'Compare Jewellery',
-                'intro' => 'Compare your favourite pieces side by side. Save items to wishlist while you decide.',
-                'sections' => [
-                    [
-                        'heading' => 'Getting started',
-                        'body' => 'Browse Kundan Collection, Bridal Collection or New Arrivals and add pieces to your wishlist to shortlist and compare.',
-                    ],
-                ],
-            ],
         ];
     }
 

@@ -5,6 +5,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     initStickyHeader();
     initHeroCarousel();
+    initCategorySlider();
     initRevealOnScroll();
     initProductTabs();
     initTestimonialDots();
@@ -28,6 +29,41 @@ function initHeroCarousel() {
     });
 
     carousel.cycle();
+}
+
+function initCategorySlider() {
+    const track = document.querySelector('[data-category-slider]');
+    if (!track || typeof window.jQuery === 'undefined' || typeof window.jQuery.fn.slick === 'undefined') {
+        return;
+    }
+
+    const $track = window.jQuery(track);
+    if ($track.hasClass('slick-initialized')) {
+        $track.slick('unslick');
+    }
+
+    $track.slick({
+        slidesToShow: 8,
+        slidesToScroll: 1,
+        autoplay: true,
+        autoplaySpeed: 2200,
+        speed: 500,
+        infinite: true,
+        arrows: false,
+        dots: false,
+        pauseOnHover: true,
+        pauseOnFocus: true,
+        swipe: true,
+        touchMove: true,
+        cssEase: 'ease',
+        responsive: [
+            { breakpoint: 1200, settings: { slidesToShow: 6 } },
+            { breakpoint: 992, settings: { slidesToShow: 5 } },
+            { breakpoint: 768, settings: { slidesToShow: 4 } },
+            { breakpoint: 576, settings: { slidesToShow: 3 } },
+            { breakpoint: 400, settings: { slidesToShow: 2 } },
+        ],
+    });
 }
 
 function initStickyHeader() {

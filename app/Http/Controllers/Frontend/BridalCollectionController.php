@@ -40,7 +40,7 @@ class BridalCollectionController extends Controller
                 'heading_line_2' => 'Your Special Day',
                 'description' => 'Exquisite bridal jewellery crafted in gold, kundan and diamonds to make your wedding moments truly unforgettable.',
                 'cta_label' => 'Explore Collection',
-                'cta_url' => $listingUrl.'#bridal-products',
+                'cta_url' => $listingUrl.'#collection-products',
                 'image' => asset('public/assets/images/collections/bridal/hero.jpg'),
                 'image_alt' => 'Indian bride in traditional bridal jewellery',
             ],

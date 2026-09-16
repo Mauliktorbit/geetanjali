@@ -21,6 +21,7 @@
     </main>
 
     @include('frontend.components.delivery-review-modal')
+    @include('frontend.components.quick-view')
 
     @hasSection('newsletter')
         @yield('newsletter')

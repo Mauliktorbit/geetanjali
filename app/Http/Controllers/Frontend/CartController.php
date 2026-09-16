@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
+use App\Models\Coupon;
 use App\Services\CartService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -16,9 +17,15 @@ class CartController extends Controller
     public function index(): View
     {
         $summary = $this->cart->summary();
+        $applied = $summary['coupon'] ?? null;
 
         return view('frontend.cart.index', [
             'cart' => $summary,
+            'availableCoupons' => Coupon::query()
+                ->available()
+                ->latest('id')
+                ->get()
+                ->map(fn (Coupon $coupon) => $coupon->toCartListItem((float) $summary['subtotal'], $applied)),
             'breadcrumb' => [
                 ['label' => 'Home', 'url' => route('home')],
                 ['label' => 'Your Cart', 'url' => null],
@@ -112,10 +119,27 @@ class CartController extends Controller
     public function applyCoupon(Request $request): JsonResponse|RedirectResponse
     {
         $validated = $request->validate([
-            'coupon' => ['required', 'string', 'max:50'],
+            'coupon' => ['nullable', 'string', 'max:50'],
         ]);
 
-        $result = $this->cart->applyCoupon($validated['coupon']);
+        $code = trim((string) ($validated['coupon'] ?? ''));
+        if ($code === '') {
+            $this->cart->clearCoupon();
+            $summary = $this->cart->summary();
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Coupon removed.',
+                    'code' => null,
+                    'cart' => $summary,
+                ]);
+            }
+
+            return back()->with('success', 'Coupon removed.');
+        }
+
+        $result = $this->cart->applyCoupon($code);
         $summary = $this->cart->summary();
 
         if ($request->expectsJson()) {

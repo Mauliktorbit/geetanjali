@@ -144,7 +144,7 @@ class HomeController extends Controller
         return [
             ['name' => 'Wedding', 'image' => 'public/assets/images/occasions/wedding.jpg', 'url' => route('collections.bridal')],
             ['name' => 'Engagement', 'image' => 'public/assets/images/occasions/engagement.jpg', 'url' => route('collections.bridal')],
-            ['name' => 'Festival', 'image' => 'public/assets/images/occasions/festival.jpg', 'url' => route('offers.index')],
+            ['name' => 'Festival', 'image' => 'public/assets/images/occasions/festival.jpg', 'url' => route('products.new-arrivals')],
             ['name' => 'Daily Wear', 'image' => 'public/assets/images/occasions/daily-wear.jpg', 'url' => route('products.new-arrivals')],
         ];
     }
@@ -173,8 +173,8 @@ class HomeController extends Controller
         return [
             ['icon' => 'bi-award', 'title' => '100% Hallmarked', 'subtitle' => 'Certified Jewellery'],
             ['icon' => 'bi-receipt', 'title' => 'Transparent Pricing', 'subtitle' => 'No Hidden Charges'],
-            ['icon' => 'bi-people', 'title' => 'Trusted by Thousands', 'subtitle' => 'Happy Customers'],
-            ['icon' => 'bi-hourglass-split', 'title' => '30+ Years of Trust', 'subtitle' => 'Legacy of Excellence'],
+            ['icon' => 'bi-people', 'title' => 'Ahmedabad Showroom', 'subtitle' => 'PNTC Tower, Vejalpur'],
+            ['icon' => 'bi-hourglass-split', 'title' => 'Made in Our Workshop', 'subtitle' => 'Kundan from design to setting'],
         ];
     }
 
@@ -183,26 +183,42 @@ class HomeController extends Controller
      */
     private function testimonials(): array
     {
-        return [
-            [
-                'rating' => 5,
-                'review' => 'The Kundan set I bought for my wedding was breathtaking. Exquisite craftsmanship and truly premium finish.',
-                'name' => 'Priya Sharma',
-                'city' => 'Mumbai',
-            ],
-            [
-                'rating' => 5,
-                'review' => 'Beautiful gold jewellery with transparent pricing. The team helped me choose the perfect anniversary gift.',
-                'name' => 'Ananya Mehta',
-                'city' => 'Pune',
-            ],
-            [
-                'rating' => 5,
-                'review' => 'Elegant designs, secure packaging and wonderful service. Geetanjali has become our family jeweller.',
-                'name' => 'Neha Kapoor',
-                'city' => 'Delhi',
-            ],
-        ];
+        $demoNames = ['Priya Sharma', 'Ananya Mehta', 'Neha Kapoor'];
+
+        $fromAdmin = \App\Models\Testimonial::query()
+            ->where('is_active', true)
+            ->whereNotIn('name', $demoNames)
+            ->orderBy('sort_order')
+            ->orderByDesc('id')
+            ->limit(6)
+            ->get();
+
+        if ($fromAdmin->isNotEmpty()) {
+            return $fromAdmin->map(fn ($item) => [
+                'rating' => (int) ($item->rating ?: 5),
+                'review' => $item->content,
+                'name' => $item->name,
+                'city' => $item->designation ?: 'Verified customer',
+            ])->all();
+        }
+
+        $fromReviews = \App\Models\Review::query()
+            ->where('status', 'approved')
+            ->whereNotIn('customer_name', $demoNames)
+            ->latest('id')
+            ->limit(6)
+            ->get();
+
+        if ($fromReviews->isNotEmpty()) {
+            return $fromReviews->map(fn ($item) => [
+                'rating' => (int) ($item->rating ?: 5),
+                'review' => $item->comment ?: $item->title,
+                'name' => $item->customer_name ?: 'Customer',
+                'city' => $item->is_verified_purchase ? 'Verified purchase' : 'Geetanjali customer',
+            ])->all();
+        }
+
+        return [];
     }
 
     /**

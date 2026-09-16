@@ -43,7 +43,7 @@ class WishlistController extends Controller
             'product_id' => ['required', 'integer'],
         ], $this->productSnapshotRules()));
 
-        $ok = $this->wishlist->add((int) $validated['product_id'], $validated);
+        $ok = $this->wishlist->add((int) $validated['product_id'], $this->snapshotFrom($validated));
 
         if ($request->expectsJson()) {
             return response()->json([
@@ -64,7 +64,7 @@ class WishlistController extends Controller
             'product_id' => ['required', 'integer'],
         ], $this->productSnapshotRules()));
 
-        $result = $this->wishlist->toggle((int) $validated['product_id'], $validated);
+        $result = $this->wishlist->toggle((int) $validated['product_id'], $this->snapshotFrom($validated));
         $inWishlist = (bool) ($result['in_wishlist'] ?? false);
         $message = $inWishlist ? 'Added to wishlist.' : 'Removed from wishlist.';
 
@@ -140,13 +140,29 @@ class WishlistController extends Controller
         return [
             'name' => ['nullable', 'string', 'max:180'],
             'slug' => ['nullable', 'string', 'max:180'],
-            'image' => ['nullable', 'string', 'max:255'],
-            'price' => ['nullable', 'numeric', 'min:0'],
-            'compare_at_price' => ['nullable', 'numeric', 'min:0'],
+            'image' => ['nullable', 'string', 'max:2048'],
+            'price' => ['nullable'],
+            'compare_at_price' => ['nullable'],
             'discount_label' => ['nullable', 'string', 'max:40'],
             'metal' => ['nullable', 'string', 'max:80'],
             'weight' => ['nullable', 'string', 'max:80'],
-            'url' => ['nullable', 'string', 'max:255'],
+            'url' => ['nullable', 'string', 'max:2048'],
         ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $validated
+     * @return array<string, mixed>
+     */
+    private function snapshotFrom(array $validated): array
+    {
+        foreach (['price', 'compare_at_price'] as $key) {
+            if (! array_key_exists($key, $validated) || $validated[$key] === null || $validated[$key] === '') {
+                continue;
+            }
+            $validated[$key] = (float) str_replace(',', '', (string) $validated[$key]);
+        }
+
+        return $validated;
     }
 }

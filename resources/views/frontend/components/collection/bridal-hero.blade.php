@@ -33,7 +33,7 @@
 
                 <p class="bridal-hero__desc">{{ $hero['description'] ?? '' }}</p>
 
-                <a href="{{ $hero['cta_url'] ?? '#bridal-products' }}" class="bridal-btn bridal-btn--hero">
+                <a href="{{ $hero['cta_url'] ?? '#collection-products' }}" class="bridal-btn bridal-btn--hero">
                     {{ $hero['cta_label'] ?? 'Explore Collection' }}
                 </a>
             </div>

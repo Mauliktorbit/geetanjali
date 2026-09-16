@@ -4,6 +4,95 @@
  * Page scripts are included from the layout after Bootstrap.
  */
 (function () {
+    const listingIds = ['collection-products', 'bridal-products'];
+    const listingQueryNames = ['page', 'sort', 'view', 'price', 'min_price', 'max_price'];
+    const listingQueryPrefixes = ['type', 'category', 'metal', 'stone', 'occasion'];
+
+    function hasListingQuery(params) {
+        for (let i = 0; i < listingQueryNames.length; i += 1) {
+            if (params.has(listingQueryNames[i])) {
+                return true;
+            }
+        }
+
+        for (const [key] of params.entries()) {
+            const name = key.replace(/\[\]$/, '').replace(/\[\d+\]$/, '');
+            if (listingQueryPrefixes.indexOf(name) !== -1) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    function shouldPinCollectionListing() {
+        if (!listingEl()) {
+            return false;
+        }
+        const params = new URLSearchParams(window.location.search);
+        const hash = (window.location.hash || '').replace(/^#/, '');
+        return listingIds.indexOf(hash) !== -1 || hasListingQuery(params);
+    }
+
+    if (shouldPinCollectionListing() && 'scrollRestoration' in history) {
+        history.scrollRestoration = 'manual';
+    }
+
+    function listingEl() {
+        for (let i = 0; i < listingIds.length; i += 1) {
+            const el = document.getElementById(listingIds[i]);
+            if (el) {
+                return el;
+            }
+        }
+        return null;
+    }
+
+    function pinCollectionListing() {
+        if (!shouldPinCollectionListing()) {
+            return;
+        }
+
+        const listing = listingEl();
+        if (!listing) {
+            return;
+        }
+
+        const header = document.querySelector('.site-header');
+        const offset = header ? header.getBoundingClientRect().height : 88;
+        const top = listing.getBoundingClientRect().top + window.pageYOffset - offset - 8;
+        window.scrollTo(0, Math.max(0, top));
+    }
+
+    function schedulePinCollectionListing() {
+        pinCollectionListing();
+        window.requestAnimationFrame(pinCollectionListing);
+        window.setTimeout(pinCollectionListing, 60);
+        window.setTimeout(pinCollectionListing, 280);
+    }
+
+    function ensureCollectionPaginationHash(link) {
+        if (!link || !listingEl()) {
+            return;
+        }
+        if (!link.closest('.pagination, .kundan-pagination, .bridal-pagination, .na-pagination')) {
+            return;
+        }
+
+        try {
+            const url = new URL(link.href, window.location.href);
+            if (url.origin !== window.location.origin) {
+                return;
+            }
+            if (!url.hash) {
+                url.hash = 'collection-products';
+                link.setAttribute('href', url.toString());
+            }
+        } catch (err) {
+            // ignore invalid href
+        }
+    }
+
     const skipLinkSelector = [
         '[data-no-loading]',
         '[data-bs-toggle]',
@@ -11,6 +100,8 @@
         '[data-add-to-cart]',
         '[data-buy-now]',
         '[data-wishlist-toggle]',
+        '[data-quick-view]',
+        '[data-quick-view-close]',
         '[download]',
     ].join(',');
 
@@ -31,11 +122,13 @@
     function hideLoader() {
         const loader = loaderEl();
         if (!loader) {
+            pinCollectionListing();
             return;
         }
         loader.classList.remove('is-active', 'active');
         loader.setAttribute('aria-busy', 'false');
         loader.setAttribute('aria-hidden', 'true');
+        pinCollectionListing();
     }
 
     window.SiteLoader = { show: showLoader, hide: hideLoader };
@@ -84,12 +177,49 @@
         }
 
         const link = event.target.closest('a[href]');
-        if (!link || shouldIgnoreLink(link)) {
+        if (!link) {
+            return;
+        }
+
+        ensureCollectionPaginationHash(link);
+
+        try {
+            const url = new URL(link.href, window.location.href);
+            if (url.origin === window.location.origin && isSamePage(url) && !url.hash) {
+                event.preventDefault();
+                window.scrollTo(0, 0);
+                return;
+            }
+        } catch (err) {
+            // ignore invalid href
+        }
+
+        if (shouldIgnoreLink(link)) {
             return;
         }
 
         showLoader();
     }, true);
+
+    document.addEventListener('change', (event) => {
+        const field = event.target;
+        if (!(field instanceof HTMLElement) || !field.hasAttribute('data-auto-submit')) {
+            return;
+        }
+
+        const form = field.closest('form');
+        if (!(form instanceof HTMLFormElement) || form.dataset.listingSubmitting === '1') {
+            return;
+        }
+
+        form.dataset.listingSubmitting = '1';
+        const action = form.getAttribute('action') || '';
+        const hashAt = action.indexOf('#');
+        if (hashAt !== -1) {
+            form.setAttribute('action', action.slice(0, hashAt));
+        }
+        form.submit();
+    });
 
     document.addEventListener('submit', (event) => {
         const form = event.target;
@@ -109,14 +239,21 @@
 
     if (document.readyState === 'complete') {
         hideReady();
+        schedulePinCollectionListing();
     } else {
-        window.addEventListener('load', hideReady);
+        window.addEventListener('load', () => {
+            hideReady();
+            schedulePinCollectionListing();
+        });
     }
+
+    document.addEventListener('DOMContentLoaded', schedulePinCollectionListing);
 
     window.setTimeout(hideLoader, 8000);
     window.addEventListener('pageshow', (event) => {
         if (event.persisted) {
             hideLoader();
+            schedulePinCollectionListing();
         }
     });
 

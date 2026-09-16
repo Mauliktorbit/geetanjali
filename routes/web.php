@@ -31,7 +31,6 @@ Route::get('/terms-and-conditions', fn () => app(PageController::class)->show('t
 Route::get('/privacy-policy', fn () => app(PageController::class)->show('privacy'))->name('pages.privacy');
 Route::get('/help', fn () => app(PageController::class)->show('help'))->name('pages.help');
 Route::get('/store-locator', fn () => app(PageController::class)->show('store-locator'))->name('pages.store-locator');
-Route::get('/compare', fn () => app(PageController::class)->show('compare'))->name('pages.compare');
 Route::get('/track-order', [PageController::class, 'trackOrder'])->name('pages.track-order');
 Route::post('/track-order', [PageController::class, 'trackOrder'])->name('pages.track-order.submit');
 Route::post('/newsletter', [PageController::class, 'newsletter'])->name('newsletter.subscribe');

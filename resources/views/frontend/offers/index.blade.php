@@ -20,10 +20,12 @@
                 <h2 id="offers-heading" class="font-heading">Best Offers For You</h2>
                 @include('frontend.components.gold-divider', ['align' => 'center'])
 
-                @include('frontend.components.offers.filters', [
-                    'tabs' => $filterTabs,
-                    'active' => $activeCategory,
-                ])
+                @if (! empty($filterTabs) && count($filterTabs) > 1)
+                    @include('frontend.components.offers.filters', [
+                        'tabs' => $filterTabs,
+                        'active' => $activeCategory,
+                    ])
+                @endif
 
                 @if ($offers->count() > 0)
                     <div class="offers-grid">
@@ -33,12 +35,34 @@
                     </div>
                 @else
                     <div class="offers-empty">
-                        <p>No offers available in this category right now.</p>
-                        <a href="{{ route('offers.index') }}" class="offers-join-btn">View All Offers</a>
+                        <p>No coupons are running right now. Explore our collections below.</p>
                     </div>
                 @endif
             </div>
         </section>
+
+        @if (! empty($highlights))
+            <section class="offers-section offers-section--highlights" aria-labelledby="offers-highlights-heading">
+                <div class="offers-container">
+                    <h2 id="offers-highlights-heading" class="font-heading">Explore Geetanjali</h2>
+                    @include('frontend.components.gold-divider', ['align' => 'center'])
+                    <div class="offers-highlights">
+                        @foreach ($highlights as $item)
+                            <article class="offers-highlight">
+                                <div class="offers-highlight__media">
+                                    <img src="{{ storefront_image($item['image'] ?? null) }}" alt="{{ $item['title'] }}" width="400" height="260" loading="lazy">
+                                </div>
+                                <div class="offers-highlight__body">
+                                    <h3 class="font-heading">{{ $item['title'] }}</h3>
+                                    <p>{{ $item['text'] }}</p>
+                                    <a href="{{ $item['url'] }}" class="offers-join-btn">{{ $item['cta'] }}</a>
+                                </div>
+                            </article>
+                        @endforeach
+                    </div>
+                </div>
+            </section>
+        @endif
 
         @include('frontend.components.offers.terms', ['terms' => $terms])
     </div>

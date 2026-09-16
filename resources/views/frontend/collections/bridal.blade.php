@@ -37,7 +37,7 @@
             </div>
         </section>
 
-        <section class="bridal-listing" id="bridal-products" aria-label="{{ $introHeading }} products">
+        <section class="bridal-listing" id="collection-products" aria-label="{{ $introHeading }} products">
             <div class="site-container">
                 @include('frontend.components.collection.bridal-toolbar', [
                     'filters' => $filters,
@@ -58,15 +58,12 @@
                 @if ($products->count() > 0)
                     <div class="bridal-grid {{ $viewMode === 'list' ? 'bridal-grid--list' : '' }}" data-bridal-grid>
                         @foreach ($products as $product)
-                            @include('frontend.components.product-card', [
-                                'product' => $product,
-                                'showCart' => false,
-                            ])
+                            @include('frontend.components.product-card', ['product' => $product])
                         @endforeach
                     </div>
 
                     <div class="bridal-pagination">
-                        {{ $products->links('pagination::bootstrap-5') }}
+                        {{ $products->fragment('collection-products')->links('pagination::bootstrap-5') }}
                     </div>
                 @else
                     <div class="bridal-empty">

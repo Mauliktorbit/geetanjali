@@ -58,8 +58,8 @@
 
 .bridal-hero__label {
     margin: 0 0 0.55rem;
-    font-size: 12px;
-    font-weight: 500;
+    font-size: 13px;
+    font-weight: 700;
     letter-spacing: 0.14em;
     text-transform: uppercase;
     color: var(--light-gold);
@@ -68,7 +68,7 @@
 .bridal-hero__content h1 {
     margin: 0;
     font-size: clamp(32px, 4.2vw, 50px);
-    font-weight: 600;
+    font-weight: 700;
     line-height: 1.1;
     color: #f6e9d0;
 }
@@ -102,7 +102,8 @@
 
 .bridal-hero__desc {
     margin: 0 0 1.5rem;
-    font-size: 14px;
+    font-size: 16px;
+    font-weight: 600;
     line-height: 1.65;
     color: rgba(255, 255, 255, 0.92);
     max-width: 450px;
@@ -198,6 +199,7 @@
 .bridal-intro h2 {
     margin: 0;
     font-size: clamp(28px, 3vw, 34px);
+    font-weight: 700;
     color: #16352d;
     letter-spacing: 0.04em;
     text-transform: uppercase;
@@ -206,7 +208,8 @@
 .bridal-intro p {
     margin: 0.85rem auto 0;
     max-width: 700px;
-    font-size: 13.5px;
+    font-size: 16px;
+    font-weight: 600;
     color: #555;
     line-height: 1.6;
 }
@@ -413,8 +416,8 @@
 }
 
 .bridal-page .product-card__name {
-    font-size: 13.5px;
-    font-weight: 600;
+    font-size: 16px;
+    font-weight: 700;
     color: #222;
     min-height: 2.5em;
     display: -webkit-box;
@@ -424,8 +427,8 @@
 }
 
 .bridal-page .price-current {
-    font-size: 14.5px;
-    font-weight: 600;
+    font-size: 16.5px;
+    font-weight: 700;
     color: #222;
 }
 
@@ -435,7 +438,13 @@
 }
 
 .bridal-page .product-card__pricing {
-    justify-content: flex-start;
+    justify-content: space-between;
+}
+
+.bridal-grid--list .product-card__actions {
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
 }
 
 .bridal-pagination {
@@ -508,7 +517,7 @@
 .bridal-promo__content h3 {
     margin: 0 0 0.65rem;
     font-size: clamp(24px, 2.4vw, 30px);
-    font-weight: 600;
+    font-weight: 700;
     line-height: 1.15;
     white-space: pre-line;
 }
@@ -519,7 +528,8 @@
 
 .bridal-promo__content p {
     margin: 0 0 1.15rem;
-    font-size: 13px;
+    font-size: 15px;
+    font-weight: 600;
     line-height: 1.55;
     max-width: 280px;
 }
@@ -674,7 +684,8 @@
     }
 
     .bridal-hero__desc {
-        font-size: 13px;
+        font-size: 15px;
+        font-weight: 600;
     }
 
     .bridal-intro {
@@ -704,11 +715,13 @@
     }
 
     .bridal-page .product-card__name {
-        font-size: 12px;
+        font-size: 15px;
+        font-weight: 700;
     }
 
     .bridal-page .price-current {
-        font-size: 13px;
+        font-size: 15.5px;
+        font-weight: 700;
     }
 
     .bridal-page .product-card__rating {

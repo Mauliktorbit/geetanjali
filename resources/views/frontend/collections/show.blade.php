@@ -7,7 +7,7 @@
     <div class="kundan-page">
         @include('frontend.components.breadcrumb', ['items' => $breadcrumb])
 
-        <section class="kundan-listing" aria-label="{{ $collection->name }} products">
+        <section class="kundan-listing" id="collection-products" aria-label="{{ $collection->name }} products">
             <div class="site-container">
                 <div class="kundan-products">
                     <div class="kundan-products__header">
@@ -31,7 +31,7 @@
                         </div>
 
                         <div class="kundan-pagination">
-                            {{ $products->links('pagination::bootstrap-5') }}
+                            {{ $products->fragment('collection-products')->links('pagination::bootstrap-5') }}
                         </div>
                     @else
                         <div class="kundan-empty">

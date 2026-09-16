@@ -116,28 +116,10 @@
                             </a>
                         </div>
 
-                        <div class="cart-coupon">
-                            <h3>Apply Coupon</h3>
-                            <form class="cart-coupon__form" data-coupon-form>
-                                @csrf
-                                <label class="visually-hidden" for="coupon-code">Coupon code</label>
-                                <input
-                                    id="coupon-code"
-                                    type="text"
-                                    name="coupon"
-                                    value="{{ $cart['coupon'] }}"
-                                    placeholder="Enter coupon code"
-                                    maxlength="50"
-                                    autocomplete="off"
-                                >
-                                <button type="submit">Apply</button>
-                            </form>
-                            <p class="cart-coupon__msg" data-coupon-msg @if ($cart['coupon']) data-success="1" @endif>
-                                @if ($cart['coupon'])
-                                    Coupon {{ $cart['coupon'] }} applied.
-                                @endif
-                            </p>
-                        </div>
+                        @include('frontend.components.cart.coupons', [
+                            'coupons' => $availableCoupons ?? collect(),
+                            'appliedCode' => $cart['coupon'] ?? null,
+                        ])
 
                         <div class="cart-benefits">
                             @foreach ($benefits as $benefit)

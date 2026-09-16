@@ -17,6 +17,20 @@ document.addEventListener('click', async (event) => {
         return;
     }
 
+    const quickViewBtn = event.target.closest('[data-quick-view]');
+    if (quickViewBtn) {
+        event.preventDefault();
+        event.stopPropagation();
+        openQuickView(quickViewBtn);
+        return;
+    }
+
+    if (event.target.closest('[data-quick-view-close]')) {
+        event.preventDefault();
+        closeQuickView();
+        return;
+    }
+
     const buyBtn = event.target.closest('[data-buy-now]');
     if (buyBtn) {
         event.preventDefault();
@@ -47,7 +61,7 @@ function storefrontToast(message) {
 }
 
 function productPayload(el) {
-    const card = el.closest('[data-product-id], .product-card, [data-product-page]') || el;
+    const card = el.closest('.product-card, [data-product-page]') || el.closest('[data-product-id]') || el;
     const qty = card.querySelector?.('[data-qty-input]')?.value;
     return {
         product_id: Number(el.dataset.productId || card.dataset.productId || 0),
@@ -64,16 +78,27 @@ function productPayload(el) {
     };
 }
 
+function storefrontXsrfCookie() {
+    const match = document.cookie.match(/(?:^|; )XSRF-TOKEN=([^;]*)/);
+    return match ? decodeURIComponent(match[1]) : '';
+}
+
 async function storefrontPost(url, body) {
+    const headers = {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        'X-CSRF-TOKEN': storefrontCsrf(),
+        'X-Requested-With': 'XMLHttpRequest',
+    };
+    const xsrf = storefrontXsrfCookie();
+    if (xsrf) {
+        headers['X-XSRF-TOKEN'] = xsrf;
+    }
+
     const res = await fetch(url, {
         method: 'POST',
         credentials: 'same-origin',
-        headers: {
-            'Content-Type': 'application/json',
-            Accept: 'application/json',
-            'X-CSRF-TOKEN': storefrontCsrf(),
-            'X-Requested-With': 'XMLHttpRequest',
-        },
+        headers,
         body: JSON.stringify(body),
     });
     const data = await res.json().catch(() => ({}));
@@ -99,11 +124,31 @@ function updateStorefrontBadges(data) {
 function setWishlistButton(btn, on) {
     btn.classList.toggle('is-active', on);
     btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    const name = btn.closest('[data-product-name]')?.dataset.productName
+        || document.querySelector('[data-product-page]')?.dataset.productName
+        || 'this piece';
+    btn.setAttribute('aria-label', on ? `Remove ${name} from wishlist` : `Add ${name} to wishlist`);
     const icon = btn.querySelector('i');
     if (icon) {
         icon.classList.toggle('bi-heart', !on);
         icon.classList.toggle('bi-heart-fill', on);
     }
+}
+
+function wishlistIdSet() {
+    const ids = window.Geetanjali?.wishlistIds;
+    return new Set((Array.isArray(ids) ? ids : []).map((id) => Number(id)));
+}
+
+function syncWishlistButtons() {
+    const ids = wishlistIdSet();
+    document.querySelectorAll('[data-wishlist-toggle]').forEach((btn) => {
+        const payload = productPayload(btn);
+        if (!payload.product_id) {
+            return;
+        }
+        setWishlistButton(btn, ids.has(payload.product_id));
+    });
 }
 
 async function handleWishlistToggle(btn) {
@@ -117,15 +162,32 @@ async function handleWishlistToggle(btn) {
     btn.disabled = true;
     try {
         const data = await storefrontPost(url, payload);
-        setWishlistButton(btn, Boolean(data.in_wishlist));
+        const on = Boolean(data.in_wishlist);
+        const ids = wishlistIdSet();
+        if (on) {
+            ids.add(payload.product_id);
+        } else {
+            ids.delete(payload.product_id);
+        }
+        window.Geetanjali = Object.assign(window.Geetanjali || {}, {
+            wishlistIds: Array.from(ids),
+        });
+        document.querySelectorAll('[data-wishlist-toggle]').forEach((heart) => {
+            const id = productPayload(heart).product_id;
+            if (id === payload.product_id) {
+                setWishlistButton(heart, on);
+            }
+        });
         updateStorefrontBadges(data);
-        storefrontToast(data.message || (data.in_wishlist ? 'Added to wishlist.' : 'Removed from wishlist.'));
+        storefrontToast(data.message || (on ? 'Added to wishlist.' : 'Removed from wishlist.'));
     } catch (error) {
         storefrontToast(error.message || 'Unable to update wishlist.');
     } finally {
         btn.disabled = false;
     }
 }
+
+document.addEventListener('DOMContentLoaded', syncWishlistButtons);
 
 async function handleAddToCart(btn, buyNow) {
     if (btn.disabled || btn.closest('[data-out-of-stock]')) {
@@ -153,3 +215,125 @@ async function handleAddToCart(btn, buyNow) {
         btn.disabled = false;
     }
 }
+
+function quickViewModal() {
+    return document.querySelector('[data-quick-view-modal]');
+}
+
+function rupee(value) {
+    const amount = Number(value);
+    if (!amount) {
+        return '';
+    }
+    return `₹${amount.toLocaleString('en-IN')}`;
+}
+
+function fillQuickView(card) {
+    const modal = quickViewModal();
+    if (!modal) {
+        return;
+    }
+
+    const dialog = modal.querySelector('[data-quick-view-dialog]') || modal;
+    const payload = productPayload(card);
+    const outOfStock = card.hasAttribute('data-out-of-stock');
+    const meta = [card.dataset.productMetal, card.dataset.productWeight].filter(Boolean).join(' · ');
+
+    [
+        'productId',
+        'productName',
+        'productPrice',
+        'productImage',
+        'productUrl',
+        'productSlug',
+        'productCompare',
+        'productDiscount',
+        'productMetal',
+        'productWeight',
+    ].forEach((key) => {
+        if (card.dataset[key] != null) {
+            dialog.dataset[key] = card.dataset[key];
+        }
+    });
+
+    if (outOfStock) {
+        dialog.setAttribute('data-out-of-stock', '1');
+    } else {
+        dialog.removeAttribute('data-out-of-stock');
+    }
+
+    const image = modal.querySelector('[data-qv-image]');
+    if (image) {
+        image.src = payload.image || '';
+        image.alt = payload.name || '';
+    }
+
+    const name = modal.querySelector('[data-qv-name]');
+    if (name) {
+        name.textContent = payload.name || '';
+    }
+
+    const metaEl = modal.querySelector('[data-qv-meta]');
+    if (metaEl) {
+        metaEl.textContent = meta;
+        metaEl.hidden = !meta;
+    }
+
+    const price = modal.querySelector('[data-qv-price]');
+    if (price) {
+        price.textContent = rupee(payload.price);
+    }
+
+    const compare = modal.querySelector('[data-qv-compare]');
+    if (compare) {
+        compare.textContent = rupee(payload.compare_at_price);
+        compare.hidden = !payload.compare_at_price;
+    }
+
+    const discount = modal.querySelector('[data-qv-discount]');
+    if (discount) {
+        discount.textContent = payload.discount_label || '';
+        discount.hidden = !payload.discount_label;
+    }
+
+    const link = modal.querySelector('[data-qv-link]');
+    if (link) {
+        link.href = payload.url || '#';
+    }
+
+    const cart = modal.querySelector('[data-qv-cart]');
+    if (cart) {
+        cart.dataset.productId = String(payload.product_id || '');
+        cart.hidden = outOfStock || !payload.product_id;
+        cart.disabled = outOfStock;
+    }
+}
+
+function openQuickView(trigger) {
+    const card = trigger.closest('.product-card');
+    const modal = quickViewModal();
+    if (!card || !modal) {
+        return;
+    }
+
+    fillQuickView(card);
+    modal.hidden = false;
+    document.body.style.overflow = 'hidden';
+    modal.querySelector('[data-quick-view-close]')?.focus();
+}
+
+function closeQuickView() {
+    const modal = quickViewModal();
+    if (!modal || modal.hidden) {
+        return;
+    }
+    modal.hidden = true;
+    document.body.style.overflow = '';
+}
+
+document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+        closeQuickView();
+    }
+});
+
