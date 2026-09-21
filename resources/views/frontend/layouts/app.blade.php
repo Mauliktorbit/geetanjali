@@ -12,7 +12,6 @@
     @stack('styles')
 </head>
 <body>
-    @include('frontend.components.page-loader')
     @include('frontend.components.navbar')
 
     <main id="main-content">

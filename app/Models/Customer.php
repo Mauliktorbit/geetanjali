@@ -135,7 +135,7 @@ class Customer extends Model
 
     public function statusLabel(): string
     {
-        return $this->is_blocked ? 'Blocked' : 'Active';
+        return $this->is_blocked ? 'Inactive' : 'Active';
     }
 
     public function statusBadge(): string

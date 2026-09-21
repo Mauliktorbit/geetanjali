@@ -29,6 +29,17 @@ class AdminBreadcrumb
             return [$dashboard, ['label' => 'Profile']];
         }
 
+        if (in_array($name, ['admin.policies.edit', 'admin.policies.update'], true)) {
+            $key = (string) request()->route('policy');
+            $labels = [
+                'shipping' => 'Shipping Policy',
+                'terms' => 'Terms & Conditions',
+                'privacy' => 'Privacy Policy',
+            ];
+
+            return [$dashboard, ['label' => $labels[$key] ?? 'Policies']];
+        }
+
         $parts = explode('.', $name);
         array_shift($parts);
 
@@ -149,6 +160,8 @@ class AdminBreadcrumb
             'expenses' => 'Expenses',
             'affiliates' => 'Affiliates',
             'abandoned-carts' => 'Abandoned Carts',
+            'policies' => 'Policies',
+            'offers' => 'Offers',
         ];
 
         return $labels[$resource] ?? Str::headline(str_replace('-', ' ', $resource));

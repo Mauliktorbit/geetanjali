@@ -10,6 +10,7 @@
             <i class="bi bi-sliders" aria-hidden="true"></i>
             Filter
         </button>
+        @include('frontend.components.collection.view-toggle', ['view' => $filters['view'] ?? 'grid'])
         <form method="get" action="{{ $listingUrl }}" class="bridal-toolbar__sort-mobile">
             @foreach (['category', 'metal', 'stone', 'price'] as $key)
                 @if (!empty($filters[$key]))

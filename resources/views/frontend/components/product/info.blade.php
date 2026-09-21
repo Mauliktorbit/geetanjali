@@ -79,11 +79,15 @@
             </button>
         </div>
     @else
-        <p class="stock-unavailable-note">This piece is currently unavailable. Please check back later or explore similar jewellery below.</p>
+        <p class="stock-unavailable-note">This piece is currently unavailable. Get an email when it returns, or browse similar jewellery.</p>
         <div class="product-actions">
-            <button type="button" class="btn-out-of-stock" disabled>
-                Out of Stock
+            <button type="button" class="btn-add-cart-lg" data-stock-notify data-no-loading data-product-id="{{ $product->id }}">
+                <i class="bi bi-bell" aria-hidden="true"></i>
+                Notify me
             </button>
+            <a class="btn-buy-now" href="{{ $product->similar_url ?? route('products.new-arrivals') }}">
+                View similar
+            </a>
         </div>
     @endif
 
@@ -101,9 +105,9 @@
 
     <div class="product-mini-services" aria-label="Purchase benefits">
         <div class="item">
-            <i class="bi bi-truck" aria-hidden="true"></i>
-            <strong>Free Shipping</strong>
-            <span>On All Orders</span>
+            <i class="bi bi-box-seam" aria-hidden="true"></i>
+            <strong>Secure Packaging</strong>
+            <span>Packed with care</span>
         </div>
         <div class="item">
             <i class="bi bi-arrow-repeat" aria-hidden="true"></i>
@@ -116,9 +120,9 @@
             <span>100% Safe & Secure</span>
         </div>
         <div class="item">
-            <i class="bi bi-gem" aria-hidden="true"></i>
-            <strong>Lifetime Service</strong>
-            <span>Maintenance & Repair</span>
+            <i class="bi bi-stars" aria-hidden="true"></i>
+            <strong>Quality-checked</strong>
+            <span>Premium finish</span>
         </div>
     </div>
 </div>

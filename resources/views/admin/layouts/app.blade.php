@@ -12,9 +12,6 @@
 
     @include('frontend.components.favicon')
     <link rel="stylesheet" href="{{ asset('css/admin.css') }}?v={{ filemtime(public_path('css/admin.css')) }}">
-    <style>
-      .page-loader{position:fixed;inset:0;z-index:5000;display:grid;place-items:center;background:rgba(250,248,242,.92)}
-    </style>
     @stack('styles')
 </head>
 <body>
@@ -125,18 +122,6 @@
 </div>
 
 @include('admin.components.confirm-modal')
-
-<div class="page-loader is-active" id="admin-page-loader" role="status" aria-live="polite" aria-busy="true">
-    <div class="page-loader__bar" aria-hidden="true"></div>
-    <div class="page-loader__inner">
-        <div class="page-loader__spinner" aria-hidden="true">
-            <span class="page-loader__orbit"></span>
-            <span class="page-loader__orbit page-loader__orbit--inner"></span>
-            <span class="page-loader__dot"></span>
-        </div>
-        <p class="page-loader__text">Loading<span>.</span><span>.</span><span>.</span></p>
-    </div>
-</div>
 
 <script id="admin-flash-data" type="application/json">
 @php

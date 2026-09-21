@@ -19,12 +19,47 @@ class OfferService extends BaseService
 
     public function forStorefront(?string $category = 'all'): Collection
     {
-        return Coupon::query()
+        $offers = Offer::query()
+            ->with('coupon')
+            ->storefront()
+            ->when($category && $category !== 'all', fn ($query) => $query->where('category', $category))
+            ->orderByDesc('sort_order')
+            ->orderByDesc('id')
+            ->get();
+
+        $linkedCouponIds = $offers->pluck('coupon_id')->filter()->map(fn ($id) => (int) $id)->all();
+        $linkedCodes = $offers
+            ->map(fn (Offer $offer) => $offer->displayCode())
+            ->filter()
+            ->map(fn (string $code) => strtoupper($code))
+            ->all();
+
+        $cards = $offers->map(fn (Offer $offer) => $offer->toCardArray())->values();
+
+        if ($category && $category !== 'all') {
+            return $cards;
+        }
+
+        $coupons = Coupon::query()
             ->available()
             ->latest('id')
             ->get()
-            ->values()
-            ->map(fn (Coupon $coupon, int $index) => $coupon->toStorefrontCard($index));
+            ->filter(function (Coupon $coupon) use ($linkedCouponIds, $linkedCodes) {
+                if (in_array((int) $coupon->id, $linkedCouponIds, true)) {
+                    return false;
+                }
+
+                $code = strtoupper(trim((string) $coupon->code));
+
+                return $code === '' || ! in_array($code, $linkedCodes, true);
+            })
+            ->values();
+
+        foreach ($coupons as $index => $coupon) {
+            $cards->push($coupon->toStorefrontCard($cards->count() + $index));
+        }
+
+        return $cards->values();
     }
 
     public function save(array $data, ?Offer $offer = null): Offer
@@ -32,9 +67,16 @@ class OfferService extends BaseService
         $title = trim((string) $data['title']);
         $payload = [
             'category' => $this->resolveCategorySlug($data),
+            'label' => (string) ($data['label'] ?? 'Flat'),
             'title' => $title,
             'discount_display' => trim((string) $data['discount_display']),
+            'discount_suffix' => trim((string) ($data['discount_suffix'] ?? 'Off')) ?: 'Off',
+            'theme' => in_array(($data['theme'] ?? ''), ['dark', 'light'], true) ? $data['theme'] : 'dark',
+            'minimum_order' => isset($data['minimum_order']) && $data['minimum_order'] !== ''
+                ? (float) $data['minimum_order']
+                : null,
             'image_alt' => $title,
+            'starts_at' => parse_dmy($data['starts_at'] ?? null) ?: now()->startOfDay(),
             'ends_at' => parse_dmy($data['ends_at'] ?? null, true),
             'is_active' => (bool) ($data['is_active'] ?? false),
         ];
@@ -43,18 +85,14 @@ class OfferService extends BaseService
             if ($offer) {
                 $this->deleteStoredImage($offer->image);
             }
-            $payload['image'] = $data['image'];
+            $payload['image'] = $data['image'] ?: null;
         }
 
         if ($offer) {
             return $this->update($offer, $payload);
         }
 
-        $payload['label'] = 'Flat';
-        $payload['discount_suffix'] = 'Off';
-        $payload['theme'] = $this->nextTheme();
         $payload['sort_order'] = (int) Offer::query()->max('sort_order') + 1;
-        $payload['starts_at'] = now()->startOfDay();
 
         return $this->create($payload);
     }
@@ -96,10 +134,5 @@ class OfferService extends BaseService
         }
 
         return OfferCategory::firstOrCreateNamed($newName !== '' ? $newName : $selected)->slug;
-    }
-
-    protected function nextTheme(): string
-    {
-        return Offer::query()->orderByDesc('id')->value('theme') === 'dark' ? 'light' : 'dark';
     }
 }

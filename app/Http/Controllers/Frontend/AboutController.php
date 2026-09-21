@@ -29,7 +29,7 @@ class AboutController extends Controller
     {
         return [
             'heading_line_1' => 'A Legacy of Trust,',
-            'heading_line_2' => 'Crafted in Gold',
+            'heading_line_2' => 'Crafted with Care',
             'description' => 'For over three decades, Geetanjali Jewellers has been a name synonymous with trust, elegance and unmatched craftsmanship.',
             'image' => 'public/assets/images/about/about-hero.jpg',
             'image_alt' => 'Geetanjali Jewellers premium Kundan jewellery on silk',
@@ -64,7 +64,7 @@ class AboutController extends Controller
             [
                 'icon' => 'bi-gem',
                 'title' => 'Trust & Transparency',
-                'description' => 'Honest pricing, certified products and transparent policies.',
+                'description' => 'Honest pricing, clear product details and transparent policies.',
             ],
             [
                 'icon' => 'bi-award',
@@ -99,7 +99,7 @@ class AboutController extends Controller
         return [
             ['icon' => 'bi-geo-alt', 'value' => 'Ahmedabad', 'label' => 'Showroom at PNTC Tower, Vejalpur'],
             ['icon' => 'bi-hammer', 'value' => 'Workshop', 'label' => 'Kundan jewellery crafted in-house'],
-            ['icon' => 'bi-patch-check', 'value' => 'Hallmarked', 'label' => 'BIS-certified gold in every piece'],
+            ['icon' => 'bi-heart', 'value' => 'Skin-friendly', 'label' => 'Anti-tarnish finish, made for everyday wear'],
             ['icon' => 'bi-clock', 'value' => 'Mon–Sat', 'label' => '10:00 AM – 7:00 PM'],
         ];
     }
@@ -112,12 +112,12 @@ class AboutController extends Controller
         return [
             'heading_line_1' => 'Crafted with Passion,',
             'heading_line_2' => 'Delivered with Pride',
-            'description' => 'Each creation goes through a meticulous process to ensure it meets our high standards of purity, quality and design.',
+            'description' => 'Each creation goes through a meticulous process to ensure it meets our high standards of finish, comfort and design.',
             'features' => [
                 [
-                    'icon' => 'bi-patch-check',
-                    'title' => 'Certified Jewellery',
-                    'description' => 'All our jewellery comes with authentic certification and hallmark.',
+                    'icon' => 'bi-heart',
+                    'title' => 'Skin-friendly Jewellery',
+                    'description' => 'Lightweight artificial jewellery with a premium anti-tarnish finish, made for everyday wear.',
                 ],
                 [
                     'icon' => 'bi-truck',

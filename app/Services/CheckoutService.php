@@ -40,6 +40,7 @@ class CheckoutService
     public function __construct(
         private readonly CartService $cart,
         private readonly NotificationService $notifications,
+        private readonly PaymentService $payments,
     ) {}
 
     public function ensureCustomer(User $user): Customer
@@ -52,14 +53,11 @@ class CheckoutService
      */
     public function addresses(Customer $customer): array
     {
-        $items = $customer->addresses()->orderByDesc('is_default')->orderBy('id')->get();
-
-        if ($items->isEmpty()) {
-            $this->seedDemoAddresses($customer);
-            $items = $customer->addresses()->orderByDesc('is_default')->orderBy('id')->get();
-        }
-
-        return $items->all();
+        return $customer->addresses()
+            ->orderByDesc('is_default')
+            ->orderBy('id')
+            ->get()
+            ->all();
     }
 
     public function findAddress(Customer $customer, int $id): ?CustomerAddress
@@ -215,6 +213,8 @@ class CheckoutService
 
             $this->cart->clear();
 
+            $this->payments->createFromOrder($order);
+
             $this->notifications->notifyNewOrder($order->load('items'));
 
             return $order;
@@ -235,39 +235,5 @@ class CheckoutService
         } while (Order::query()->where('order_number', $number)->exists());
 
         return $number;
-    }
-
-    private function seedDemoAddresses(Customer $customer): void
-    {
-        $name = $customer->name ?: 'Customer';
-        $phone = $customer->phone ?: '+91 98765 43210';
-
-        $customer->addresses()->create([
-            'type' => 'shipping',
-            'label' => 'home',
-            'name' => $name,
-            'phone' => $phone,
-            'address_line1' => '123, Green Park',
-            'address_line2' => null,
-            'city' => 'New Delhi',
-            'state' => 'Delhi',
-            'country' => 'India',
-            'pincode' => '110016',
-            'is_default' => true,
-        ]);
-
-        $customer->addresses()->create([
-            'type' => 'shipping',
-            'label' => 'office',
-            'name' => $name,
-            'phone' => $phone,
-            'address_line1' => 'C - 1209/1210, PNTC Tower, Times of India Press Road',
-            'address_line2' => 'Vejalpur',
-            'city' => 'Ahmedabad',
-            'state' => 'Gujarat',
-            'country' => 'India',
-            'pincode' => '380015',
-            'is_default' => false,
-        ]);
     }
 }

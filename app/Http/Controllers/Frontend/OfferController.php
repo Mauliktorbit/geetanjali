@@ -3,20 +3,24 @@
 namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
+use App\Models\OfferCategory;
 use App\Services\OfferService;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class OfferController extends Controller
 {
     public function __construct(protected OfferService $offers) {}
 
-    public function index(): View
+    public function index(Request $request): View
     {
+        $category = OfferCategory::normalize($request->query('category', 'all'));
+
         return view('frontend.offers.index', [
-            'offers' => $this->offers->forStorefront(),
+            'offers' => $this->offers->forStorefront($category),
             'highlights' => $this->highlights(),
-            'activeCategory' => 'all',
-            'filterTabs' => [],
+            'activeCategory' => $category,
+            'filterTabs' => OfferCategory::tabs(),
             'benefits' => $this->benefits(),
             'terms' => $this->terms(),
             'hero' => [

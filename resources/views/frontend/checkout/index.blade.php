@@ -26,11 +26,11 @@
         <header class="checkout-header">
             <h1 class="font-heading">Checkout</h1>
             @include('frontend.components.gold-divider', ['align' => 'left'])
-            <p>Review your details and place your order. All jewellery is hallmarked and shipped securely.</p>
+            <p>Review your details and place your order. All jewellery is packed securely and shipped with care.</p>
         </header>
 
         @if (session('success'))
-            <div class="checkout-flash checkout-flash--success">{{ session('success') }}</div>
+            <script id="app-flash-data" type="application/json">@json(['success' => session('success')])</script>
         @endif
         @if (session('error'))
             <div class="checkout-flash checkout-flash--error">{{ session('error') }}</div>
@@ -116,7 +116,7 @@
                             <input type="radio" name="shipping_method" value="{{ $key }}" @checked($key === 'standard') data-shipping-option>
                             <span class="address-card__radio" aria-hidden="true"></span>
                             <span class="method-card__copy">
-                                <strong>{{ $option['label'] }} — {{ $option['charge'] > 0 ? '₹'.number_format($option['charge']) : 'FREE' }}</strong>
+                                <strong>{{ $option['label'] }} — ₹{{ number_format($option['charge']) }}</strong>
                                 <small>Delivery in {{ $option['eta'] }}</small>
                             </span>
                         </label>
@@ -187,7 +187,7 @@
                     <div class="checkout-totals">
                         <div><span>Subtotal</span><strong>₹{{ number_format($cart['subtotal']) }}</strong></div>
                         <div class="is-discount"><span>Discount</span><strong>- ₹{{ number_format($cart['discount']) }}</strong></div>
-                        <div><span>Shipping</span><strong data-shipping-label>{{ $cart['shipping'] > 0 ? '₹'.number_format($cart['shipping']) : 'FREE' }}</strong></div>
+                        <div><span>Shipping</span><strong data-shipping-label>{{ $cart['shipping'] > 0 ? '₹'.number_format($cart['shipping']) : '₹0' }}</strong></div>
                         <div class="is-total"><span>Total</span><strong data-order-total>₹{{ number_format($cart['total']) }}</strong></div>
                     </div>
 

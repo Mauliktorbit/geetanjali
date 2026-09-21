@@ -31,11 +31,11 @@ class CartController extends Controller
                 ['label' => 'Your Cart', 'url' => null],
             ],
             'benefits' => [
-                ['icon' => 'bi-patch-check', 'title' => '100% Hallmarked Jewellery', 'subtitle' => 'Certified for purity and quality'],
+                ['icon' => 'bi-heart', 'title' => 'Skin-friendly Jewellery', 'subtitle' => 'Anti-tarnish finish for everyday wear'],
                 ['icon' => 'bi-shield-lock', 'title' => 'Secure Payment', 'subtitle' => '100% Safe & Secure Transactions'],
-                ['icon' => 'bi-truck', 'title' => 'Free Shipping', 'subtitle' => 'On All Orders'],
+                ['icon' => 'bi-box-seam', 'title' => 'Secure Packaging', 'subtitle' => 'Packed with care'],
                 ['icon' => 'bi-arrow-repeat', 'title' => 'Easy Returns', 'subtitle' => '15 Day Return Policy'],
-                ['icon' => 'bi-gem', 'title' => 'Lifetime Service', 'subtitle' => 'Maintenance & Repair'],
+                ['icon' => 'bi-stars', 'title' => 'Quality-checked', 'subtitle' => 'Premium finish'],
             ],
         ]);
     }

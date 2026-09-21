@@ -48,6 +48,13 @@
     </div>
 
     <div class="nav-item">
+        <a href="{{ $adminRoute('admin.payments.index') }}" class="nav-link {{ $isActive('admin.payments.*') ? 'active' : '' }}">
+            <span class="nav-icon"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></span>
+            <span class="nav-label">Payments</span>
+        </a>
+    </div>
+
+    <div class="nav-item">
         <a href="{{ $adminRoute('admin.customers.index') }}" class="nav-link {{ $isActive('admin.customers.*') ? 'active' : '' }}">
             <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
             <span class="nav-label">Customers</span>
@@ -90,6 +97,29 @@
         <a href="{{ $adminRoute('admin.enquiries.index') }}" class="nav-link {{ $isActive('admin.enquiries.*') ? 'active' : '' }}">
             <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path d="m22 6-10 7L2 6"/></svg></span>
             <span class="nav-label">Enquiries</span>
+        </a>
+    </div>
+
+    <div class="nav-section-label">Policies</div>
+
+    <div class="nav-item">
+        <a href="{{ $adminRoute('admin.policies.edit', 'shipping') }}" class="nav-link {{ $isActive('admin.policies.edit') && request()->route('policy') === 'shipping' ? 'active' : '' }}">
+            <span class="nav-icon"><svg viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></span>
+            <span class="nav-label">Shipping Policy</span>
+        </a>
+    </div>
+
+    <div class="nav-item">
+        <a href="{{ $adminRoute('admin.policies.edit', 'terms') }}" class="nav-link {{ $isActive('admin.policies.edit') && request()->route('policy') === 'terms' ? 'active' : '' }}">
+            <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg></span>
+            <span class="nav-label">Terms &amp; Conditions</span>
+        </a>
+    </div>
+
+    <div class="nav-item">
+        <a href="{{ $adminRoute('admin.policies.edit', 'privacy') }}" class="nav-link {{ $isActive('admin.policies.edit') && request()->route('policy') === 'privacy' ? 'active' : '' }}">
+            <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
+            <span class="nav-label">Privacy Policy</span>
         </a>
     </div>
 </nav>

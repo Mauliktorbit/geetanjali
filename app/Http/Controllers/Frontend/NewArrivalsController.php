@@ -98,11 +98,11 @@ class NewArrivalsController extends Controller
     private function services(): array
     {
         return [
-            ['icon' => 'bi-patch-check', 'title' => '100% Hallmarked', 'subtitle' => 'Certified Jewellery'],
+            ['icon' => 'bi-heart', 'title' => 'Skin-friendly', 'subtitle' => 'Anti-tarnish finish'],
             ['icon' => 'bi-shield-lock', 'title' => 'Secure Payment', 'subtitle' => '100% Safe & Secure'],
-            ['icon' => 'bi-truck', 'title' => 'Free Shipping', 'subtitle' => 'On All Orders Above ₹10,000'],
+            ['icon' => 'bi-box-seam', 'title' => 'Secure Packaging', 'subtitle' => 'Packed with care'],
             ['icon' => 'bi-arrow-repeat', 'title' => 'Easy Returns', 'subtitle' => '15 Day Return Policy'],
-            ['icon' => 'bi-gem', 'title' => 'Lifetime Service', 'subtitle' => 'Maintenance & Repair'],
+            ['icon' => 'bi-stars', 'title' => 'Quality-checked', 'subtitle' => 'Premium finish'],
             ['icon' => 'bi-gift', 'title' => 'Gift Wrapping', 'subtitle' => 'Available on Request'],
         ];
     }

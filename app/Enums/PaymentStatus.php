@@ -41,4 +41,16 @@ class PaymentStatus
     {
         return self::labels()[$status] ?? ucfirst(str_replace('_', ' ', $status));
     }
+
+    public static function badge(string $status): string
+    {
+        return match ($status) {
+            self::PAID => 'paid',
+            self::PENDING, self::AUTHORIZED => 'pending',
+            self::PARTIALLY_PAID => 'warning',
+            self::FAILED, self::CANCELLED => 'failed',
+            self::REFUNDED, self::PARTIALLY_REFUNDED => 'refunded',
+            default => 'default',
+        };
+    }
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
+use App\Models\StockNotification;
 use App\Services\CartService;
 use App\Services\StorefrontCatalogService;
 use Illuminate\Http\JsonResponse;
@@ -100,6 +101,56 @@ class ProductController extends Controller
             'cart_count' => $cart->count(),
             'product_id' => (int) $validated['product_id'],
             'quantity' => (int) $validated['quantity'],
+        ]);
+    }
+
+    public function notifyStock(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'product_id' => ['required', 'integer', 'exists:products,id'],
+            'email' => ['nullable', 'email', 'max:180'],
+        ]);
+
+        $product = Product::query()->storefront()->with('inventories')->find($validated['product_id']);
+        if ($product === null) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This product is not available.',
+            ], 404);
+        }
+
+        $inStock = (int) $product->inventories->sum('available_stock') > 0;
+        if ($inStock) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This piece is back in stock. You can add it to your bag.',
+            ], 422);
+        }
+
+        $user = $request->user();
+        $email = strtolower(trim((string) ($validated['email'] ?? $user?->email ?? '')));
+        if ($email === '') {
+            return response()->json([
+                'success' => false,
+                'needs_email' => true,
+                'message' => 'Enter your email to be notified.',
+            ], 422);
+        }
+
+        StockNotification::query()->updateOrCreate(
+            [
+                'product_id' => (int) $product->id,
+                'email' => $email,
+            ],
+            [
+                'customer_id' => $user?->customer?->id,
+                'notified_at' => null,
+            ]
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'We’ll email you when this piece is back in stock.',
         ]);
     }
 }

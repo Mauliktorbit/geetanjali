@@ -19,6 +19,12 @@
         <p class="subtitle">Customer details</p>
     </div>
     <div class="page-actions">
+        <form method="POST" action="{{ route('admin.customers.toggle', $item) }}" data-no-loading>
+            @csrf
+            <button class="btn {{ $item->is_blocked ? 'btn-primary' : 'btn-secondary' }}" type="submit" onclick="return confirm({{ json_encode($item->is_blocked ? 'Activate this customer so they can log in again?' : 'Deactivate this customer and block website login?') }})">
+                {{ $item->is_blocked ? 'Activate' : 'Deactivate' }}
+            </button>
+        </form>
         <a href="{{ route('admin.customers.index') }}" class="btn btn-ghost">Back</a>
     </div>
 </div>

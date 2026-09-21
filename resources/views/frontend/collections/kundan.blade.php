@@ -24,6 +24,7 @@
                         <i class="bi bi-sliders" aria-hidden="true"></i>
                         Filter
                     </button>
+                    @include('frontend.components.collection.view-toggle', ['view' => $filters['view'] ?? 'grid'])
                     <form method="get" action="{{ route('collections.kundan') }}" class="kundan-sort-mobile">
                         @foreach (($filters['type'] ?? []) as $t)
                             <input type="hidden" name="type[]" value="{{ $t }}">
@@ -39,6 +40,7 @@
                         @if (!empty($filters['category']))
                             <input type="hidden" name="category" value="{{ $filters['category'] }}">
                         @endif
+                        <input type="hidden" name="view" value="{{ $filters['view'] ?? 'grid' }}">
                         <label class="visually-hidden" for="kundan-sort-mobile">Sort by</label>
                         <select id="kundan-sort-mobile" name="sort" class="kundan-sort-select" data-auto-submit onchange="this.form.dataset.listingSubmitting='1'; this.form.submit()">
                             <option value="popularity" @selected($filters['sort'] === 'popularity')>Popularity</option>
@@ -71,34 +73,40 @@
                                 @endif
                             </p>
 
-                            <form method="get" action="{{ route('collections.kundan') }}" class="kundan-sort d-none d-lg-flex">
-                                @foreach (($filters['type'] ?? []) as $t)
-                                    <input type="hidden" name="type[]" value="{{ $t }}">
-                                @endforeach
-                                @foreach (($filters['metal'] ?? []) as $m)
-                                    <input type="hidden" name="metal[]" value="{{ $m }}">
-                                @endforeach
-                                @foreach (($filters['stone'] ?? []) as $s)
-                                    <input type="hidden" name="stone[]" value="{{ $s }}">
-                                @endforeach
-                                <input type="hidden" name="min_price" value="{{ $filters['min_price'] }}">
-                                <input type="hidden" name="max_price" value="{{ $filters['max_price'] }}">
-                                @if (!empty($filters['category']))
-                                    <input type="hidden" name="category" value="{{ $filters['category'] }}">
-                                @endif
-                                <label for="kundan-sort">Sort by:</label>
-                                <select id="kundan-sort" name="sort" class="kundan-sort-select" data-auto-submit onchange="this.form.dataset.listingSubmitting='1'; this.form.submit()">
-                                    <option value="popularity" @selected($filters['sort'] === 'popularity')>Popularity</option>
-                                    <option value="newest" @selected($filters['sort'] === 'newest')>Newest</option>
-                                    <option value="price_low" @selected($filters['sort'] === 'price_low')>Price Low to High</option>
-                                    <option value="price_high" @selected($filters['sort'] === 'price_high')>Price High to Low</option>
-                                    <option value="rating" @selected($filters['sort'] === 'rating')>Best Rated</option>
-                                </select>
-                            </form>
+                            <div class="kundan-products__tools">
+                                <form method="get" action="{{ route('collections.kundan') }}" class="kundan-sort d-none d-lg-flex">
+                                    @foreach (($filters['type'] ?? []) as $t)
+                                        <input type="hidden" name="type[]" value="{{ $t }}">
+                                    @endforeach
+                                    @foreach (($filters['metal'] ?? []) as $m)
+                                        <input type="hidden" name="metal[]" value="{{ $m }}">
+                                    @endforeach
+                                    @foreach (($filters['stone'] ?? []) as $s)
+                                        <input type="hidden" name="stone[]" value="{{ $s }}">
+                                    @endforeach
+                                    <input type="hidden" name="min_price" value="{{ $filters['min_price'] }}">
+                                    <input type="hidden" name="max_price" value="{{ $filters['max_price'] }}">
+                                    @if (!empty($filters['category']))
+                                        <input type="hidden" name="category" value="{{ $filters['category'] }}">
+                                    @endif
+                                    <input type="hidden" name="view" value="{{ $filters['view'] ?? 'grid' }}">
+                                    <label for="kundan-sort">Sort by:</label>
+                                    <select id="kundan-sort" name="sort" class="kundan-sort-select" data-auto-submit onchange="this.form.dataset.listingSubmitting='1'; this.form.submit()">
+                                        <option value="popularity" @selected($filters['sort'] === 'popularity')>Popularity</option>
+                                        <option value="newest" @selected($filters['sort'] === 'newest')>Newest</option>
+                                        <option value="price_low" @selected($filters['sort'] === 'price_low')>Price Low to High</option>
+                                        <option value="price_high" @selected($filters['sort'] === 'price_high')>Price High to Low</option>
+                                        <option value="rating" @selected($filters['sort'] === 'rating')>Best Rated</option>
+                                    </select>
+                                </form>
+                                <div class="d-none d-lg-flex">
+                                    @include('frontend.components.collection.view-toggle', ['view' => $filters['view'] ?? 'grid'])
+                                </div>
+                            </div>
                         </div>
 
                         @if ($products->count() > 0)
-                            <div class="kundan-grid">
+                            <div class="kundan-grid{{ ($filters['view'] ?? 'grid') === 'list' ? ' kundan-grid--list' : '' }}">
                                 @foreach ($products as $product)
                                     @include('frontend.components.product-card', ['product' => $product])
                                 @endforeach

@@ -13,7 +13,6 @@
       this.initFlashToasts();
       this.initConfirmModals();
       this.initImagePreview();
-      this.initPageLoader();
       this.initFormLoading();
       this.initFilterDropdowns();
       this.initCharts();
@@ -319,6 +318,9 @@
     /* ------------------------------------------------------------------ */
     initImagePreview() {
       document.querySelectorAll('input[type="file"][accept*="image"], input[type="file"][data-preview]').forEach((input) => {
+        if (input.hasAttribute('data-no-preview')) {
+          return;
+        }
         input.addEventListener('change', () => {
           const file = input.files && input.files[0];
           let preview = input.parentElement.querySelector('.image-preview');
@@ -348,69 +350,6 @@
     },
 
     /* ------------------------------------------------------------------ */
-    /* Page loader                                                        */
-    /* ------------------------------------------------------------------ */
-    initPageLoader() {
-      const loader = document.getElementById('admin-page-loader');
-      if (!loader) return;
-
-      let hideTimer = 0;
-
-      const show = () => {
-        window.clearTimeout(hideTimer);
-        loader.classList.add('is-active', 'active');
-        loader.setAttribute('aria-busy', 'true');
-        loader.setAttribute('aria-hidden', 'false');
-      };
-
-      const hide = () => {
-        loader.classList.remove('is-active', 'active');
-        loader.setAttribute('aria-busy', 'false');
-        loader.setAttribute('aria-hidden', 'true');
-      };
-
-      this.showLoader = show;
-      this.hideLoader = hide;
-      window.AdminLoader = { show, hide };
-
-      const hideReady = () => {
-        hideTimer = window.setTimeout(hide, 220);
-      };
-
-      if (document.readyState === 'complete') {
-        hideReady();
-      } else {
-        window.addEventListener('load', hideReady);
-      }
-
-      window.setTimeout(hide, 8000);
-      window.addEventListener('pageshow', (event) => {
-        if (event.persisted) hide();
-      });
-
-      document.addEventListener('click', (event) => {
-        const link = event.target.closest('a[href]');
-        if (!link || event.defaultPrevented) return;
-        if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-        if (link.target === '_blank' || link.hasAttribute('download')) return;
-        if (link.dataset.noLoading !== undefined) return;
-
-        const href = link.getAttribute('href') || '';
-        if (href === '' || href.charAt(0) === '#' || href.indexOf('javascript:') === 0) return;
-
-        try {
-          const url = new URL(link.href, window.location.href);
-          if (url.origin !== window.location.origin) return;
-          if (url.pathname === window.location.pathname && url.search === window.location.search) return;
-        } catch (err) {
-          return;
-        }
-
-        show();
-      });
-    },
-
-    /* ------------------------------------------------------------------ */
     /* Form submit loading                                                */
     /* ------------------------------------------------------------------ */
     initFormLoading() {
@@ -421,21 +360,8 @@
 
           const submitters = form.querySelectorAll('button[type="submit"], input[type="submit"], .btn-primary');
           submitters.forEach((btn) => {
-            btn.classList.add('is-loading');
             btn.disabled = true;
-            if (btn.tagName === 'BUTTON' && !btn.querySelector('.spinner')) {
-              const spin = document.createElement('span');
-              spin.className = 'spinner spinner-sm';
-              btn.prepend(spin);
-            }
           });
-
-          if (typeof this.showLoader === 'function') {
-            this.showLoader();
-          } else {
-            const pageLoader = document.querySelector('.page-loader');
-            if (pageLoader) pageLoader.classList.add('is-active', 'active');
-          }
         });
       });
     },

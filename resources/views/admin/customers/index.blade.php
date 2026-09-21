@@ -15,7 +15,7 @@
         <select name="status" class="form-control" aria-label="Status">
             <option value="">All statuses</option>
             <option value="active" @selected(request('status') === 'active')>Active</option>
-            <option value="blocked" @selected(request('status') === 'blocked')>Blocked</option>
+            <option value="inactive" @selected(in_array(request('status'), ['inactive', 'blocked'], true))>Inactive</option>
         </select>
         <button class="btn btn-secondary" type="submit">Filter</button>
         @if (request()->hasAny(['search', 'status']))
@@ -52,6 +52,22 @@
                             <a href="{{ route('admin.customers.show', $item) }}" class="btn btn-sm btn-icon btn-ghost" title="View" aria-label="View {{ $item->name }}">
                                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                             </a>
+                            <form method="POST" action="{{ route('admin.customers.toggle', $item) }}" data-no-loading>
+                                @csrf
+                                <button
+                                    class="btn btn-sm btn-icon {{ $item->is_blocked ? 'btn-secondary' : 'btn-ghost' }}"
+                                    type="submit"
+                                    title="{{ $item->is_blocked ? 'Activate' : 'Deactivate' }}"
+                                    aria-label="{{ $item->is_blocked ? 'Activate' : 'Deactivate' }} {{ $item->name }}"
+                                    onclick="return confirm({{ json_encode($item->is_blocked ? 'Activate '.$item->name.' so they can log in again?' : 'Deactivate '.$item->name.' and block website login?') }})"
+                                >
+                                    @if ($item->is_blocked)
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                                    @else
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
+                                    @endif
+                                </button>
+                            </form>
                         </div>
                     </td>
                 </tr>

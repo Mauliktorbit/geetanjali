@@ -6,7 +6,13 @@
             @foreach ($promos as $promo)
                 <article class="bridal-promo bridal-promo--{{ $promo['theme'] ?? 'dark' }}">
                     <div class="bridal-promo__content">
-                        <h3 class="font-heading">{!! nl2br(e($promo['heading'] ?? '')) !!}</h3>
+                        <h3 class="bridal-promo__title">
+                            @foreach (preg_split("/\r\n|\n|\r/", (string) ($promo['heading'] ?? '')) as $line)
+                                @if (trim($line) !== '')
+                                    <span>{{ $line }}</span>
+                                @endif
+                            @endforeach
+                        </h3>
                         <p>{{ $promo['description'] ?? '' }}</p>
                         <a href="{{ $promo['cta_url'] ?? '#' }}" class="bridal-btn bridal-btn--promo">
                             {{ $promo['cta_label'] ?? 'Learn More' }}

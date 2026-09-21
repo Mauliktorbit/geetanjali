@@ -373,15 +373,6 @@
     }
 }
 
-.kundan-page .product-card__actions,
-.bridal-page .product-card__actions,
-.new-arrivals-page .product-card__actions,
-.search-page .product-card__actions {
-    opacity: 1;
-    transform: none;
-    pointer-events: auto;
-}
-
 .product-card__action {
     display: inline-flex;
     align-items: center;
@@ -419,6 +410,40 @@
     color: var(--white);
 }
 
+.product-card__action--notify {
+    background: #16352d;
+    color: var(--white);
+}
+
+.product-card__action--notify:hover,
+.product-card__action--notify.is-notified {
+    background: var(--dark-green);
+    color: var(--white);
+}
+
+.product-card__action--similar {
+    background: rgba(255, 255, 255, 0.96);
+    color: #16352d;
+    text-decoration: none;
+}
+
+.product-card__action--similar:hover {
+    background: #fff;
+    color: var(--primary-green);
+}
+
+.btn-add-cart--notify {
+    background: #fff;
+    color: #16352d;
+    border: 1px solid #16352d;
+}
+
+.btn-add-cart--notify:hover,
+.btn-add-cart--notify.is-notified {
+    background: #16352d;
+    color: #fff;
+}
+
 .product-card__wishlist:hover,
 .product-card__wishlist.is-active {
     color: #c0392b;
@@ -429,7 +454,7 @@
 }
 
 .product-card__name {
-    font-size: 17px;
+    font-size: 20px;
     font-weight: 700;
     margin: 0 0 0.55rem;
     color: var(--text-dark);
@@ -580,7 +605,8 @@
     gap: 0.75rem;
 }
 
-.quick-view__actions .btn-add-cart-lg {
+.quick-view__actions .btn-add-cart-lg,
+.quick-view__actions .btn-buy-now {
     width: 100%;
 }
 
@@ -1016,7 +1042,7 @@
     }
 
     .product-card__name {
-        font-size: 15px;
+        font-size: 18px;
         min-height: 0;
     }
 

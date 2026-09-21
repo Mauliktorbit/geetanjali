@@ -18,10 +18,10 @@ class CustomerRepository extends BaseRepository
     {
         parent::applyFilters($query, $filters);
 
-        $status = (string) ($filters['status'] ?? '');
-        if ($status === 'blocked') {
+        $status = strtolower((string) ($filters['status'] ?? ''));
+        if (in_array($status, ['blocked', 'inactive', '0'], true)) {
             $query->where('is_blocked', true);
-        } elseif ($status === 'active') {
+        } elseif (in_array($status, ['active', '1'], true)) {
             $query->where('is_blocked', false);
         }
     }

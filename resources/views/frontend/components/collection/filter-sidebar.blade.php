@@ -35,6 +35,7 @@
     data-filter-form
 >
     <input type="hidden" name="sort" value="{{ $sort }}">
+    <input type="hidden" name="view" value="{{ $filters['view'] ?? 'grid' }}">
 
     <div class="kundan-filters__head">
         <h3>Filters</h3>

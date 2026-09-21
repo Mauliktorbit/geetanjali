@@ -62,16 +62,9 @@
                             <li><a href="{{ auth()->check() ? route('account.orders') : route('login') }}">My Orders</a></li>
                             <li><a href="{{ route('wishlist.index') }}">Wishlist</a></li>
                             <li><a href="{{ route('pages.privacy') }}">Privacy Policy</a></li>
-                            @auth
-                                <li>
-                                    <form action="{{ route('logout') }}" method="post" class="d-inline" data-confirm="Log out? You will need to sign in again to view your account.">
-                                        @csrf
-                                        <button type="submit" class="footer-logout-link" data-confirm="Log out? You will need to sign in again to view your account.">Logout</button>
-                                    </form>
-                                </li>
-                            @else
+                            @guest
                                 <li><a href="{{ route('login') }}">Login</a></li>
-                            @endauth
+                            @endguest
                         </ul>
                     </div>
 

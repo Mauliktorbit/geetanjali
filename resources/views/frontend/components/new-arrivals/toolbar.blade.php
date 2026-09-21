@@ -58,25 +58,8 @@
                 <option value="name_desc" @selected(($filters['sort'] ?? '') === 'name_desc')>Name: Z-A</option>
             </select>
 
-            <div class="na-view-toggle" role="group" aria-label="Product view">
-                <button
-                    type="button"
-                    class="na-view-btn {{ ($filters['view'] ?? 'grid') === 'grid' ? 'is-active' : '' }}"
-                    data-view="grid"
-                    aria-label="Grid view"
-                    aria-pressed="{{ ($filters['view'] ?? 'grid') === 'grid' ? 'true' : 'false' }}"
-                >
-                    <i class="bi bi-grid-3x3-gap-fill" aria-hidden="true"></i>
-                </button>
-                <button
-                    type="button"
-                    class="na-view-btn {{ ($filters['view'] ?? '') === 'list' ? 'is-active' : '' }}"
-                    data-view="list"
-                    aria-label="List view"
-                    aria-pressed="{{ ($filters['view'] ?? '') === 'list' ? 'true' : 'false' }}"
-                >
-                    <i class="bi bi-list" aria-hidden="true"></i>
-                </button>
+            <div class="na-view-toggle">
+                @include('frontend.components.collection.view-toggle', ['view' => $filters['view'] ?? 'grid'])
             </div>
         </form>
     </div>

@@ -5,6 +5,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const checkoutPage = document.querySelector('[data-checkout-page]');
     const accountAddresses = document.querySelector('[data-account-addresses]');
 
+    autoHideCheckoutSuccess();
+
     if (checkoutPage) {
         const selectCard = (input) => {
             const group = input.closest('.checkout-card, .checkout-address-list') || checkoutPage;
@@ -47,6 +49,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+function autoHideCheckoutSuccess(delayMs) {
+    const wait = Number(delayMs) > 0 ? Number(delayMs) : 3500;
+    const banners = document.querySelectorAll('.checkout-flash--success, [data-checkout-page] .alert-success');
+    banners.forEach((el) => {
+        window.setTimeout(() => {
+            el.classList.add('is-hiding');
+            window.setTimeout(() => el.remove(), 280);
+        }, wait);
+    });
+}
+
 function lockCheckoutModal(open) {
     document.body.classList.toggle('is-checkout-modal-open', open);
 }
@@ -73,7 +86,7 @@ function updateShipping(page, method) {
     const charge = method === 'express' ? express : 0;
     const label = page.querySelector('[data-shipping-label]');
     const total = page.querySelector('[data-order-total]');
-    if (label) label.textContent = charge > 0 ? formatMoney(charge) : 'FREE';
+    if (label) label.textContent = formatMoney(charge);
     if (total) total.textContent = formatMoney(base + charge);
 }
 

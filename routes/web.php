@@ -43,7 +43,8 @@ Route::get('/collection/{slug}', [CollectionController::class, 'show'])->name('c
 Route::get('/offers', [OfferController::class, 'index'])->name('offers.index');
 
 Route::get('/product/{slug}', [ProductController::class, 'show'])->name('products.show');
-Route::post('/delivery/check', [ProductController::class, 'checkDelivery'])->name('delivery.check');
+Route::post('/product/stock-notify', [ProductController::class, 'notifyStock'])->name('products.stock-notify');
+Route::post('/product/delivery-check', [ProductController::class, 'checkDelivery'])->name('delivery.check');
 
 Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
 Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
@@ -52,7 +53,7 @@ Route::delete('/cart/remove/{id}', [CartController::class, 'remove'])->name('car
 Route::post('/cart/apply-coupon', [CartController::class, 'applyCoupon'])->name('cart.coupon');
 Route::post('/cart/gift-message', [CartController::class, 'saveGiftMessage'])->name('cart.gift');
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'account.active'])->group(function () {
     Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
     Route::post('/checkout', [CheckoutController::class, 'place'])->name('checkout.place');
     Route::post('/checkout/contact', [CheckoutController::class, 'updateContact'])->name('checkout.contact');
@@ -98,6 +99,7 @@ Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [AuthController::class, 'login'])->name('login.submit');
     Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
+    Route::post('/register/check', [AuthController::class, 'checkRegisterField'])->middleware('throttle:30,1')->name('register.check');
     Route::post('/register', [AuthController::class, 'register'])->name('register.submit');
     Route::get('/forgot-password', [PasswordResetController::class, 'showEmailForm'])->name('password.request');
     Route::post('/forgot-password', [PasswordResetController::class, 'sendOtp'])->middleware('throttle:5,1')->name('password.email');

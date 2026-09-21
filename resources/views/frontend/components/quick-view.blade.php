@@ -37,6 +37,20 @@
                         <i class="bi bi-bag" aria-hidden="true"></i>
                         Add to Cart
                     </button>
+                    <button
+                        type="button"
+                        class="btn-add-cart-lg"
+                        data-stock-notify
+                        data-qv-notify
+                        data-no-loading
+                        hidden
+                    >
+                        <i class="bi bi-bell" aria-hidden="true"></i>
+                        Notify me
+                    </button>
+                    <a class="btn-buy-now" href="#" data-qv-similar hidden>
+                        View similar
+                    </a>
                     <a class="quick-view__details" href="#" data-qv-link>
                         View Full Details
                     </a>

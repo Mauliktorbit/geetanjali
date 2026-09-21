@@ -6,8 +6,10 @@ use App\Enums\PaymentStatus;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Repositories\PaymentRepository;
+use App\Services\CheckoutService;
 use App\Services\PaymentService;
 use Illuminate\Http\Request;
+use InvalidArgumentException;
 
 class PaymentController extends AdminController
 {
@@ -18,11 +20,13 @@ class PaymentController extends AdminController
 
     public function index(Request $request)
     {
+        $this->paymentService->syncMissingFromOrders();
         $items = $this->repository->paginate($request->all());
 
         return view('admin.payments.index', [
             'items' => $items,
             'statuses' => PaymentStatus::labels(),
+            'methods' => CheckoutService::PAYMENTS,
         ]);
     }
 
@@ -60,13 +64,17 @@ class PaymentController extends AdminController
             'reason' => ['nullable', 'string'],
         ]);
 
-        $this->paymentService->processRefund(
-            $payment->order,
-            (float) $request->input('amount'),
-            $payment,
-            $request->input('method', 'original'),
-            $request->input('reason')
-        );
+        try {
+            $this->paymentService->processRefund(
+                $payment->order,
+                (float) $request->input('amount'),
+                $payment,
+                $request->input('method', 'original'),
+                $request->input('reason')
+            );
+        } catch (InvalidArgumentException $e) {
+            return $this->error($e->getMessage());
+        }
 
         return $this->success('Refund processed.');
     }

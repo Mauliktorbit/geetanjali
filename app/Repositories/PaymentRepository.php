@@ -3,15 +3,33 @@
 namespace App\Repositories;
 
 use App\Models\Payment;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 
 class PaymentRepository extends BaseRepository
 {
-    protected array $searchable = ['transaction_id', 'payment_method', 'gateway'];
+    protected array $searchable = [
+        'transaction_id',
+        'payment_method',
+        'gateway',
+        'order.order_number',
+        'customer.name',
+        'customer.email',
+        'customer.phone',
+    ];
 
     public function __construct(Payment $model)
     {
         parent::__construct($model);
+    }
+
+    public function paginate(array $filters = [], int $perPage = 15): LengthAwarePaginator
+    {
+        $query = $this->query()->with(['order', 'customer']);
+        $this->applyFilters($query, $filters);
+        $this->applySorting($query, $filters);
+
+        return $query->paginate($filters['per_page'] ?? $perPage)->withQueryString();
     }
 
     protected function applyFilters(Builder $query, array $filters): void

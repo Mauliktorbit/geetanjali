@@ -55,8 +55,11 @@
                         @endif
                     </td>
                     <td>
-                        <a href="{{ route('admin.offers.show', $item) }}" class="orders-table__number">{{ $item->discount_display }} {{ $item->discount_suffix }}</a>
+                        <a href="{{ route('admin.offers.show', $item) }}" class="orders-table__number">{{ $item->label }} {{ $item->discount_display }} {{ $item->discount_suffix }}</a>
                         <div class="form-hint">{{ str_replace(["\r", "\n"], ' ', $item->title) }}</div>
+                        @if ($item->minimumOrderLabel())
+                            <div class="form-hint">{{ $item->minimumOrderLabel() }}</div>
+                        @endif
                     </td>
                     <td>{{ $item->categoryLabel() }}</td>
                     <td>{{ $item->validTillAdmin() }}</td>

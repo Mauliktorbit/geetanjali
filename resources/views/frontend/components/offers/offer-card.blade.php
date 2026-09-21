@@ -19,11 +19,6 @@
             @if (! empty($offer['min_order']))
                 <p class="offer-card__min">{{ $offer['min_order'] }}</p>
             @endif
-            @if (! empty($offer['promo_code']))
-                <button type="button" class="offer-card__code" data-copy-code="{{ $offer['promo_code'] }}">
-                    Use Code: <strong>{{ $offer['promo_code'] }}</strong>
-                </button>
-            @endif
         </div>
         <div class="offer-card__media">
             <img

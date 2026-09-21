@@ -78,27 +78,8 @@
             </div>
         @endif
 
-        <div class="bridal-view-toggle" role="group" aria-label="Product view">
-            <input type="hidden" name="view" value="{{ $view }}" data-view-input>
-            <button
-                type="button"
-                class="bridal-view-btn {{ $view === 'grid' ? 'is-active' : '' }}"
-                data-view="grid"
-                aria-label="Grid view"
-                aria-pressed="{{ $view === 'grid' ? 'true' : 'false' }}"
-            >
-                <i class="bi bi-grid-3x3-gap-fill" aria-hidden="true"></i>
-            </button>
-            <button
-                type="button"
-                class="bridal-view-btn {{ $view === 'list' ? 'is-active' : '' }}"
-                data-view="list"
-                aria-label="List view"
-                aria-pressed="{{ $view === 'list' ? 'true' : 'false' }}"
-            >
-                <i class="bi bi-list" aria-hidden="true"></i>
-            </button>
-        </div>
+        <input type="hidden" name="view" value="{{ $view }}" data-view-input>
+        @include('frontend.components.collection.view-toggle', ['view' => $view])
 
         @unless ($compact)
             <button type="submit" class="bridal-btn bridal-btn--apply">Apply Filters</button>

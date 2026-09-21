@@ -1,7 +1,7 @@
 @extends('frontend.layouts.app')
 
 @section('title', 'About Us — ' . config('brand.name'))
-@section('meta_description', 'Discover the legacy of Geetanjali Jewellers — trusted Kundan, Gold and Diamond craftsmanship rooted in tradition and modern elegance.')
+@section('meta_description', 'Discover Geetanjali Jewellers — premium artificial jewellery crafted for celebrations, everyday wear and lasting style.')
 
 @section('content')
     <div class="about-page">

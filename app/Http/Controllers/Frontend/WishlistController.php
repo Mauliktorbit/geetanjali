@@ -28,11 +28,11 @@ class WishlistController extends Controller
                 ['label' => 'My Wishlist', 'url' => null],
             ],
             'trustItems' => [
-                ['icon' => 'bi-shield-check', 'title' => '100% Hallmarked', 'subtitle' => 'Certified Jewellery'],
+                ['icon' => 'bi-heart', 'title' => 'Skin-friendly', 'subtitle' => 'Anti-tarnish finish'],
                 ['icon' => 'bi-bag-check', 'title' => 'Secure Payment', 'subtitle' => '100% Safe & Secure'],
-                ['icon' => 'bi-truck', 'title' => 'Free Shipping', 'subtitle' => 'On All Orders'],
-                ['icon' => 'bi-box-seam', 'title' => 'Easy Returns', 'subtitle' => '15 Day Return Policy'],
-                ['icon' => 'bi-tools', 'title' => 'Lifetime Service', 'subtitle' => 'Maintenance & Repair'],
+                ['icon' => 'bi-box-seam', 'title' => 'Secure Packaging', 'subtitle' => 'Packed with care'],
+                ['icon' => 'bi-arrow-repeat', 'title' => 'Easy Returns', 'subtitle' => '15 Day Return Policy'],
+                ['icon' => 'bi-stars', 'title' => 'Quality-checked', 'subtitle' => 'Premium finish'],
             ],
         ]);
     }

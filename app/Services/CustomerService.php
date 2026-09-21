@@ -89,6 +89,9 @@ class CustomerService extends BaseService
                     $userData['password'] = $password;
                 }
                 $model->user->update($userData);
+                if ($model->is_blocked) {
+                    $this->forgetUserSessions($model->user);
+                }
             }
 
             return $model->fresh();
@@ -97,36 +100,26 @@ class CustomerService extends BaseService
 
     public function block(Customer $customer, ?string $reason = null): Customer
     {
-        $customer->update(['is_blocked' => true]);
-
-        if ($reason) {
-            CustomerNote::create([
-                'customer_id' => $customer->id,
-                'user_id' => Auth::id(),
-                'note' => 'Blocked: ' . $reason,
-            ]);
-        }
-
-        if ($customer->user) {
-            $customer->user->update(['is_active' => false]);
-        }
-
-        return $customer->fresh();
+        return $this->setActive($customer, false, $reason ?: 'Deactivated from admin');
     }
 
     public function unblock(Customer $customer): Customer
     {
-        $customer->update(['is_blocked' => false]);
+        return $this->setActive($customer, true);
+    }
 
-        if ($customer->user) {
-            $customer->user->update(['is_active' => true]);
+    public function setActive(Customer $customer, bool $active, ?string $reason = null): Customer
+    {
+        $customer->update(['is_blocked' => ! $active]);
+        $this->syncUserAccess($customer, $active);
+
+        if (Schema::hasTable('customer_notes')) {
+            CustomerNote::create([
+                'customer_id' => $customer->id,
+                'user_id' => Auth::id(),
+                'note' => $active ? 'Customer activated' : 'Deactivated: '.($reason ?: 'Deactivated from admin'),
+            ]);
         }
-
-        CustomerNote::create([
-            'customer_id' => $customer->id,
-            'user_id' => Auth::id(),
-            'note' => 'Customer unblocked',
-        ]);
 
         return $customer->fresh();
     }
@@ -317,6 +310,27 @@ class CustomerService extends BaseService
             if (Schema::hasTable($table) && Schema::hasColumn($table, 'customer_id')) {
                 DB::table($table)->where('customer_id', $fromId)->update(['customer_id' => $toId]);
             }
+        }
+    }
+
+    private function syncUserAccess(Customer $customer, bool $active): void
+    {
+        $user = $customer->user;
+        if (! $user) {
+            return;
+        }
+
+        $user->update(['is_active' => $active]);
+
+        if (! $active) {
+            $this->forgetUserSessions($user);
+        }
+    }
+
+    private function forgetUserSessions(User $user): void
+    {
+        if (Schema::hasTable('sessions') && Schema::hasColumn('sessions', 'user_id')) {
+            DB::table('sessions')->where('user_id', $user->id)->delete();
         }
     }
 }

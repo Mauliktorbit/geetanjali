@@ -37,6 +37,11 @@
 
 .checkout-flash--success { background: #edf7f0; color: #16803c; }
 .checkout-flash--error { background: #fdf2f2; color: #c0392b; }
+.checkout-flash.is-hiding,
+[data-checkout-page] .alert-success.is-hiding {
+    opacity: 0;
+    transition: opacity 0.28s ease;
+}
 
 .checkout-layout {
     display: grid;

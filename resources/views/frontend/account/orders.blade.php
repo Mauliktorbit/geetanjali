@@ -30,7 +30,7 @@
             <span class="account-status account-status--{{ $row['tone'] }}">{{ $row['status_label'] }}</span>
         </a>
     @empty
-        <p class="account-empty">No orders yet. Discover hallmarked jewellery made to last.</p>
+        <p class="account-empty">No orders yet. Discover jewellery made for everyday wear and celebrations.</p>
         <a class="account-ghost-btn" href="{{ route('home') }}">Continue Shopping</a>
     @endforelse
 

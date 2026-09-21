@@ -3,8 +3,8 @@
         <div class="product-service-grid">
             <div class="product-service-item">
                 <i class="bi bi-patch-check" aria-hidden="true"></i>
-                <strong>100% Hallmarked</strong>
-                <span>Certified Jewellery</span>
+                <strong>Skin-friendly</strong>
+                <span>Anti-tarnish finish</span>
             </div>
             <div class="product-service-item">
                 <i class="bi bi-shield-lock" aria-hidden="true"></i>
@@ -12,9 +12,9 @@
                 <span>100% Safe & Secure</span>
             </div>
             <div class="product-service-item">
-                <i class="bi bi-truck" aria-hidden="true"></i>
-                <strong>Free Shipping</strong>
-                <span>On All Orders Above ₹10,000</span>
+                <i class="bi bi-box-seam" aria-hidden="true"></i>
+                <strong>Secure Packaging</strong>
+                <span>Packed with care</span>
             </div>
             <div class="product-service-item">
                 <i class="bi bi-arrow-repeat" aria-hidden="true"></i>
@@ -22,9 +22,9 @@
                 <span>15 Day Return Policy</span>
             </div>
             <div class="product-service-item">
-                <i class="bi bi-gem" aria-hidden="true"></i>
-                <strong>Lifetime Service</strong>
-                <span>Maintenance & Repair</span>
+                <i class="bi bi-stars" aria-hidden="true"></i>
+                <strong>Quality-checked</strong>
+                <span>Premium finish</span>
             </div>
             <div class="product-service-item">
                 <i class="bi bi-gift" aria-hidden="true"></i>

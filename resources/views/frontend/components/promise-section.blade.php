@@ -1,7 +1,7 @@
 @props([
     'heading_line_1' => 'Crafted with Passion,',
     'heading_line_2' => 'Delivered with Pride',
-    'description' => 'Each creation goes through a meticulous process to ensure it meets our high standards of purity, quality and design.',
+    'description' => 'Each creation goes through a meticulous process to ensure it meets our high standards of finish, comfort and design.',
     'features' => [],
     'image' => 'public/assets/images/about/craftsmanship.jpg',
     'image_alt' => 'Artisan crafting fine Geetanjali jewellery by hand',
@@ -10,9 +10,9 @@
 @php
     $features = $features ?: [
         [
-            'icon' => 'bi-patch-check',
-            'title' => 'Certified Jewellery',
-            'description' => 'All our jewellery comes with authentic certification and hallmark.',
+            'icon' => 'bi-heart',
+            'title' => 'Skin-friendly Jewellery',
+            'description' => 'Lightweight artificial jewellery with a premium anti-tarnish finish, made for everyday wear.',
         ],
         [
             'icon' => 'bi-truck',

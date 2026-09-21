@@ -27,4 +27,14 @@ class CustomerController extends AdminController
 
         return view('admin.customers.show', ['item' => $customer]);
     }
+
+    public function toggle(Customer $customer)
+    {
+        $active = $customer->is_blocked;
+        $this->service->setActive($customer, $active);
+
+        return $this->success($active
+            ? $customer->name.' is now active.'
+            : $customer->name.' is now inactive and cannot log in.');
+    }
 }

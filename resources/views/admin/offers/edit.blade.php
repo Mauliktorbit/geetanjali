@@ -9,7 +9,7 @@
     </div>
 </div>
 @include('admin.components.alerts')
-<div class="card product-form-card">
+<div class="card product-form-card offer-form-card">
     <form method="POST" action="{{ route('admin.offers.update', $item) }}" enctype="multipart/form-data">
         @csrf
         @method('PUT')

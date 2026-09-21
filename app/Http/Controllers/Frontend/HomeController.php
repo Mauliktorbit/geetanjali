@@ -88,11 +88,11 @@ class HomeController extends Controller
     private function services(): array
     {
         return [
-            ['icon' => 'bi-patch-check', 'title' => 'Certified Jewellery', 'subtitle' => '100% Hallmarked'],
+            ['icon' => 'bi-heart', 'title' => 'Skin-friendly', 'subtitle' => 'Anti-tarnish finish'],
             ['icon' => 'bi-shield-lock', 'title' => 'Secure Payment', 'subtitle' => '100% Safe & Secure'],
-            ['icon' => 'bi-truck', 'title' => 'Free Shipping', 'subtitle' => 'On All Orders'],
+            ['icon' => 'bi-box-seam', 'title' => 'Secure Packaging', 'subtitle' => 'Packed with care'],
             ['icon' => 'bi-arrow-repeat', 'title' => 'Easy Returns', 'subtitle' => '15 Day Return Policy'],
-            ['icon' => 'bi-gem', 'title' => 'Lifetime Service', 'subtitle' => 'Maintenance & Repair'],
+            ['icon' => 'bi-stars', 'title' => 'Quality-checked', 'subtitle' => 'Premium finish'],
             ['icon' => 'bi-gift', 'title' => 'Gift Wrapping', 'subtitle' => 'Available on Request'],
         ];
     }
@@ -171,7 +171,7 @@ class HomeController extends Controller
     private function whyFeatures(): array
     {
         return [
-            ['icon' => 'bi-award', 'title' => '100% Hallmarked', 'subtitle' => 'Certified Jewellery'],
+            ['icon' => 'bi-heart', 'title' => 'Skin-friendly', 'subtitle' => 'Anti-tarnish finish'],
             ['icon' => 'bi-receipt', 'title' => 'Transparent Pricing', 'subtitle' => 'No Hidden Charges'],
             ['icon' => 'bi-people', 'title' => 'Ahmedabad Showroom', 'subtitle' => 'PNTC Tower, Vejalpur'],
             ['icon' => 'bi-hourglass-split', 'title' => 'Made in Our Workshop', 'subtitle' => 'Kundan from design to setting'],

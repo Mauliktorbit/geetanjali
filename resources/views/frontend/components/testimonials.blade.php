@@ -37,8 +37,8 @@
         @else
         <div class="testimonial-grid">
             <article class="testimonial-card reveal">
-                <strong>BIS Hallmarked Gold</strong>
-                <p>Every gold piece is hallmarked for purity, so you know exactly what you are taking home.</p>
+                <strong>Skin-friendly Finish</strong>
+                <p>Anti-tarnish plating so pieces stay comfortable and bright with daily wear.</p>
             </article>
             <article class="testimonial-card reveal">
                 <strong>Made in Our Workshop</strong>

@@ -2,8 +2,8 @@
     <div class="auth-benefits__item">
         <i class="bi bi-patch-check" aria-hidden="true"></i>
         <div>
-            <h3>100% Hallmarked</h3>
-            <p>Certified Jewellery</p>
+            <h3>Skin-friendly</h3>
+            <p>Anti-tarnish finish</p>
         </div>
     </div>
     <div class="auth-benefits__item">
@@ -14,10 +14,10 @@
         </div>
     </div>
     <div class="auth-benefits__item">
-        <i class="bi bi-truck" aria-hidden="true"></i>
+        <i class="bi bi-box-seam" aria-hidden="true"></i>
         <div>
-            <h3>Free Shipping</h3>
-            <p>On All Orders</p>
+            <h3>Secure Packaging</h3>
+            <p>Packed with care</p>
         </div>
     </div>
     <div class="auth-benefits__item">

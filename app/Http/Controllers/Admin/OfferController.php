@@ -36,6 +36,8 @@ class OfferController extends AdminController
 
     public function show(Offer $offer)
     {
+        $offer->load('coupon');
+
         return view('admin.offers.show', ['item' => $offer]);
     }
 
@@ -67,6 +69,8 @@ class OfferController extends AdminController
 
         if ($request->hasFile('image')) {
             $data['image'] = $request->file('image')->store('uploads/offers', 'public');
+        } elseif ($request->boolean('remove_image')) {
+            $data['image'] = null;
         } else {
             unset($data['image']);
         }

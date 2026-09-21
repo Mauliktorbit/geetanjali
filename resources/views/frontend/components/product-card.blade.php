@@ -12,6 +12,7 @@
     $badge = $product['badge'] ?? null;
     $productId = $product['id'] ?? null;
     $url = $product['url'] ?? (! empty($product['slug']) ? route('products.show', $product['slug']) : null);
+    $similarUrl = $product['similar_url'] ?? $url;
     $outOfStock = ($product['stock_status'] ?? 'in_stock') === 'out_of_stock'
         || (isset($product['stock']) && (int) $product['stock'] <= 0);
     $inWishlist = $productId && in_array((int) $productId, $wishlistProductIds ?? [], true);
@@ -30,6 +31,7 @@
     data-product-discount="{{ $discount ?? '' }}"
     data-product-metal="{{ $product['metal'] ?? '' }}"
     data-product-weight="{{ $product['weight'] ?? '' }}"
+    data-product-similar="{{ $similarUrl ?? '' }}"
 >
     <div class="product-card__media">
         @if ($badge)
@@ -91,6 +93,27 @@
                     <i class="bi bi-bag" aria-hidden="true"></i>
                     <span>Add to Cart</span>
                 </button>
+            @else
+                <button
+                    type="button"
+                    class="product-card__action product-card__action--notify"
+                    aria-label="Notify me when {{ $name }} is back in stock"
+                    data-stock-notify
+                    data-no-loading
+                    @if ($productId) data-product-id="{{ $productId }}" @endif
+                >
+                    <i class="bi bi-bell" aria-hidden="true"></i>
+                    <span>Notify me</span>
+                </button>
+                @if ($similarUrl)
+                    <a
+                        href="{{ $similarUrl }}"
+                        class="product-card__action product-card__action--similar"
+                    >
+                        <i class="bi bi-arrow-left-right" aria-hidden="true"></i>
+                        <span>View similar</span>
+                    </a>
+                @endif
             @endif
         </div>
     </div>
@@ -121,6 +144,17 @@
                     @if ($productId) data-product-id="{{ $productId }}" @endif
                 >
                     <i class="bi bi-bag" aria-hidden="true"></i>
+                </button>
+            @elseif ($outOfStock)
+                <button
+                    type="button"
+                    class="btn-add-cart btn-add-cart--notify"
+                    aria-label="Notify me when {{ $name }} is back in stock"
+                    data-stock-notify
+                    data-no-loading
+                    @if ($productId) data-product-id="{{ $productId }}" @endif
+                >
+                    <i class="bi bi-bell" aria-hidden="true"></i>
                 </button>
             @endif
         </div>

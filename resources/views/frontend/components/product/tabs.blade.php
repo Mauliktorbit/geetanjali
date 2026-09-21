@@ -27,10 +27,10 @@
                 <aside class="why-card">
                     <h3>Why Choose Geetanjali Jewellers?</h3>
                     <ul>
-                        <li><i class="bi bi-award" aria-hidden="true"></i><span>100% Hallmarked & Certified Jewellery</span></li>
+                        <li><i class="bi bi-award" aria-hidden="true"></i><span>Premium artificial jewellery, quality checked</span></li>
                         <li><i class="bi bi-stars" aria-hidden="true"></i><span>Exquisite Craftsmanship</span></li>
                         <li><i class="bi bi-geo-alt" aria-hidden="true"></i><span>Visit our Ahmedabad showroom</span></li>
-                        <li><i class="bi bi-headset" aria-hidden="true"></i><span>Lifetime Maintenance & Support</span></li>
+                        <li><i class="bi bi-headset" aria-hidden="true"></i><span>Helpful after-sales support</span></li>
                     </ul>
                 </aside>
             </div>
@@ -55,7 +55,7 @@
 
         <div class="tab-panel" data-product-panel="shipping" role="tabpanel">
             <ul class="check-list">
-                <li><i class="bi bi-check-circle-fill" aria-hidden="true"></i><span>Free shipping on eligible orders</span></li>
+                <li><i class="bi bi-check-circle-fill" aria-hidden="true"></i><span>Shipping charges calculated at checkout</span></li>
                 <li><i class="bi bi-check-circle-fill" aria-hidden="true"></i><span>Estimated delivery in 3–5 business days</span></li>
                 <li><i class="bi bi-check-circle-fill" aria-hidden="true"></i><span>Easy 15-day returns on unused jewellery</span></li>
                 <li><i class="bi bi-check-circle-fill" aria-hidden="true"></i><span>Exchange available as per store policy</span></li>

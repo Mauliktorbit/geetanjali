@@ -16,7 +16,7 @@ class OfferRepository extends BaseRepository
 
     public function query(): Builder
     {
-        return parent::query()->with('offerCategory');
+        return parent::query()->with(['offerCategory', 'coupon']);
     }
 
     protected function applyFilters(Builder $query, array $filters): void

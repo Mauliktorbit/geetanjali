@@ -35,7 +35,7 @@ class PasswordResetController extends Controller
                 ->withErrors(['email' => 'No account was found for this email.']);
         }
 
-        if (! $user->is_active) {
+        if (! $user->is_active || $user->customer?->is_blocked) {
             return back()
                 ->withInput(['email' => $email])
                 ->withErrors(['email' => 'This account is inactive. Please contact support.']);

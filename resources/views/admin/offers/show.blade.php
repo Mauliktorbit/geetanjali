@@ -1,11 +1,11 @@
 @extends('admin.layouts.app')
-@section('title', $item->displayCode() ?: 'Offer')
+@section('title', $item->title ?: 'Offer')
 @section('content')
 <div class="page-header">
     <div>
         <h1>{{ $item->discount_display }} {{ $item->discount_suffix }}</h1>
         <p class="subtitle">{{ str_replace(["\r", "\n"], ' ', $item->title) }}</p>
-        @include('admin.components.breadcrumbs', ['items' => [['label' => 'Offers', 'url' => route('admin.offers.index')], ['label' => $item->displayCode() ?: 'Offer']]])
+        @include('admin.components.breadcrumbs', ['items' => [['label' => 'Offers', 'url' => route('admin.offers.index')], ['label' => str_replace(["\r", "\n"], ' ', $item->title) ?: 'Offer']]])
     </div>
     <div class="page-actions">
         <a href="{{ route('admin.offers.edit', $item) }}" class="btn btn-primary">Edit</a>
@@ -30,12 +30,28 @@
             <span class="value">{{ $item->categoryLabel() }}</span>
         </div>
         <div class="detail-item">
+            <span class="label">Label</span>
+            <span class="value">{{ $item->label ?: '—' }}</span>
+        </div>
+        <div class="detail-item">
             <span class="label">Headline</span>
             <span class="value">{{ str_replace(["\r", "\n"], ' ', $item->title) }}</span>
         </div>
         <div class="detail-item">
             <span class="label">Discount</span>
             <span class="value">{{ $item->discount_display }} {{ $item->discount_suffix }}</span>
+        </div>
+        <div class="detail-item">
+            <span class="label">Minimum order</span>
+            <span class="value">{{ $item->minimumOrderLabel() ?: 'No minimum' }}</span>
+        </div>
+        <div class="detail-item">
+            <span class="label">Card style</span>
+            <span class="value">{{ \App\Models\Offer::themes()[$item->theme] ?? $item->theme }}</span>
+        </div>
+        <div class="detail-item">
+            <span class="label">Starts</span>
+            <span class="value">{{ $item->starts_at?->format('d/m/Y') ?: '—' }}</span>
         </div>
         <div class="detail-item">
             <span class="label">Valid till</span>

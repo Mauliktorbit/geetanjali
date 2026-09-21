@@ -4,7 +4,7 @@
     $stats = $stats ?: [
         ['icon' => 'bi-geo-alt', 'value' => 'Ahmedabad', 'label' => 'Showroom at PNTC Tower, Vejalpur'],
         ['icon' => 'bi-hammer', 'value' => 'Workshop', 'label' => 'Kundan jewellery crafted in-house'],
-        ['icon' => 'bi-patch-check', 'value' => 'Hallmarked', 'label' => 'BIS-certified gold in every piece'],
+        ['icon' => 'bi-heart', 'value' => 'Skin-friendly', 'label' => 'Anti-tarnish finish, made for everyday wear'],
         ['icon' => 'bi-clock', 'value' => 'Mon–Sat', 'label' => '10:00 AM – 7:00 PM'],
     ];
 @endphp

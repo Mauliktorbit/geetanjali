@@ -21,6 +21,7 @@ class Offer extends Model
         'discount_suffix',
         'title',
         'promo_code',
+        'minimum_order',
         'image',
         'image_alt',
         'starts_at',
@@ -34,6 +35,7 @@ class Offer extends Model
         return [
             'starts_at' => 'datetime',
             'ends_at' => 'datetime',
+            'minimum_order' => 'decimal:2',
             'sort_order' => 'integer',
             'is_active' => 'boolean',
         ];
@@ -47,6 +49,20 @@ class Offer extends Model
     public function offerCategory(): BelongsTo
     {
         return $this->belongsTo(OfferCategory::class, 'category', 'slug');
+    }
+
+    public function scopeStorefront($query)
+    {
+        $now = now();
+
+        return $query
+            ->where('is_active', true)
+            ->where(function ($inner) use ($now) {
+                $inner->whereNull('starts_at')->orWhere('starts_at', '<=', $now);
+            })
+            ->where(function ($inner) use ($now) {
+                $inner->whereNull('ends_at')->orWhere('ends_at', '>=', $now);
+            });
     }
 
     /**
@@ -147,6 +163,14 @@ class Offer extends Model
             'image' => $this->image,
             'image_alt' => $this->image_alt ?: $this->title,
             'valid_until' => $this->validUntilLabel(),
+            'min_order' => $this->minimumOrderLabel(),
         ];
+    }
+
+    public function minimumOrderLabel(): ?string
+    {
+        $amount = (float) ($this->minimum_order ?: $this->coupon?->minimum_cart ?: 0);
+
+        return $amount > 0 ? 'Min. order '.money($amount) : null;
     }
 }

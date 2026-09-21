@@ -7,6 +7,7 @@ use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Models\LoginHistory;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -55,7 +56,7 @@ class AuthController extends Controller
         /** @var User $user */
         $user = Auth::user();
 
-        if (! $user->is_active) {
+        if (! $user->is_active || $user->customer?->is_blocked) {
             Auth::logout();
 
             return back()
@@ -109,6 +110,32 @@ class AuthController extends Controller
         return view('auth.register', [
             'image' => 'public/assets/images/auth/register-jewellery.jpg',
             'imageAlt' => 'Premium Kundan necklace on champagne silk',
+        ]);
+    }
+
+    public function checkRegisterField(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'field' => ['required', 'in:email,mobile'],
+            'value' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        if ($data['field'] === 'email') {
+            $value = strtolower(trim((string) ($data['value'] ?? '')));
+            $taken = $value !== '' && User::query()->where('email', $value)->exists();
+
+            return response()->json([
+                'taken' => $taken,
+                'message' => $taken ? 'An account with this email already exists. Please sign in.' : null,
+            ]);
+        }
+
+        $value = preg_replace('/\D+/', '', (string) ($data['value'] ?? '')) ?: '';
+        $taken = $value !== '' && User::query()->where('mobile', $value)->exists();
+
+        return response()->json([
+            'taken' => $taken,
+            'message' => $taken ? 'This mobile number is already registered.' : null,
         ]);
     }
 

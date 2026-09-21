@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
+use App\Services\PolicyPageService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -15,7 +16,7 @@ class PageController extends Controller
      */
     private array $pages = [];
 
-    public function __construct()
+    public function __construct(private readonly PolicyPageService $policies)
     {
         $brand = config('brand.name');
         $phone = config('brand.contact.phone');
@@ -30,11 +31,11 @@ class PageController extends Controller
                 'sections' => [
                     [
                         'heading' => 'Do you ship across India?',
-                        'body' => 'Yes. We offer free shipping on all orders across India with secure packaging and insured delivery.',
+                        'body' => 'Yes. We ship across India with secure packaging. Shipping charges are calculated at checkout.',
                     ],
                     [
-                        'heading' => 'Are your jewellery pieces hallmarked?',
-                        'body' => 'Yes. All gold jewellery is BIS hallmarked and certified for purity and quality.',
+                        'heading' => 'Is your jewellery skin-friendly?',
+                        'body' => 'Yes. Our pieces are fashion jewellery with a premium anti-tarnish finish, made to be lightweight and comfortable for everyday wear.',
                     ],
                     [
                         'heading' => 'How can I track my order?',
@@ -57,7 +58,7 @@ class PageController extends Controller
                     ],
                     [
                         'heading' => 'Shipping charges',
-                        'body' => 'Shipping is free on all orders. Your jewellery is packed securely and dispatched with tracking.',
+                        'body' => 'Shipping charges are calculated at checkout based on your delivery option. Your jewellery is packed securely and dispatched with tracking.',
                     ],
                     [
                         'heading' => 'Need help?',
@@ -172,11 +173,11 @@ class PageController extends Controller
 
     public function show(string $slug): View
     {
-        if (! isset($this->pages[$slug])) {
+        $page = $this->policies->storefrontPage($slug) ?? ($this->pages[$slug] ?? null);
+
+        if ($page === null) {
             throw new NotFoundHttpException();
         }
-
-        $page = $this->pages[$slug];
 
         return view('frontend.pages.show', [
             'page' => $page,

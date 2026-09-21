@@ -92,8 +92,8 @@
                                 <strong data-discount>- ₹{{ number_format($cart['discount']) }}</strong>
                             </div>
                             <div class="cart-summary__row">
-                                <span>Shipping <i class="bi bi-info-circle" title="Free shipping on all orders" aria-hidden="true"></i></span>
-                                <strong class="is-free">Free</strong>
+                                <span>Shipping</span>
+                                <strong>At checkout</strong>
                             </div>
 
                             <hr class="cart-summary__divider">

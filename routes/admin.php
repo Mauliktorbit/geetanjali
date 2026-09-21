@@ -33,6 +33,7 @@ use App\Http\Controllers\Admin\OfferController;
 use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\PageController;
 use App\Http\Controllers\Admin\PaymentController;
+use App\Http\Controllers\Admin\PolicyPageController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\ProductQuestionController;
 use App\Http\Controllers\Admin\ProfileController;
@@ -81,6 +82,7 @@ Route::name('admin.')->group(function () {
         Route::resource('products', ProductController::class);
 
         // Customers
+        Route::post('customers/{customer}/toggle', [CustomerController::class, 'toggle'])->name('customers.toggle');
         Route::resource('customers', CustomerController::class)->only(['index', 'show']);
 
         // Orders
@@ -220,6 +222,13 @@ Route::name('admin.')->group(function () {
         Route::put('menus/{menu}/items/{menuItem}', [MenuItemController::class, 'update'])->name('menus.items.update');
         Route::delete('menus/{menu}/items/{menuItem}', [MenuItemController::class, 'destroy'])->name('menus.items.destroy');
         Route::post('menus/{menu}/items/reorder', [MenuItemController::class, 'reorder'])->name('menus.items.reorder');
+
+        Route::get('policies/{policy}', [PolicyPageController::class, 'edit'])
+            ->whereIn('policy', ['shipping', 'terms', 'privacy'])
+            ->name('policies.edit');
+        Route::put('policies/{policy}', [PolicyPageController::class, 'update'])
+            ->whereIn('policy', ['shipping', 'terms', 'privacy'])
+            ->name('policies.update');
 
         // Existing catalog / CMS resources
         foreach ([

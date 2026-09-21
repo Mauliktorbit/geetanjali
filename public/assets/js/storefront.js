@@ -10,6 +10,14 @@ document.addEventListener('click', async (event) => {
         return;
     }
 
+    const notifyBtn = event.target.closest('[data-stock-notify]');
+    if (notifyBtn) {
+        event.preventDefault();
+        event.stopPropagation();
+        await handleStockNotify(notifyBtn);
+        return;
+    }
+
     const cartBtn = event.target.closest('[data-add-to-cart]');
     if (cartBtn) {
         event.preventDefault();
@@ -103,7 +111,9 @@ async function storefrontPost(url, body) {
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok || data.success === false) {
-        throw new Error(data.message || 'Unable to update your bag.');
+        const error = new Error(data.message || 'Unable to update your bag.');
+        error.needsEmail = Boolean(data.needs_email);
+        throw error;
     }
     return data;
 }
@@ -189,6 +199,76 @@ async function handleWishlistToggle(btn) {
 
 document.addEventListener('DOMContentLoaded', syncWishlistButtons);
 
+async function promptNotifyEmail() {
+    if (window.Swal && typeof window.Swal.fire === 'function') {
+        const result = await window.Swal.fire({
+            title: 'Notify me',
+            text: 'Enter your email and we will let you know when this piece is back in stock.',
+            input: 'email',
+            inputPlaceholder: 'you@example.com',
+            inputAttributes: {
+                autocapitalize: 'off',
+                autocomplete: 'email',
+            },
+            confirmButtonText: 'Notify me',
+            showCancelButton: true,
+            confirmButtonColor: '#064E3B',
+            cancelButtonColor: '#888',
+        });
+        if (!result.isConfirmed) {
+            return null;
+        }
+        return String(result.value || '').trim();
+    }
+
+    const email = window.prompt('Enter your email to be notified when this piece is back in stock.');
+    return email ? email.trim() : null;
+}
+
+async function handleStockNotify(btn) {
+    const url = storefrontRoutes().stockNotify;
+    const payload = productPayload(btn);
+    if (!url || !payload.product_id) {
+        storefrontToast('Unable to save this alert.');
+        return;
+    }
+
+    const body = { product_id: payload.product_id };
+    const loggedIn = Boolean(window.Geetanjali?.loggedIn);
+    if (!loggedIn) {
+        const email = await promptNotifyEmail();
+        if (!email) {
+            return;
+        }
+        body.email = email;
+    }
+
+    btn.disabled = true;
+    try {
+        const data = await storefrontPost(url, body);
+        storefrontToast(data.message || 'We’ll email you when this piece is back in stock.');
+        btn.classList.add('is-notified');
+    } catch (error) {
+        if (error.needsEmail) {
+            const email = await promptNotifyEmail();
+            if (!email) {
+                return;
+            }
+            try {
+                const data = await storefrontPost(url, { product_id: payload.product_id, email });
+                storefrontToast(data.message || 'We’ll email you when this piece is back in stock.');
+                btn.classList.add('is-notified');
+            } catch (retryError) {
+                storefrontToast(retryError.message || 'Unable to save this alert.');
+            }
+            return;
+        }
+        storefrontToast(error.message || 'Unable to save this alert.');
+    } finally {
+        btn.disabled = false;
+    }
+}
+
 async function handleAddToCart(btn, buyNow) {
     if (btn.disabled || btn.closest('[data-out-of-stock]')) {
         storefrontToast('This product is out of stock.');
@@ -206,6 +286,7 @@ async function handleAddToCart(btn, buyNow) {
         const data = await storefrontPost(url, payload);
         updateStorefrontBadges(data);
         storefrontToast(data.message || 'Product added to cart');
+        closeQuickView();
         if (buyNow) {
             window.location.href = storefrontRoutes().checkout || '/';
         }
@@ -306,6 +387,18 @@ function fillQuickView(card) {
         cart.dataset.productId = String(payload.product_id || '');
         cart.hidden = outOfStock || !payload.product_id;
         cart.disabled = outOfStock;
+    }
+
+    const notify = modal.querySelector('[data-qv-notify]');
+    if (notify) {
+        notify.dataset.productId = String(payload.product_id || '');
+        notify.hidden = !outOfStock || !payload.product_id;
+    }
+
+    const similar = modal.querySelector('[data-qv-similar]');
+    if (similar) {
+        similar.href = card.dataset.productSimilar || payload.url || '#';
+        similar.hidden = !outOfStock;
     }
 }
 

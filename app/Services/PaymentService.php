@@ -131,6 +131,41 @@ class PaymentService
         });
     }
 
+    public function createFromOrder(Order $order): Payment
+    {
+        $existing = $order->payments()->first();
+        if ($existing) {
+            return $existing;
+        }
+
+        $method = (string) ($order->payment_method ?: 'manual');
+        $isCod = $method === 'cod';
+        $isPaid = in_array((string) $order->payment_status, [PaymentStatus::PAID, 'paid'], true)
+            || ((float) $order->paid_amount > 0 && ! $isCod);
+
+        return Payment::create([
+            'order_id' => $order->id,
+            'customer_id' => $order->customer_id,
+            'transaction_id' => $order->order_number,
+            'payment_method' => $method,
+            'gateway' => $isCod ? 'cod' : 'storefront',
+            'amount' => $order->grand_total,
+            'status' => $isPaid ? PaymentStatus::PAID : PaymentStatus::PENDING,
+            'settlement_status' => $isPaid ? 'pending' : null,
+            'paid_at' => $isPaid ? ($order->confirmed_at ?? now()) : null,
+        ]);
+    }
+
+    public function syncMissingFromOrders(int $limit = 100): void
+    {
+        Order::query()
+            ->whereDoesntHave('payments')
+            ->orderByDesc('id')
+            ->limit($limit)
+            ->get()
+            ->each(fn (Order $order) => $this->createFromOrder($order));
+    }
+
     public function syncOrderPaymentStatus(Order $order): void
     {
         $order->refresh();

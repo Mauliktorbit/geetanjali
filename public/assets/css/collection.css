@@ -248,6 +248,8 @@
     display: flex;
     gap: 0.75rem;
     margin-bottom: 1rem;
+    align-items: center;
+    flex-wrap: wrap;
 }
 
 .kundan-filter-toggle,
@@ -454,6 +456,48 @@
     color: #555;
 }
 
+.kundan-products__tools {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.listing-view-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    flex: 0 0 auto;
+}
+
+.listing-view-btn {
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--white);
+    color: #777;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.listing-view-btn:hover,
+.listing-view-btn.is-active {
+    color: var(--primary-green);
+    border-color: var(--primary-green);
+    background: rgba(6, 78, 59, 0.06);
+    text-decoration: none;
+}
+
+.kundan-listing__toolbar .listing-view-toggle,
+.bridal-toolbar__mobile .listing-view-toggle {
+    flex: 0 0 auto;
+    align-self: center;
+}
+
 .kundan-sort {
     align-items: center;
     gap: 0.45rem;
@@ -476,6 +520,33 @@
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 14px;
+}
+
+.kundan-grid--list {
+    grid-template-columns: 1fr;
+}
+
+.kundan-grid--list .product-card {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    align-items: stretch;
+}
+
+.kundan-grid--list .product-card__media {
+    aspect-ratio: auto;
+    min-height: 200px;
+}
+
+.kundan-grid--list .product-card__body {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.kundan-grid--list .product-card__actions {
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
 }
 
 .kundan-page .product-card {
@@ -567,8 +638,6 @@
 }
 
 .kundan-page .product-card__wishlist {
-    opacity: 1;
-    transform: none;
     color: #555;
 }
 
@@ -578,7 +647,7 @@
 }
 
 .kundan-page .product-card__name {
-    font-size: 16px;
+    font-size: 20px;
     font-weight: 700;
     min-height: 2.5em;
     display: -webkit-box;
@@ -613,6 +682,7 @@
 .kundan-pagination .page-item.active .page-link {
     background: var(--primary-green);
     border-color: var(--primary-green);
+    color: #fff;
 }
 
 .kundan-empty {
@@ -815,6 +885,10 @@ body:has(.kundan-page) .newsletter {
         grid-template-columns: repeat(3, 1fr);
     }
 
+    .kundan-grid--list {
+        grid-template-columns: 1fr;
+    }
+
     .kundan-why__grid {
         grid-template-columns: repeat(3, 1fr);
     }
@@ -826,6 +900,11 @@ body:has(.kundan-page) .newsletter {
 }
 
 @media (max-width: 991.98px) {
+    .listing-view-toggle,
+    .na-view-toggle {
+        display: none !important;
+    }
+
     .kundan-listing__layout {
         grid-template-columns: 1fr;
     }
@@ -907,13 +986,14 @@ body:has(.kundan-page) .newsletter {
         object-position: center right;
     }
 
-    .kundan-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 10px;
+    .kundan-grid,
+    .kundan-grid.kundan-grid--list {
+        grid-template-columns: 1fr !important;
+        gap: 1rem;
     }
 
     .kundan-page .product-card__name {
-        font-size: 15px;
+        font-size: 18px;
         font-weight: 700;
     }
 

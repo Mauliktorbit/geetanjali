@@ -28,7 +28,7 @@
             <select id="customer-status" name="is_blocked" class="form-control">
                 @php $blocked = (string) old('is_blocked', ! empty($item) && $item->is_blocked ? '1' : '0'); @endphp
                 <option value="0" @selected($blocked === '0' || $blocked === '')>Active</option>
-                <option value="1" @selected($blocked === '1')>Blocked</option>
+                <option value="1" @selected($blocked === '1')>Inactive</option>
             </select>
         </div>
     @endif

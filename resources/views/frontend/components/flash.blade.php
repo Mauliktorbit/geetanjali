@@ -1,10 +1,11 @@
-@if (session('success'))
+{{-- Checkout uses a single auto-hiding toast instead of this banner. --}}
+@if (session('success') && ! request()->routeIs('checkout.index'))
     <div class="site-container pt-3">
         <x-alert type="success" :message="session('success')" />
     </div>
 @endif
 
-@if (session('error'))
+@if (session('error') && ! request()->routeIs('checkout.index'))
     <div class="site-container pt-3">
         <x-alert type="danger" :message="session('error')" />
     </div>
@@ -22,7 +23,7 @@
     </div>
 @endif
 
-@if ($errors->any())
+@if ($errors->any() && ! request()->routeIs('checkout.index'))
     <div class="site-container pt-3">
         <x-alert type="danger" title="Please correct the following:">
             <ul class="mb-0 ps-3">

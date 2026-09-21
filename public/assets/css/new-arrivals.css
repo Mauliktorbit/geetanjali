@@ -255,8 +255,6 @@
 }
 
 .new-arrivals-page .product-card__wishlist {
-    opacity: 1;
-    transform: none;
     width: 34px;
     height: 34px;
     color: #765b4a;
@@ -274,7 +272,7 @@
 }
 
 .new-arrivals-page .product-card__name {
-    font-size: 16px;
+    font-size: 20px;
     font-weight: 700;
     color: #222;
     min-height: 2.5em;
@@ -619,6 +617,11 @@
 }
 
 @media (max-width: 991.98px) {
+    .na-view-toggle,
+    .listing-view-toggle {
+        display: none !important;
+    }
+
     .na-toolbar {
         grid-template-columns: 1fr 1fr;
         row-gap: 0.75rem;
@@ -678,21 +681,33 @@
         flex-wrap: wrap;
     }
 
+    .na-view-toggle,
+    .listing-view-toggle {
+        display: none !important;
+    }
+
+    .na-grid,
+    .na-grid--list,
+    .na-grid.na-grid--list {
+        grid-template-columns: 1fr !important;
+        gap: 1rem;
+    }
+
     .na-select {
         flex: 1;
     }
 
     .na-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 10px;
+        grid-template-columns: 1fr !important;
+        gap: 1rem;
     }
 
-    .na-grid--list .product-card {
-        grid-template-columns: 110px 1fr;
+    .na-grid--list {
+        grid-template-columns: 1fr !important;
     }
 
     .new-arrivals-page .product-card__name {
-        font-size: 15px;
+        font-size: 18px;
         font-weight: 700;
     }
 

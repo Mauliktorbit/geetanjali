@@ -129,7 +129,7 @@
       icon: icon || 'success',
       title: String(message || ''),
       showConfirmButton: false,
-      timer: 3200,
+      timer: 3500,
       timerProgressBar: true,
     });
   }
@@ -289,12 +289,19 @@
     if (!flash || !ready()) return;
     try {
       const data = JSON.parse(flash.textContent || '{}');
-      if (data.success) toast(data.success, 'success');
-      if (data.error) toast(data.error, 'error');
-      if (data.warning) toast(data.warning, 'warning');
-      if (data.info) toast(data.info, 'info');
-      if (data.status) toast(data.status, 'success');
-      if (Array.isArray(data.errors)) data.errors.forEach((msg) => toast(msg, 'error'));
+      const shown = new Set();
+      const showOnce = (message, icon) => {
+        const text = String(message || '').trim();
+        if (!text || shown.has(text)) return;
+        shown.add(text);
+        toast(text, icon);
+      };
+      if (data.success) showOnce(data.success, 'success');
+      if (data.error) showOnce(data.error, 'error');
+      if (data.warning) showOnce(data.warning, 'warning');
+      if (data.info) showOnce(data.info, 'info');
+      if (data.status) showOnce(data.status, 'success');
+      if (Array.isArray(data.errors)) data.errors.forEach((msg) => showOnce(msg, 'error'));
     } catch (err) {
       // ignore malformed flash payload
     }

@@ -24,11 +24,6 @@
 
         @include('frontend.components.collection.bridal-hero', ['hero' => $hero])
 
-        @include('frontend.components.collection.bridal-service-strip', [
-            'services' => $topServices,
-            'variant' => 'top',
-        ])
-
         <section class="bridal-intro" aria-labelledby="bridal-intro-heading">
             <div class="site-container">
                 <h2 id="bridal-intro-heading" class="font-heading">{{ $introHeading }}</h2>
@@ -75,11 +70,6 @@
         </section>
 
         @include('frontend.components.collection.bridal-promos', ['promos' => $promos])
-
-        @include('frontend.components.collection.bridal-service-strip', [
-            'services' => $trustServices,
-            'variant' => 'trust',
-        ])
     </div>
 
     <div class="bridal-filter-drawer" id="bridalFilterDrawer" data-bridal-drawer hidden>

@@ -33,7 +33,7 @@
     <div class="account-totals">
         <div><span>Subtotal</span><strong>₹{{ number_format((float) $order->subtotal) }}</strong></div>
         <div><span>Discount</span><strong>- ₹{{ number_format((float) $order->discount_amount) }}</strong></div>
-        <div><span>Shipping</span><strong>{{ (float) $order->shipping_charge > 0 ? '₹'.number_format((float) $order->shipping_charge) : 'FREE' }}</strong></div>
+        <div><span>Shipping</span><strong>₹{{ number_format((float) $order->shipping_charge) }}</strong></div>
         <div class="is-total"><span>Total</span><strong>₹{{ number_format((float) $order->grand_total) }}</strong></div>
     </div>
 

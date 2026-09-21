@@ -258,6 +258,27 @@
     color: #b94a48;
 }
 
+.auth-error[hidden] {
+    display: none !important;
+}
+
+.auth-field.is-invalid .auth-input input {
+    border-color: #b94a48;
+}
+
+.auth-field.is-invalid .auth-input input:focus {
+    border-color: #b94a48;
+    box-shadow: 0 0 0 2px rgba(185, 74, 72, 0.12);
+}
+
+.auth-field:has(.auth-terms) {
+    margin-bottom: 1.1rem;
+}
+
+.auth-field .auth-terms {
+    margin: 0;
+}
+
 .auth-terms {
     display: flex;
     align-items: flex-start;

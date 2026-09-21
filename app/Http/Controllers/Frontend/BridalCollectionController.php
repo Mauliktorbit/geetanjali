@@ -44,8 +44,6 @@ class BridalCollectionController extends Controller
                 'image' => asset('public/assets/images/collections/bridal/hero.jpg'),
                 'image_alt' => 'Indian bride in traditional bridal jewellery',
             ],
-            'topServices' => StorefrontCatalogService::listingTopServices(),
-            'trustServices' => StorefrontCatalogService::listingTrustServices(),
             'promos' => StorefrontCatalogService::listingPromos(),
             'viewMode' => $filters['view'],
             'breadcrumb' => [

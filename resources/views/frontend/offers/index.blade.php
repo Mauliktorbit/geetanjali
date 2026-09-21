@@ -35,7 +35,7 @@
                     </div>
                 @else
                     <div class="offers-empty">
-                        <p>No coupons are running right now. Explore our collections below.</p>
+                        <p>No offers are running right now. Explore our collections below.</p>
                     </div>
                 @endif
             </div>

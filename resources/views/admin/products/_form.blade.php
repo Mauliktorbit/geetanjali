@@ -74,7 +74,7 @@
             </div>
             <div class="form-group full">
                 <label for="highlights_text">Highlights</label>
-                <textarea id="highlights_text" name="highlights_text" class="form-control" rows="5" placeholder="Handcrafted in 22K Hallmarked Gold&#10;Studded with authentic Kundan stones and Emerald drops&#10;Secure screw-back closure for added comfort">{{ old('highlights_text', implode("\n", $item->highlights ?? [])) }}</textarea>
+                <textarea id="highlights_text" name="highlights_text" class="form-control" rows="5" placeholder="Handcrafted fashion jewellery with a premium finish&#10;Lightweight, skin-friendly and made for everyday wear&#10;Secure screw-back closure for added comfort">{{ old('highlights_text', implode("\n", $item->highlights ?? [])) }}</textarea>
                 <span class="form-hint">One point per line. These become the green ticks under Description.</span>
             </div>
         </div>
@@ -144,7 +144,7 @@
             </div>
             <div class="form-group">
                 <label for="certification">Certification</label>
-                <input id="certification" type="text" name="certification" class="form-control" value="{{ old('certification', $item->certification ?? '') }}" placeholder="BIS Hallmarked">
+                <input id="certification" type="text" name="certification" class="form-control" value="{{ old('certification', $item->certification ?? '') }}" placeholder="Quality-checked finish">
             </div>
         </div>
     </div>

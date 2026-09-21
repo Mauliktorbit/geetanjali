@@ -282,6 +282,11 @@ class StorefrontCatalogService
             $sort = 'popularity';
         }
 
+        $view = (string) $request->input('view', 'grid');
+        if (! in_array($view, ['grid', 'list'], true)) {
+            $view = 'grid';
+        }
+
         return [
             'type' => $type,
             'metal' => $metal,
@@ -290,6 +295,7 @@ class StorefrontCatalogService
             'max_price' => $max,
             'sort' => $sort,
             'category' => $request->filled('category') ? (string) $request->input('category') : null,
+            'view' => $view,
         ];
     }
 
@@ -487,6 +493,9 @@ class StorefrontCatalogService
             'image' => $product->main_image ?: 'public/assets/images/categories/kundan.jpg',
             'weight' => $this->weightLabel($product),
             'url' => route('products.show', $product->slug),
+            'similar_url' => $this->typeKey($product)
+                ? route('collections.kundan', ['category' => $this->typeKey($product)])
+                : route('products.new-arrivals'),
             'stock' => $stock,
             'stock_status' => $stock > 0 ? 'in_stock' : 'out_of_stock',
         ];
@@ -532,15 +541,18 @@ class StorefrontCatalogService
             'weight' => $this->weightLabel($product),
             'dimensions' => $this->dimensionsLabel($product),
             'occasion' => $product->occasion,
-            'certification' => $product->certification,
+            'certification' => $this->qualityLabel($product),
             'stock' => $stock,
             'stock_status' => $stock > 0 ? 'in_stock' : 'out_of_stock',
+            'similar_url' => $this->typeKey($product)
+                ? route('collections.kundan', ['category' => $this->typeKey($product)])
+                : route('products.new-arrivals'),
             'rating' => (float) ($product->avg_rating ?: 0),
             'review_count' => (int) ($product->review_count ?: $reviews->count()),
             'sold_count' => $sold >= 100 ? $sold.'+' : (string) $sold,
             'image' => $images[0]->url ?? 'public/assets/images/categories/kundan.jpg',
             'images' => $images,
-            'highlights' => array_values(array_filter($product->highlights ?? [])),
+            'highlights' => $this->storefrontHighlights($product->highlights ?? []),
             'benefits' => $this->benefits($product),
             'reviews' => $reviews,
             'rating_breakdown' => $breakdown,
@@ -602,6 +614,8 @@ class StorefrontCatalogService
 
     public function applySort(Builder $query, string $sort): void
     {
+        $query->orderByRaw($this->outOfStockSortSql().' asc');
+
         match ($sort) {
             'price_low' => $query->orderByRaw('COALESCE(sale_price, regular_price) asc'),
             'price_high' => $query->orderByRaw('COALESCE(sale_price, regular_price) desc'),
@@ -613,6 +627,11 @@ class StorefrontCatalogService
             'featured' => $query->orderByDesc('is_featured')->orderByDesc('is_bestseller')->orderByDesc('sold_count'),
             default => $query->orderByDesc('is_bestseller')->orderByDesc('sold_count')->orderByDesc('view_count'),
         };
+    }
+
+    private function outOfStockSortSql(): string
+    {
+        return 'CASE WHEN (SELECT COALESCE(SUM(available_stock), 0) FROM inventories WHERE inventories.product_id = products.id) > 0 THEN 0 ELSE 1 END';
     }
 
     /**
@@ -698,11 +717,42 @@ class StorefrontCatalogService
     private function benefits(Product $product): array
     {
         return [
-            ['icon' => 'bi-circle', 'label' => $product->purity ? $product->purity.' Pure Gold' : 'Certified Gold'],
-            ['icon' => 'bi-award', 'label' => $product->certification ?: 'Hallmarked Jewellery'],
-            ['icon' => 'bi-arrow-left-right', 'label' => 'Lifetime Exchange'],
-            ['icon' => 'bi-patch-check', 'label' => 'Certified Jewellery'],
+            ['icon' => 'bi-circle', 'label' => filled($product->metal) ? $product->metal : 'Premium fashion jewellery'],
+            ['icon' => 'bi-award', 'label' => $this->qualityLabel($product)],
+            ['icon' => 'bi-arrow-left-right', 'label' => 'Easy 15-day returns'],
+            ['icon' => 'bi-patch-check', 'label' => 'Quality-checked finish'],
         ];
+    }
+
+    private function storefrontHighlights(array $highlights): array
+    {
+        $items = [];
+
+        foreach ($highlights as $item) {
+            $text = trim((string) $item);
+            if ($text === '') {
+                continue;
+            }
+
+            if (preg_match('/hallmark|\bbis\b/i', $text)) {
+                $text = 'Handcrafted fashion jewellery with a premium anti-tarnish finish';
+            }
+
+            $items[] = $text;
+        }
+
+        return array_values(array_unique($items));
+    }
+
+    private function qualityLabel(Product $product): string
+    {
+        $value = trim((string) ($product->certification ?? ''));
+
+        if ($value === '' || preg_match('/hallmark|\bbis\b/i', $value)) {
+            return 'Quality-checked finish';
+        }
+
+        return $value;
     }
 
     private function typeKey(Product $product): ?string
@@ -846,10 +896,10 @@ class StorefrontCatalogService
     public static function listingTopServices(): array
     {
         return [
-            ['icon' => 'bi-patch-check', 'title' => '100% Hallmarked', 'subtitle' => 'Certified Jewellery'],
-            ['icon' => 'bi-truck', 'title' => 'Free Shipping', 'subtitle' => 'On All Orders'],
+            ['icon' => 'bi-heart', 'title' => 'Skin-friendly', 'subtitle' => 'Anti-tarnish finish'],
+            ['icon' => 'bi-box-seam', 'title' => 'Secure Packaging', 'subtitle' => 'Packed with care'],
             ['icon' => 'bi-arrow-repeat', 'title' => 'Easy Returns', 'subtitle' => '15 Day Return Policy'],
-            ['icon' => 'bi-gem', 'title' => 'Lifetime Service', 'subtitle' => 'Maintenance & Repair'],
+            ['icon' => 'bi-stars', 'title' => 'Quality-checked', 'subtitle' => 'Premium finish'],
             ['icon' => 'bi-shield-lock', 'title' => 'Secure Payment', 'subtitle' => '100% Safe & Secure'],
         ];
     }
@@ -860,8 +910,8 @@ class StorefrontCatalogService
     public static function listingTrustServices(): array
     {
         return [
-            ['icon' => 'bi-diamond', 'title' => 'Certified Natural', 'subtitle' => 'Diamonds & Gemstones'],
-            ['icon' => 'bi-award', 'title' => 'BIS Hallmarked', 'subtitle' => 'Pure Gold'],
+            ['icon' => 'bi-heart', 'title' => 'Skin-friendly', 'subtitle' => 'Anti-tarnish finish'],
+            ['icon' => 'bi-stars', 'title' => 'Premium Plating', 'subtitle' => 'Lasting Shine'],
             ['icon' => 'bi-hand-index-thumb', 'title' => 'Handcrafted by', 'subtitle' => 'Expert Artisans'],
             ['icon' => 'bi-globe2', 'title' => 'Secure & Insured', 'subtitle' => 'Worldwide Shipping'],
             ['icon' => 'bi-gift', 'title' => 'Elegant Gift', 'subtitle' => 'Packaging'],
@@ -876,12 +926,12 @@ class StorefrontCatalogService
         return [
             [
                 'theme' => 'dark',
-                'heading' => "Custom\nJewellery",
-                'description' => 'Create your dream jewellery with our customization service.',
-                'cta_label' => 'Book Appointment',
-                'cta_url' => route('contact'),
+                'heading' => "Visit Our\nShowroom",
+                'description' => 'See our bridal jewellery in person and get help choosing from the collection.',
+                'cta_label' => 'Find the Store',
+                'cta_url' => route('pages.store-locator'),
                 'image' => 'public/assets/images/collections/bridal/promo-custom.jpg',
-                'image_alt' => 'Handcrafted jewellery detail',
+                'image_alt' => 'Gold jewellery on display',
             ],
             [
                 'theme' => 'light',
