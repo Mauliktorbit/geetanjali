@@ -9,6 +9,7 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
 
 class StorefrontCatalogService
@@ -21,7 +22,14 @@ class StorefrontCatalogService
 
     public const TYPE_KEYS = ['necklaces', 'earrings', 'rings', 'bangles', 'maang-tikka', 'bracelets', 'sets', 'jhumkas'];
 
-    public const METAL_KEYS = ['22k', '18k'];
+    public const METAL_KEYS = ['gold-plated', 'oxidized', 'silver-plated', 'antique'];
+
+    public const METAL_LABELS = [
+        'gold-plated' => 'Gold-plated',
+        'oxidized' => 'Oxidized',
+        'silver-plated' => 'Silver-plated',
+        'antique' => 'Antique',
+    ];
 
     public const STONE_KEYS = ['emerald', 'ruby', 'pearl', 'polki', 'meenakari'];
 
@@ -44,7 +52,9 @@ class StorefrontCatalogService
             ->where('is_active', true)
             ->orderBy('display_order')
             ->orderBy('name')
-            ->get(['id', 'name', 'slug', 'image']);
+            ->get(['id', 'name', 'slug', 'image'])
+            ->filter(fn ($type) => ! self::isPlaceholderCategory($type->name, $type->slug))
+            ->values();
 
         if ($types->isNotEmpty()) {
             return $types;
@@ -372,7 +382,7 @@ class StorefrontCatalogService
     }
 
     /**
-     * @return array{type: array<string, int>, metal: array<string, int>, stone: array<string, int>}
+     * @return array{type: array<string, int>, metal: array<string, int>, stone: array<string, int>, total: int}
      */
     public function filterCounts(?string $collectionSlug = 'kundan'): array
     {
@@ -380,20 +390,53 @@ class StorefrontCatalogService
 
         $type = [];
         foreach (self::jewelleryTypeSlugs() as $key) {
-            $type[$key] = $catalog->filter(fn (Product $p) => $this->matchesType($p, $key))->count();
+            $type[$key] = 0;
+        }
+
+        foreach ($catalog as $product) {
+            $slug = (string) ($product->category?->slug ?? '');
+            if ($slug === '' && str_contains(strtolower((string) $product->name), 'set')) {
+                $slug = 'sets';
+            }
+            if ($slug === '') {
+                continue;
+            }
+            if (! array_key_exists($slug, $type)) {
+                $type[$slug] = 0;
+            }
+            $type[$slug]++;
         }
 
         $metal = [];
         foreach (self::METAL_KEYS as $key) {
-            $metal[$key] = $catalog->filter(fn (Product $p) => $this->metalKey($p) === $key)->count();
+            $metal[$key] = 0;
+        }
+        foreach ($catalog as $product) {
+            $key = $this->metalKey($product);
+            if ($key && array_key_exists($key, $metal)) {
+                $metal[$key]++;
+            }
         }
 
         $stone = [];
-        foreach (self::STONE_KEYS as $key) {
-            $stone[$key] = $catalog->filter(fn (Product $p) => $this->hasStone($p, $key))->count();
+        foreach (array_merge(self::STONE_KEYS, ['kundan', 'diamond']) as $key) {
+            $stone[$key] = 0;
+        }
+        foreach ($catalog as $product) {
+            foreach (array_keys($stone) as $key) {
+                if ($this->hasStone($product, $key)) {
+                    $stone[$key]++;
+                    break;
+                }
+            }
         }
 
-        return compact('type', 'metal', 'stone');
+        return [
+            'type' => $type,
+            'metal' => $metal,
+            'stone' => $stone,
+            'total' => $catalog->count(),
+        ];
     }
 
     /**
@@ -429,7 +472,8 @@ class StorefrontCatalogService
                 'category',
                 'inventories',
                 'approvedReviews',
-                'relatedProducts' => fn ($q) => $q->storefront()->with('inventories'),
+                'relatedProducts' => fn ($q) => $q->storefront()->with(['inventories', 'category']),
+                'collections',
             ])
             ->where('slug', $slug)
             ->first();
@@ -438,27 +482,133 @@ class StorefrontCatalogService
     /**
      * @return Collection<int, array<string, mixed>>
      */
-    public function relatedCards(Product $product, int $limit = 6): Collection
+    public function relatedCards(Product $product, int $limit = 8): Collection
     {
+        $exclude = [(int) $product->id];
         $related = $product->relatedProducts
-            ->filter(fn (Product $item) => $item->is_active && ! $item->is_archived)
-            ->take($limit);
+            ->filter(fn (Product $item) => $item->is_active && ! $item->is_archived && $this->isSameStorefrontType($product, $item))
+            ->values();
+
+        $exclude = array_values(array_unique(array_merge($exclude, $related->pluck('id')->map(fn ($id) => (int) $id)->all())));
 
         if ($related->count() < $limit) {
-            $extra = Product::query()
-                ->storefront()
-                ->whereKeyNot($product->id)
-                ->when($related->isNotEmpty(), fn ($q) => $q->whereNotIn('id', $related->pluck('id')))
-                ->when($product->category_id, fn ($q) => $q->where('category_id', $product->category_id))
-                ->with(['inventories'])
+            $extra = $this->sameTypeQuery($product)
+                ->whereKeyNot($exclude)
+                ->with(['inventories', 'category'])
                 ->latest()
                 ->limit($limit - $related->count())
                 ->get();
-
             $related = $related->concat($extra);
+            $exclude = array_values(array_unique(array_merge($exclude, $related->pluck('id')->map(fn ($id) => (int) $id)->all())));
         }
 
-        return $related->map(fn (Product $item) => $this->toCard($item))->values();
+        if ($related->count() < $limit) {
+            $collectionIds = $product->collections->pluck('id')->filter()->values();
+            if ($collectionIds->isNotEmpty()) {
+                $extra = $this->sameTypeQuery($product)
+                    ->whereKeyNot($exclude)
+                    ->whereHas('collections', fn ($q) => $q->whereIn('collections.id', $collectionIds))
+                    ->with(['inventories', 'category'])
+                    ->latest()
+                    ->limit($limit - $related->count())
+                    ->get();
+                $related = $related->concat($extra);
+            }
+        }
+
+        return $related->take($limit)->map(fn (Product $item) => $this->toCard($item))->values();
+    }
+
+    /**
+     * @return Collection<int, array<string, mixed>>
+     */
+    public function rememberAndRecentlyViewed(Product $product, int $limit = 8): Collection
+    {
+        $currentId = (int) $product->id;
+        $ids = collect(Session::get('recently_viewed_product_ids', []))
+            ->map(fn ($id) => (int) $id)
+            ->filter(fn ($id) => $id > 0 && $id !== $currentId)
+            ->prepend($currentId)
+            ->unique()
+            ->take(16)
+            ->values()
+            ->all();
+
+        Session::put('recently_viewed_product_ids', $ids);
+
+        $others = array_values(array_filter($ids, fn ($id) => $id !== $currentId));
+        if ($others === []) {
+            return collect();
+        }
+
+        $order = array_flip(array_slice($others, 0, $limit));
+
+        return Product::query()
+            ->storefront()
+            ->whereIn('id', array_keys($order))
+            ->with(['inventories', 'category'])
+            ->get()
+            ->sortBy(fn (Product $item) => $order[(int) $item->id] ?? 999)
+            ->values()
+            ->map(fn (Product $item) => $this->toCard($item));
+    }
+
+    /**
+     * @param  list<int>  $excludeIds
+     * @return Collection<int, array<string, mixed>>
+     */
+    public function recentlyViewedCards(array $excludeIds = [], int $limit = 8): Collection
+    {
+        $excludeIds = array_values(array_filter(array_map('intval', $excludeIds)));
+        $ids = collect(Session::get('recently_viewed_product_ids', []))
+            ->map(fn ($id) => (int) $id)
+            ->filter(fn ($id) => $id > 0 && ! in_array($id, $excludeIds, true))
+            ->unique()
+            ->take($limit)
+            ->values()
+            ->all();
+
+        if ($ids === []) {
+            return collect();
+        }
+
+        $order = array_flip($ids);
+
+        return Product::query()
+            ->storefront()
+            ->whereIn('id', $ids)
+            ->with(['inventories', 'category'])
+            ->get()
+            ->sortBy(fn (Product $item) => $order[(int) $item->id] ?? 999)
+            ->values()
+            ->map(fn (Product $item) => $this->toCard($item));
+    }
+
+    /**
+     * @param  list<int>  $excludeIds
+     * @return Collection<int, array<string, mixed>>
+     */
+    public function trendingCards(array $excludeIds = [], int $limit = 8, ?Product $similarTo = null): Collection
+    {
+        $excludeIds = array_values(array_filter(array_map('intval', $excludeIds)));
+
+        $query = Product::query()
+            ->storefront()
+            ->when($excludeIds !== [], fn ($q) => $q->whereKeyNot($excludeIds))
+            ->with(['inventories', 'category']);
+
+        if ($similarTo) {
+            $this->applySameTypeConstraint($query, $similarTo);
+        }
+
+        return $query
+            ->orderByDesc('is_bestseller')
+            ->orderByDesc('sold_count')
+            ->orderByDesc('view_count')
+            ->limit($limit)
+            ->get()
+            ->map(fn (Product $item) => $this->toCard($item))
+            ->values();
     }
 
     /**
@@ -468,10 +618,9 @@ class StorefrontCatalogService
     {
         $price = (float) $product->effective_price;
         $compare = (float) $product->regular_price;
-        $discount = ($compare > $price && $compare > 0)
-            ? 'Save ₹'.number_format($compare - $price)
-            : null;
+        $discount = price_discount_label($price, $compare);
         $stock = $this->availableStock($product);
+        $images = $this->gallery($product);
 
         return [
             'id' => (int) $product->id,
@@ -479,7 +628,7 @@ class StorefrontCatalogService
             'name' => $product->name,
             'type' => $this->typeKey($product),
             'metal_key' => $this->metalKey($product),
-            'metal' => $product->metal,
+            'metal' => $this->storefrontMetalLabel($product),
             'stones' => $this->stoneKeys($product),
             'price' => $price,
             'compare_at_price' => $compare > $price ? $compare : null,
@@ -490,7 +639,7 @@ class StorefrontCatalogService
             'rating' => (float) ($product->avg_rating ?: 0),
             'review_count' => (int) $product->review_count,
             'sold' => (int) $product->sold_count,
-            'image' => $product->main_image ?: 'public/assets/images/categories/kundan.jpg',
+            'image' => $images[0]->url ?? self::categoryImage($this->typeKey($product)),
             'weight' => $this->weightLabel($product),
             'url' => route('products.show', $product->slug),
             'similar_url' => $this->typeKey($product)
@@ -521,68 +670,95 @@ class StorefrontCatalogService
         $price = (float) $product->regular_price;
         $sale = $product->sale_price !== null ? (float) $product->sale_price : null;
         $sold = (int) $product->sold_count;
+        [$qtyMin, $qtyMax] = $this->quantityBounds($product, $stock);
 
         return (object) [
             'id' => $product->id,
             'slug' => $product->slug,
             'name' => $product->name,
             'sku' => $product->sku,
-            'category' => $product->category?->name ?: 'Jewellery',
+            'type' => $this->typeKey($product),
+            'category' => $this->storefrontCategoryName($product),
             'badge' => $this->badge($product),
             'price' => $price,
             'sale_price' => $sale && $sale > 0 && $sale < $price ? $sale : null,
+            'discount_label' => price_discount_label($sale && $sale > 0 && $sale < $price ? $sale : $price, $price),
             'tax_note' => $product->tax_note ?: 'Inclusive of all taxes',
-            'short_description' => $product->short_description,
-            'description' => $product->description,
-            'metal' => $product->metal,
-            'purity' => $product->purity,
-            'stone' => $product->stone,
-            'style' => $product->style,
+            'short_description' => $this->storefrontProse($product->short_description),
+            'description' => $this->storefrontProse($product->description),
+            'metal' => $this->storefrontMetalLabel($product),
+            'purity' => $this->storefrontMetalLabel($product),
+            'stone' => $this->storefrontProse($product->stone),
+            'style' => $this->storefrontProse($product->style),
             'weight' => $this->weightLabel($product),
             'dimensions' => $this->dimensionsLabel($product),
-            'occasion' => $product->occasion,
+            'occasion' => $this->storefrontProse($product->occasion),
             'certification' => $this->qualityLabel($product),
             'stock' => $stock,
             'stock_status' => $stock > 0 ? 'in_stock' : 'out_of_stock',
+            'qty_min' => $qtyMin,
+            'qty_max' => $qtyMax,
             'similar_url' => $this->typeKey($product)
                 ? route('collections.kundan', ['category' => $this->typeKey($product)])
                 : route('products.new-arrivals'),
-            'rating' => (float) ($product->avg_rating ?: 0),
-            'review_count' => (int) ($product->review_count ?: $reviews->count()),
-            'sold_count' => $sold >= 100 ? $sold.'+' : (string) $sold,
-            'image' => $images[0]->url ?? 'public/assets/images/categories/kundan.jpg',
+            'rating' => $reviews->count() > 0
+                ? round((float) $reviews->avg('rating'), 1)
+                : (float) ($product->avg_rating ?: 0),
+            'review_count' => $reviews->count() > 0 ? $reviews->count() : (int) $product->review_count,
+            'sold_count' => $sold > 0 ? (string) $sold : '0',
+            'image' => $images[0]->url ?? self::categoryImage($this->typeKey($product)),
             'images' => $images,
-            'highlights' => $this->storefrontHighlights($product->highlights ?? []),
+            'highlights' => $this->storefrontHighlights($product),
             'benefits' => $this->benefits($product),
+            'about_points' => $this->aboutPoints($product),
             'reviews' => $reviews,
             'rating_breakdown' => $breakdown,
             'estimated_delivery' => $product->estimated_delivery ?: '3–5 business days',
+            'care_instructions' => $this->storefrontCareLines($product),
+            'shipping_information' => array_map(fn (string $line) => $this->storefrontProse($line), $this->textLines($product->shipping_information)),
+            'return_policy' => array_map(fn (string $line) => $this->storefrontProse($line), $this->textLines($product->return_policy)),
         ];
     }
 
     public function applyFilters(Builder $query, array $filters): void
     {
         if (! empty($filters['type'])) {
-            $slugs = $this->expandTypeSlugs($filters['type']);
-            $wantSets = collect($filters['type'])->contains(
-                fn ($type) => in_array((string) $type, ['sets', 'bridal-sets'], true)
-            );
+            $slugs = [];
+            foreach ($filters['type'] as $type) {
+                $key = strtolower(trim((string) $type));
+                if ($key === '') {
+                    continue;
+                }
+                if ($key === 'bridal-sets') {
+                    $slugs[] = 'sets';
+                    $slugs[] = 'bridal';
+                    continue;
+                }
+                $slugs[] = $key;
+            }
+            $slugs = array_values(array_unique($slugs));
 
-            $query->where(function (Builder $q) use ($slugs, $wantSets) {
-                if ($slugs !== []) {
+            if ($slugs !== []) {
+                $includeUncategorizedSets = count(array_intersect($slugs, ['sets', 'bridal'])) > 0;
+                $query->where(function (Builder $q) use ($slugs, $includeUncategorizedSets) {
                     $q->whereHas('category', fn (Builder $category) => $category->whereIn('slug', $slugs));
-                }
-                if ($wantSets) {
-                    $q->orWhere('name', 'like', '%set%');
-                }
-            });
+                    if ($includeUncategorizedSets) {
+                        $q->orWhere(function (Builder $inner) {
+                            $inner->whereNull('category_id')
+                                ->where('name', 'like', '%set%');
+                        });
+                    }
+                });
+            }
         }
 
         if (! empty($filters['metal'])) {
             $query->where(function (Builder $q) use ($filters) {
                 foreach ($filters['metal'] as $metal) {
-                    $q->orWhere('purity', 'like', '%'.$metal.'%')
-                        ->orWhere('metal', 'like', '%'.$metal.'%');
+                    foreach ($this->metalSearchTerms((string) $metal) as $term) {
+                        $q->orWhere('purity', 'like', '%'.$term.'%')
+                            ->orWhere('metal', 'like', '%'.$term.'%');
+                    }
                 }
             });
         }
@@ -650,7 +826,12 @@ class StorefrontCatalogService
         }
 
         if ($paths === []) {
-            $paths[] = 'public/assets/images/categories/kundan.jpg';
+            $paths[] = self::categoryImage($product->category?->slug);
+        } else {
+            $paths = array_values(array_unique(array_map(
+                fn (string $path) => $this->storefrontImagePath($product, $path),
+                $paths
+            )));
         }
 
         return array_map(fn (string $path) => (object) [
@@ -717,31 +898,116 @@ class StorefrontCatalogService
     private function benefits(Product $product): array
     {
         return [
-            ['icon' => 'bi-circle', 'label' => filled($product->metal) ? $product->metal : 'Premium fashion jewellery'],
+            ['icon' => 'bi-circle', 'label' => $this->storefrontMetalLabel($product)],
             ['icon' => 'bi-award', 'label' => $this->qualityLabel($product)],
             ['icon' => 'bi-arrow-left-right', 'label' => 'Easy 15-day returns'],
-            ['icon' => 'bi-patch-check', 'label' => 'Quality-checked finish'],
+            ['icon' => 'bi-patch-check', 'label' => 'Premium anti-tarnish finish'],
         ];
     }
 
-    private function storefrontHighlights(array $highlights): array
+    private function storefrontHighlights(Product $product): array
     {
         $items = [];
+        $type = $this->typeKey($product);
+        $isBridal = $type === 'sets' || $type === 'bridal' || str_contains(strtolower($product->name), 'bridal');
 
-        foreach ($highlights as $item) {
+        foreach ((array) ($product->highlights ?? []) as $item) {
             $text = trim((string) $item);
             if ($text === '') {
                 continue;
             }
 
-            if (preg_match('/hallmark|\bbis\b/i', $text)) {
+            if (preg_match('/hallmark|\bbis\b|22k|18k|24k/i', $text)) {
                 $text = 'Handcrafted fashion jewellery with a premium anti-tarnish finish';
+            } elseif (preg_match('/authenticity certificate/i', $text)) {
+                $text = 'Each piece is quality-checked before dispatch';
+            } elseif (preg_match('/lifetime service/i', $text)) {
+                $text = 'After-sales care available';
+            } elseif (preg_match('/bridal and festive/i', $text) && ! $isBridal) {
+                $text = 'Designed for festive occasions and special evenings';
+            } else {
+                $text = $this->storefrontProse($text);
             }
 
             $items[] = $text;
         }
 
         return array_values(array_unique($items));
+    }
+
+    /**
+     * @return list<array{icon: string, label: string}>
+     */
+    private function aboutPoints(Product $product): array
+    {
+        $category = $this->storefrontCategoryName($product);
+        $metal = $this->storefrontMetalLabel($product);
+        $stone = trim($this->storefrontProse($product->stone));
+        $occasion = trim($this->storefrontProse($product->occasion));
+        $type = $this->typeKey($product);
+
+        $points = [];
+        if ($category !== '') {
+            $points[] = [
+                'icon' => 'bi-gem',
+                'label' => $category.' from the Geetanjali fashion jewellery collection',
+            ];
+        }
+        if ($metal !== '') {
+            $points[] = [
+                'icon' => 'bi-circle',
+                'label' => $metal.' with a premium anti-tarnish finish',
+            ];
+        }
+        if ($stone !== '') {
+            $points[] = [
+                'icon' => 'bi-stars',
+                'label' => 'Set with '.$stone,
+            ];
+        }
+        if ($occasion !== '') {
+            $points[] = [
+                'icon' => 'bi-calendar-event',
+                'label' => 'Styled for '.$occasion,
+            ];
+        } elseif (in_array($type, ['sets', 'bridal'], true) || str_contains(strtolower($product->name), 'bridal')) {
+            $points[] = [
+                'icon' => 'bi-calendar-event',
+                'label' => 'Made for weddings, receptions and festive wear',
+            ];
+        } else {
+            $points[] = [
+                'icon' => 'bi-calendar-event',
+                'label' => 'Made for festive occasions and special evenings',
+            ];
+        }
+        $points[] = [
+            'icon' => 'bi-patch-check',
+            'label' => 'Quality-checked before dispatch',
+        ];
+
+        return array_slice($points, 0, 4);
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function storefrontCareLines(Product $product): array
+    {
+        $defaults = [
+            'Keep away from perfumes, sprays and household chemicals',
+            'Store in a dry pouch, away from other jewellery',
+            'Avoid water, sweat and prolonged moisture',
+            'Wipe gently with a soft dry cloth after wearing',
+            'Do not use jewellery cleaning dips or ultrasonic cleaners',
+        ];
+
+        $lines = array_values(array_filter(
+            array_map(fn (string $line) => $this->storefrontProse($line), $this->textLines($product->care_instructions)),
+            fn (string $line) => $line !== '' && ! preg_match('/professional cleaning|ultrasonic|hallmark|22k|18k|24k|\bbis\b/i', $line)
+        ));
+
+        return $lines !== [] ? $lines : $defaults;
     }
 
     private function qualityLabel(Product $product): string
@@ -752,14 +1018,294 @@ class StorefrontCatalogService
             return 'Quality-checked finish';
         }
 
-        return $value;
+        return $this->storefrontProse($value);
+    }
+
+    private function storefrontMetalLabel(Product $product): string
+    {
+        $raw = trim((string) ($product->metal ?? ''));
+        $key = $this->metalKey($product);
+
+        if ($raw !== '' && ! preg_match('/\b(22k|18k|24k|hallmark|\bbis\b|yellow gold)\b/i', $raw) && ! preg_match('/^gold$/i', $raw)) {
+            return $raw;
+        }
+
+        if ($key && isset(self::METAL_LABELS[$key])) {
+            return self::METAL_LABELS[$key];
+        }
+
+        return $raw !== '' ? $raw : 'Fashion jewellery';
+    }
+
+    private function storefrontProse(?string $text): string
+    {
+        $text = trim((string) $text);
+        if ($text === '') {
+            return '';
+        }
+
+        $pairs = [
+            '/\bBIS[\s-]*Hallmarked\b/i' => 'quality-checked',
+            '/\bHallmarked Gold\b/i' => 'premium-finish plating',
+            '/\bHallmarked\b/i' => 'premium-finish',
+            '/\b(?:22|18|24)\s*K(?:T)?\s+Pure Gold\b/i' => 'gold-plated metal',
+            '/\b(?:22|18|24)\s*K(?:T)?\s+Yellow Gold\b/i' => 'gold-plated metal',
+            '/\b(?:22|18|24)\s*K(?:T)?\s+[Gg]old\b/i' => 'gold-plated metal',
+            '/\bYellow Gold\b/i' => 'gold-plated metal',
+            '/\bcertified Kundan stones\b/i' => 'hand-set kundan stones',
+            '/\bcertified Kundan\b/i' => 'hand-set kundan',
+            '/authenticity certificate/i' => 'quality check',
+        ];
+
+        foreach ($pairs as $pattern => $replacement) {
+            $text = preg_replace($pattern, $replacement, $text) ?? $text;
+        }
+
+        return $text;
+    }
+
+    /**
+     * @return array{0: int, 1: int}
+     */
+    private function quantityBounds(Product $product, int $stock): array
+    {
+        $min = max(1, (int) ($product->min_order_qty ?: 1));
+        $max = max(0, $stock);
+        $maxOrder = (int) ($product->max_order_qty ?: 0);
+        if ($maxOrder > 0) {
+            $max = min($max, $maxOrder);
+        }
+        $max = min($max, CartService::MAX_QUANTITY);
+
+        if ($max < 1) {
+            return [1, 1];
+        }
+
+        if ($min > $max) {
+            $min = $max;
+        }
+
+        return [$min, $max];
+    }
+
+    private function storefrontCategoryName(Product $product): string
+    {
+        $name = trim((string) ($product->category?->name ?? ''));
+        $slug = (string) ($product->category?->slug ?? '');
+
+        if (self::isPlaceholderCategory($name, $slug)) {
+            return $this->categoryNameFromProductName($product->name) ?: 'Jewellery';
+        }
+
+        return $name;
+    }
+
+    private function categoryNameFromProductName(string $name): ?string
+    {
+        $slug = $this->typeSlugFromName($name);
+        if ($slug === null) {
+            return null;
+        }
+
+        return match ($slug) {
+            'maang-tikka' => 'Maang Tikka',
+            default => Str::title(str_replace('-', ' ', $slug)),
+        };
+    }
+
+    private function storefrontImagePath(Product $product, string $path): string
+    {
+        $path = trim($path);
+        $type = $this->typeKey($product);
+
+        if ($path === '') {
+            return self::categoryImage($type);
+        }
+
+        if (str_starts_with($path, 'uploads/')) {
+            return $path;
+        }
+
+        if ($this->demoImageMismatchesCategory($path, $type, $product->name)) {
+            return self::categoryImage($type);
+        }
+
+        return $path;
+    }
+
+    private function demoImageMismatchesCategory(string $path, ?string $slug, ?string $name = null): bool
+    {
+        $path = strtolower($path);
+        $slug = strtolower((string) $slug);
+        $name = strtolower((string) $name);
+
+        if ($slug === '' || self::isPlaceholderCategory($slug, $slug)) {
+            $slug = $this->typeSlugFromName($name) ?: $slug;
+        }
+
+        $hints = [
+            'necklaces' => ['necklace', 'choker', 'pendant'],
+            'earrings' => ['earring', 'jhumka', 'drop'],
+            'jhumkas' => ['earring', 'jhumka', 'drop'],
+            'rings' => ['ring'],
+            'bangles' => ['bangle'],
+            'bracelets' => ['bracelet', 'bangle'],
+            'maang-tikka' => ['tikka', 'mangalsutra'],
+            'sets' => ['bridal', 'set', 'necklace'],
+            'bridal' => ['bridal', 'set', 'necklace'],
+        ];
+        $conflicts = [
+            'necklaces' => ['earring', 'jhumka', 'ring', 'bangle', 'bracelet', 'tikka'],
+            'earrings' => ['necklace', 'choker', 'pendant', 'bangle', 'bracelet', 'ring', 'tikka'],
+            'jhumkas' => ['necklace', 'choker', 'pendant', 'bangle', 'bracelet', 'ring', 'tikka'],
+            'rings' => ['earring', 'jhumka', 'necklace', 'bangle', 'bracelet', 'tikka'],
+            'bangles' => ['earring', 'jhumka', 'necklace', 'ring', 'tikka'],
+            'bracelets' => ['earring', 'jhumka', 'necklace', 'ring', 'tikka'],
+            'maang-tikka' => ['earring', 'jhumka', 'necklace', 'bangle', 'bracelet', 'ring'],
+            'sets' => ['earring', 'jhumka', 'ring', 'bangle', 'bracelet', 'tikka'],
+            'bridal' => ['earring', 'jhumka', 'ring', 'bangle', 'bracelet', 'tikka'],
+        ];
+
+        if (! str_contains($path, 'public/assets/images') && ! str_contains($path, 'assets/images')) {
+            return false;
+        }
+
+        foreach ($conflicts[$slug] ?? [] as $needle) {
+            if (str_contains($path, $needle)) {
+                return true;
+            }
+        }
+
+        $needles = $hints[$slug] ?? [];
+        if ($needles === []) {
+            return false;
+        }
+
+        foreach ($needles as $needle) {
+            if (str_contains($path, $needle)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public static function isPlaceholderCategory(?string $name, ?string $slug): bool
+    {
+        foreach ([$name, $slug] as $value) {
+            $value = strtolower(trim((string) $value));
+            if ($value === '') {
+                continue;
+            }
+            if (preg_match('/^test\d*$/', $value)) {
+                return true;
+            }
+            if (in_array($value, ['jewellery', 'jewelry', 'all', 'uncategorized', 'general'], true)) {
+                return true;
+            }
+        }
+
+        return trim((string) $name) === '' && trim((string) $slug) === '';
+    }
+
+    private function typeSlugFromName(?string $name): ?string
+    {
+        $hay = strtolower((string) $name);
+        if ($hay === '') {
+            return null;
+        }
+
+        foreach ([
+            'jhumka' => 'jhumkas',
+            'earring' => 'earrings',
+            'necklace' => 'necklaces',
+            'choker' => 'necklaces',
+            'bangle' => 'bangles',
+            'bracelet' => 'bracelets',
+            'tikka' => 'maang-tikka',
+            'ring' => 'rings',
+            'set' => 'sets',
+        ] as $needle => $slug) {
+            if (str_contains($hay, $needle)) {
+                return $slug;
+            }
+        }
+
+        return null;
     }
 
     private function typeKey(Product $product): ?string
     {
-        $slug = $product->category?->slug;
+        $slug = strtolower(trim((string) ($product->category?->slug ?? '')));
+        $name = (string) ($product->category?->name ?? '');
 
-        return filled($slug) ? $slug : null;
+        if ($slug !== '' && ! self::isPlaceholderCategory($name, $slug)) {
+            return $slug;
+        }
+
+        return $this->typeSlugFromName($product->name);
+    }
+
+    private function isSameStorefrontType(Product $left, Product $right): bool
+    {
+        $a = $this->typeKey($left);
+        $b = $this->typeKey($right);
+        if ($a && $b) {
+            return in_array($b, $this->expandTypeSlugs([$a]), true)
+                || in_array($a, $this->expandTypeSlugs([$b]), true);
+        }
+
+        return $left->category_id && $left->category_id === $right->category_id;
+    }
+
+    private function namePatternForType(?string $type): ?string
+    {
+        return match ($type) {
+            'jhumkas' => '%jhumka%',
+            'earrings' => '%earring%',
+            'necklaces' => '%necklace%',
+            'rings' => '%ring%',
+            'bangles' => '%bangle%',
+            'bracelets' => '%bracelet%',
+            'maang-tikka' => '%tikka%',
+            'sets', 'bridal' => '%set%',
+            default => null,
+        };
+    }
+
+    private function applySameTypeConstraint(Builder $query, Product $product): void
+    {
+        $type = $this->typeKey($product);
+        $placeholder = self::isPlaceholderCategory($product->category?->name, $product->category?->slug);
+        $slugs = $type ? $this->expandTypeSlugs([$type]) : [];
+        $pattern = $this->namePatternForType($type);
+
+        $query->where(function (Builder $q) use ($product, $placeholder, $slugs, $pattern) {
+            $matched = false;
+            if (! $placeholder && $product->category_id) {
+                $q->orWhere('category_id', $product->category_id);
+                $matched = true;
+            }
+            if ($slugs !== []) {
+                $q->orWhereHas('category', fn (Builder $category) => $category->whereIn('slug', $slugs));
+                $matched = true;
+            }
+            if ($pattern) {
+                $q->orWhere('name', 'like', $pattern);
+                $matched = true;
+            }
+            if (! $matched) {
+                $q->whereRaw('0 = 1');
+            }
+        });
+    }
+
+    private function sameTypeQuery(Product $product): Builder
+    {
+        $query = Product::query()->storefront();
+        $this->applySameTypeConstraint($query, $product);
+
+        return $query;
     }
 
     /**
@@ -812,13 +1358,64 @@ class StorefrontCatalogService
     {
         $haystack = strtolower(($product->purity ?? '').' '.($product->metal ?? ''));
 
+        if (str_contains($haystack, 'oxidized')) {
+            return 'oxidized';
+        }
+        if (str_contains($haystack, 'silver')) {
+            return 'silver-plated';
+        }
+        if (str_contains($haystack, 'antique')) {
+            return 'antique';
+        }
+        if (
+            str_contains($haystack, 'gold-plated')
+            || str_contains($haystack, 'gold plated')
+            || str_contains($haystack, '22k')
+            || str_contains($haystack, '18k')
+            || str_contains($haystack, '24k')
+            || str_contains($haystack, 'yellow gold')
+            || str_contains($haystack, 'gold')
+        ) {
+            return 'gold-plated';
+        }
+
         foreach (self::METAL_KEYS as $key) {
-            if (str_contains($haystack, $key)) {
+            if (str_contains($haystack, $key) || str_contains($haystack, str_replace('-', ' ', $key))) {
                 return $key;
             }
         }
 
         return null;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function metalSearchTerms(string $key): array
+    {
+        return match ($key) {
+            'gold-plated', '22k', '18k', '24k' => ['gold-plated', 'gold plated', '22k', '18k', '24k', 'yellow gold'],
+            'oxidized' => ['oxidized'],
+            'silver-plated', 'platinum' => ['silver-plated', 'silver plated', 'silver'],
+            'antique' => ['antique'],
+            'diamond' => ['diamond', 'american diamond', 'ad'],
+            default => [$key],
+        };
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function textLines(?string $value): array
+    {
+        if (! filled($value)) {
+            return [];
+        }
+
+        $lines = preg_split('/\r\n|\r|\n/', trim((string) $value)) ?: [];
+        $items = array_values(array_filter(array_map('trim', $lines)));
+
+        return $items !== [] ? $items : [trim((string) $value)];
     }
 
     /**
@@ -851,7 +1448,11 @@ class StorefrontCatalogService
             self::jewelleryTypeSlugs(),
             ['bridal-sets']
         )));
-        $allowedMetals = ['', '22k', '18k', 'diamond', 'platinum'];
+        $allowedMetals = array_values(array_unique(array_merge(
+            [''],
+            self::METAL_KEYS,
+            ['22k', '18k', '24k', 'diamond', 'platinum']
+        )));
         $allowedStones = ['', 'kundan', 'emerald', 'ruby', 'diamond', 'pearl'];
         $allowedPrices = ['', 'under-50000', '50000-100000', '100000-200000', '200000-plus'];
         $allowedSorts = ['featured', 'newest', 'price_low', 'price_high', 'bestselling', 'rating'];
@@ -880,7 +1481,7 @@ class StorefrontCatalogService
             'heading_line_2' => $collection->name,
             'description' => $details !== ''
                 ? $details
-                : 'Discover our stunning range of jewellery crafted in gold, kundan and diamonds.',
+                : 'Discover our stunning range of fashion jewellery including kundan, bridal and everyday pieces.',
             'cta_label' => 'Explore Collection',
             'cta_url' => $listingUrl.'#collection-products',
             'image' => $collection->image
@@ -954,7 +1555,7 @@ class StorefrontCatalogService
         $category = $filters['category'] ?? '';
         $type = [];
         if ($category === 'bridal-sets') {
-            $type = ['sets'];
+            $type = ['sets', 'bridal'];
         } elseif ($category !== '') {
             $type = [$category];
         }

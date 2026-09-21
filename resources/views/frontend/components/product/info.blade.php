@@ -13,20 +13,38 @@
             @endfor
         </span>
         <strong>{{ number_format((float) $product->rating, 1) }}</strong>
-        <a href="#product-tabs" data-open-reviews>({{ $product->review_count }} Reviews)</a>
-        <span class="sep" aria-hidden="true">|</span>
-        <span>Sold {{ $product->sold_count }}</span>
+        <a href="#product-tabs" data-open-reviews>{{ review_count_label($product->review_count, true) }}</a>
+        @if ((int) $product->sold_count > 0)
+            <span class="sep" aria-hidden="true">|</span>
+            <span>Sold {{ $product->sold_count }}</span>
+        @endif
     </div>
 
-    <p class="product-price">₹{{ number_format($product->sale_price ?: $product->price) }}</p>
-    @if (!empty($product->sale_price) && $product->sale_price < $product->price)
-        <p class="product-price-note">
-            <span style="text-decoration:line-through;margin-right:6px;">₹{{ number_format($product->price) }}</span>
-            {{ $product->tax_note }}
+    @php
+        $displaySale = (float) ($product->sale_price ?: $product->price);
+        $displayMrp = (float) $product->price;
+        $hasSale = $product->sale_price && $displaySale > 0 && $displaySale < $displayMrp;
+        $displayDiscount = $hasSale
+            ? ($product->discount_label ?: price_discount_label($displaySale, $displayMrp))
+            : null;
+        if ($hasSale && ! $displayDiscount) {
+            $displayDiscount = 'Save ₹'.number_format((int) round($displayMrp - $displaySale));
+        }
+    @endphp
+    <div class="product-price-block">
+        <p class="product-price">
+            <span class="product-price__current">₹{{ number_format($displaySale) }}</span>
+            @if ($hasSale)
+                <span class="product-price__original">₹{{ number_format($displayMrp) }}</span>
+            @endif
         </p>
-    @else
-        <p class="product-price-note">{{ $product->tax_note }}</p>
-    @endif
+        @if ($displayDiscount)
+            <p class="product-price__save">{{ $displayDiscount }}</p>
+        @endif
+        @if (! empty($product->tax_note))
+            <p class="product-price-note">{{ $product->tax_note }}</p>
+        @endif
+    </div>
 
     <p class="product-short">{{ $product->short_description }}</p>
 
@@ -39,13 +57,19 @@
         @endforeach
     </div>
 
-    <p class="attr-label-top">Metal</p>
-    <div class="metal-pill">{{ $product->metal }}</div>
+    <p class="attr-label-top">Material</p>
+    <div class="metal-pill">{{ $product->metal ?: 'Fashion jewellery' }}</div>
 
     <ul class="product-attrs">
-        <li><span class="label">Stone:</span><span class="value">{{ $product->stone }}</span></li>
-        <li><span class="label">Style:</span><span class="value">{{ $product->style }}</span></li>
-        <li><span class="label">Net Weight:</span><span class="value">{{ $product->weight }}</span></li>
+        @if (filled($product->stone))
+            <li><span class="label">Stone:</span><span class="value">{{ $product->stone }}</span></li>
+        @endif
+        @if (filled($product->style))
+            <li><span class="label">Style:</span><span class="value">{{ $product->style }}</span></li>
+        @endif
+        @if (filled($product->weight))
+            <li><span class="label">Weight:</span><span class="value">{{ $product->weight }}</span></li>
+        @endif
     </ul>
 
     <div class="stock-status {{ ($product->stock_status ?? '') === 'out_of_stock' ? 'is-out' : '' }}">
@@ -60,13 +84,27 @@
     </div>
 
     @if (($product->stock_status ?? 'in_stock') === 'in_stock' && (int) ($product->stock ?? 0) > 0)
+        @php
+            $qtyMin = max(1, (int) ($product->qty_min ?? 1));
+            $qtyMax = max($qtyMin, (int) ($product->qty_max ?? $product->stock ?? 1));
+        @endphp
         <div class="qty-row">
             <div class="qty-control" role="group" aria-label="Quantity">
-                <button type="button" data-qty-minus aria-label="Decrease quantity">−</button>
-                <input type="number" name="quantity" value="1" min="1" max="{{ max(1, (int) $product->stock) }}" data-qty-input aria-label="Quantity">
-                <button type="button" data-qty-plus aria-label="Increase quantity">+</button>
+                <button type="button" data-qty-minus aria-label="Decrease quantity" disabled>−</button>
+                <input
+                    type="number"
+                    name="quantity"
+                    value="{{ $qtyMin }}"
+                    min="{{ $qtyMin }}"
+                    max="{{ $qtyMax }}"
+                    step="1"
+                    inputmode="numeric"
+                    data-qty-input
+                    aria-label="Quantity"
+                >
+                <button type="button" data-qty-plus aria-label="Increase quantity" @disabled($qtyMin >= $qtyMax)>+</button>
             </div>
-            <span class="visually-hidden">Select quantity</span>
+            <span class="visually-hidden">Select quantity between {{ $qtyMin }} and {{ $qtyMax }}</span>
         </div>
 
         <div class="product-actions">
@@ -94,11 +132,11 @@
     <div class="delivery-card">
         <h3>Check Delivery</h3>
         <p>Enter your pincode to check availability and estimated delivery.</p>
-        <form class="delivery-form" action="{{ route('delivery.check') }}" method="post" data-delivery-form>
+        <form class="delivery-form" action="{{ route('delivery.check') }}" method="post" data-delivery-form data-no-loading novalidate>
             @csrf
             <label class="visually-hidden" for="pincode">Pincode</label>
-            <input id="pincode" type="text" name="pincode" placeholder="6-digit pincode" maxlength="6" inputmode="numeric" pattern="[0-9]{6}" required>
-            <button type="submit">Check</button>
+            <input id="pincode" type="text" name="pincode" placeholder="6-digit pincode" maxlength="6" inputmode="numeric" autocomplete="postal-code" required>
+            <button type="submit" data-delivery-submit data-no-loading>Check</button>
         </form>
         <div class="delivery-result" data-delivery-result aria-live="polite"></div>
     </div>

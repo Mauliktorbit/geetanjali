@@ -17,8 +17,11 @@
             placeholder="Enter coupon code"
             maxlength="50"
             autocomplete="off"
+            @if ($appliedCode) readonly @endif
         >
-        <button type="submit">Apply</button>
+        <button type="submit" data-coupon-submit @if ($appliedCode) disabled @endif>
+            {{ $appliedCode ? 'Applied' : 'Apply' }}
+        </button>
     </form>
     <p class="cart-coupon__msg" data-coupon-msg @if ($appliedCode) data-success="1" @endif>
         @if ($appliedCode)

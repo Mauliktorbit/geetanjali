@@ -17,14 +17,16 @@
     $specs = [
         'SKU' => $item->sku,
         'Category' => $item->category?->name,
-        'Metal' => $item->metal,
-        'Purity' => $item->purity,
+        'Material' => $item->metal,
         'Stone' => $item->stone,
         'Style' => $item->style,
-        'Net weight' => $weightLabel,
+        'Weight' => $weightLabel,
         'Dimensions' => $item->dimensions_text,
         'Occasion' => $item->occasion,
-        'Certification' => $item->certification,
+        'Quality' => $item->certification,
+        'Sold count' => $item->sold_count,
+        'Quantity' => (int) $item->inventories->sum('available_stock'),
+        'Stock' => ((int) $item->inventories->sum('available_stock') > 0) ? 'In Stock' : 'Out of Stock',
         'Delivery' => $item->estimated_delivery,
     ];
 @endphp
@@ -133,6 +135,21 @@
                         <li>{{ $highlight }}</li>
                     @endforeach
                 </ul>
+            @endif
+
+            @if (filled($item->care_instructions))
+                <h4 class="product-show__sub">Care instructions</h4>
+                <p class="product-show__copy" style="white-space: pre-line;">{{ $item->care_instructions }}</p>
+            @endif
+
+            @if (filled($item->shipping_information) || filled($item->return_policy))
+                <h4 class="product-show__sub">Shipping & returns</h4>
+                @if (filled($item->shipping_information))
+                    <p class="product-show__copy" style="white-space: pre-line;">{{ $item->shipping_information }}</p>
+                @endif
+                @if (filled($item->return_policy))
+                    <p class="product-show__copy" style="white-space: pre-line;">{{ $item->return_policy }}</p>
+                @endif
             @endif
         </div>
     </div>

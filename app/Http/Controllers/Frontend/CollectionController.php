@@ -17,22 +17,18 @@ class CollectionController extends Controller
     {
         abort_unless(StorefrontCatalogService::isActiveSlug('kundan'), 404);
 
-        $bounds = $this->catalog->priceBounds('kundan');
-        $filters = $this->catalog->normalizeFilters($request, $bounds['min'], $bounds['max']);
-        $paginator = $this->catalog->paginateKundan($filters);
+        $filters = $this->catalog->normalizeListingFilters($request);
+        $paginator = $this->catalog->paginateKundan($this->catalog->filtersFromBridal($filters));
         $products = $paginator->through(fn ($product) => $this->catalog->toCard($product));
 
         return view('frontend.collections.kundan', [
             'products' => $products,
             'filters' => $filters,
-            'filterCounts' => $this->catalog->filterCounts('kundan'),
             'categoryNav' => $this->categoryNav($filters),
-            'services' => $this->services(),
+            'filterCounts' => $this->catalog->filterCounts('kundan'),
             'whyFeatures' => $this->whyKundanFeatures(),
             'viewMode' => $filters['view'] ?? 'grid',
             'hero' => $this->hero(),
-            'minPriceBound' => $bounds['min'],
-            'maxPriceBound' => $bounds['max'],
             'breadcrumb' => [
                 ['label' => 'Home', 'url' => route('home')],
                 ['label' => 'Kundan Collection', 'url' => null],
@@ -59,31 +55,31 @@ class CollectionController extends Controller
             ->where('is_active', true)
             ->firstOrFail();
 
-        $listingUrl = url('/collection/'.$collection->slug);
         $filters = $this->catalog->normalizeListingFilters($request);
-        $paginator = $this->catalog->paginateCollection($slug, $this->catalog->filtersFromBridal($filters));
+        $paginator = $this->catalog->paginateCollection($collection->slug, $this->catalog->filtersFromBridal($filters));
         $products = $paginator->through(fn ($product) => $this->catalog->toCard($product));
         $details = trim((string) $collection->description);
+        $listingUrl = StorefrontCatalogService::storefrontUrl($collection);
+        $heroImage = $collection->image
+            ? storefront_image($collection->image)
+            : 'public/assets/images/collections/kundan/hero.jpg';
 
-        return view('frontend.collections.bridal', [
+        return view('frontend.collections.show', [
+            'collection' => $collection,
             'products' => $products,
             'filters' => $filters,
-            'categoryOptions' => StorefrontCatalogService::jewelleryTypeOptions(),
             'listingUrl' => $listingUrl,
-            'canonicalUrl' => $listingUrl,
-            'pageTitle' => $collection->name.' | Geetanjali Jewellers',
-            'metaDescription' => $details !== ''
-                ? $details
-                : 'Explore '.$collection->name.' jewellery from Geetanjali Jewellers.',
-            'introHeading' => $collection->name,
-            'introText' => $details !== ''
-                ? $details
-                : 'Discover our stunning range of jewellery including necklaces, earrings, bangles, rings and complete sets.',
-            'showBridalSets' => false,
-            'hero' => StorefrontCatalogService::listingHero($collection, $listingUrl),
-            'promos' => StorefrontCatalogService::listingPromos(),
-            'viewMode' => $filters['view'],
+            'filterCounts' => $this->catalog->filterCounts($collection->slug),
             'emptyMessage' => $this->emptyMessage($request),
+            'hero' => [
+                'heading' => $collection->name,
+                'subtitle' => 'Handcrafted jewellery, curated for you.',
+                'description' => $details !== ''
+                    ? $details
+                    : 'Discover our stunning range of jewellery including necklaces, earrings, bangles, rings and complete sets.',
+                'image' => $heroImage,
+                'image_alt' => $collection->name,
+            ],
             'breadcrumb' => [
                 ['label' => 'Home', 'url' => route('home')],
                 ['label' => $collection->name, 'url' => null],
@@ -93,7 +89,7 @@ class CollectionController extends Controller
 
     private function emptyMessage(Request $request): string
     {
-        if ($request->hasAny(['category', 'metal', 'stone', 'price'])) {
+        if ($request->hasAny(['category', 'metal', 'stone', 'price', 'type', 'min_price', 'max_price'])) {
             return 'No products match your filters.';
         }
 
@@ -101,12 +97,12 @@ class CollectionController extends Controller
     }
 
     /**
-     * @param  array{category: string|null, type: list<string>}  $filters
+     * @param  array{category: string, type?: list<string>}  $filters
      * @return list<array<string, mixed>>
      */
     private function categoryNav(array $filters): array
     {
-        $active = $filters['category'] ?? ($filters['type'][0] ?? null);
+        $active = $filters['category'] !== '' ? $filters['category'] : null;
 
         return StorefrontCatalogService::jewelleryTypes()->map(function ($category) use ($active) {
             $key = $category->slug;
@@ -126,27 +122,20 @@ class CollectionController extends Controller
      */
     private function hero(): array
     {
-        return [
-            'heading' => 'Kundan Collection',
-            'subtitle' => 'Timeless Heritage. Royal Elegance.',
-            'description' => 'Discover our exquisite range of handcrafted Kundan jewellery that celebrates tradition, craftsmanship and timeless beauty.',
-            'image' => 'public/assets/images/collections/kundan/hero.jpg',
-            'image_alt' => 'Premium Kundan necklace and earrings on emerald draped fabric',
-        ];
-    }
+        $collection = \App\Models\Collection::query()->where('slug', 'kundan')->first();
+        $image = $collection?->image
+            ? storefront_image($collection->image)
+            : 'public/assets/images/collections/kundan/hero.jpg';
+        $description = trim((string) ($collection?->description ?? ''));
 
-    /**
-     * @return list<array<string, string>>
-     */
-    private function services(): array
-    {
         return [
-            ['icon' => 'bi-heart', 'title' => 'Skin-friendly', 'subtitle' => 'Anti-tarnish finish'],
-            ['icon' => 'bi-shield-lock', 'title' => 'Secure Payment', 'subtitle' => '100% Safe & Secure'],
-            ['icon' => 'bi-box-seam', 'title' => 'Secure Packaging', 'subtitle' => 'Packed with care'],
-            ['icon' => 'bi-arrow-repeat', 'title' => 'Easy Returns', 'subtitle' => '15 Day Return Policy'],
-            ['icon' => 'bi-stars', 'title' => 'Quality-checked', 'subtitle' => 'Premium finish'],
-            ['icon' => 'bi-gift', 'title' => 'Gift Wrapping', 'subtitle' => 'Available on Request'],
+            'heading' => $collection?->name ?: 'Kundan Collection',
+            'subtitle' => 'Timeless Heritage. Royal Elegance.',
+            'description' => $description !== ''
+                ? $description
+                : 'Discover our exquisite range of handcrafted Kundan jewellery that celebrates tradition, craftsmanship and timeless beauty.',
+            'image' => $image,
+            'image_alt' => $collection?->name ?: 'Premium Kundan necklace and earrings on emerald draped fabric',
         ];
     }
 

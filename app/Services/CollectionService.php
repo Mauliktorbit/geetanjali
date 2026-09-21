@@ -64,8 +64,8 @@ class CollectionService extends BaseService
     }
 
     /**
-     * @param  array{name?: string, description?: string|null, image?: string|null}  $data
-     * @return array{name: string, slug: string, type: string, description: string|null, is_active: bool, sort_order?: int, image?: string}
+     * @param  array{name?: string, slug?: string|null, description?: string|null, image?: string|null, remove_image?: bool, seo_title?: string|null, seo_description?: string|null, sort_order?: int|null, is_active?: bool}  $data
+     * @return array<string, mixed>
      */
     private function fromInput(array $data, ?Collection $existing = null): array
     {
@@ -75,6 +75,8 @@ class CollectionService extends BaseService
         $payload = [
             'name' => $name,
             'description' => filled($data['description'] ?? null) ? trim((string) $data['description']) : null,
+            'seo_title' => filled($data['seo_title'] ?? null) ? trim((string) $data['seo_title']) : null,
+            'seo_description' => filled($data['seo_description'] ?? null) ? trim((string) $data['seo_description']) : null,
         ];
 
         if (array_key_exists('is_active', $data)) {
@@ -83,11 +85,18 @@ class CollectionService extends BaseService
             $payload['is_active'] = true;
         }
 
+        if (array_key_exists('sort_order', $data) && $data['sort_order'] !== null && $data['sort_order'] !== '') {
+            $payload['sort_order'] = max(0, (int) $data['sort_order']);
+        } elseif ($existing === null) {
+            $payload['sort_order'] = (int) Collection::query()->max('sort_order') + 1;
+        }
+
         if ($protected) {
             $payload['slug'] = $existing->slug;
             $payload['type'] = $existing->type ?: $existing->slug;
         } else {
-            $payload['slug'] = $this->uniqueSlug(Str::slug($name) ?: 'collection', $existing?->id);
+            $source = filled($data['slug'] ?? null) ? (string) $data['slug'] : (Str::slug($name) ?: 'collection');
+            $payload['slug'] = $this->uniqueSlug($source, $existing?->id);
             $payload['type'] = StorefrontCatalogService::isProtectedSlug($payload['slug'])
                 ? $payload['slug']
                 : 'custom';
@@ -95,10 +104,8 @@ class CollectionService extends BaseService
 
         if (! empty($data['image'])) {
             $payload['image'] = $data['image'];
-        }
-
-        if ($existing === null) {
-            $payload['sort_order'] = (int) Collection::query()->max('sort_order') + 1;
+        } elseif (! empty($data['remove_image'])) {
+            $payload['image'] = null;
         }
 
         return $payload;

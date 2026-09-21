@@ -468,6 +468,17 @@
     text-transform: uppercase;
 }
 
+.cart-coupon__form button:disabled {
+    background: #9aa8a3;
+    color: #fff;
+    cursor: not-allowed;
+}
+
+.cart-coupon__form input[readonly] {
+    background: #f6f6f6;
+    color: #555;
+}
+
 .cart-coupon__msg {
     min-height: 1.2em;
     margin: 0.55rem 0 0;

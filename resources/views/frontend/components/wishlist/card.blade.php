@@ -1,37 +1,51 @@
-@props(['item' => []])
+@props(['item' => [], 'readonly' => false])
 
 @php
     $name = $item['name'] ?? 'Jewellery Piece';
     $removeUrl = route('wishlist.remove', $item['id']);
     $moveUrl = route('wishlist.move', $item['id']);
     $viewUrl = $item['url'] ?? route('products.new-arrivals');
+    $itemDiscount = price_discount_label($item['price'] ?? 0, $item['compare_at_price'] ?? 0);
 @endphp
 
 <article
     class="wishlist-card"
     data-wishlist-item
     data-product-id="{{ $item['id'] }}"
-    data-remove-url="{{ $removeUrl }}"
-    data-move-url="{{ $moveUrl }}"
+    @if (! $readonly)
+        data-remove-url="{{ $removeUrl }}"
+        data-move-url="{{ $moveUrl }}"
+    @endif
+    data-product-name="{{ $name }}"
+    data-product-price="{{ $item['price'] ?? 0 }}"
+    data-product-image="{{ storefront_image($item['image'] ?? null) }}"
+    data-product-url="{{ $viewUrl }}"
+    data-product-slug="{{ $item['slug'] ?? '' }}"
+    data-product-compare="{{ $item['compare_at_price'] ?? '' }}"
+    data-product-discount="{{ $itemDiscount ?? '' }}"
+    data-product-metal="{{ $item['metal'] ?? '' }}"
+    data-product-weight="{{ $item['weight'] ?? '' }}"
 >
     <div class="wishlist-card__media">
         <a href="{{ $viewUrl }}" aria-label="View {{ $name }}">
             <img
-                src="{{ asset($item['image']) }}"
+                src="{{ storefront_image($item['image'] ?? null) }}"
                 alt="{{ $name }}"
                 width="400"
                 height="400"
                 loading="lazy"
             >
         </a>
-        <button
-            type="button"
-            class="wishlist-card__remove"
-            data-wishlist-remove
-            aria-label="Remove {{ $name }} from wishlist"
-        >
-            <i class="bi bi-x-lg" aria-hidden="true"></i>
-        </button>
+        @if (! $readonly)
+            <button
+                type="button"
+                class="wishlist-card__remove"
+                data-wishlist-remove
+                aria-label="Remove {{ $name }} from wishlist"
+            >
+                <i class="bi bi-x-lg" aria-hidden="true"></i>
+            </button>
+        @endif
     </div>
 
     <div class="wishlist-card__body">
@@ -44,15 +58,21 @@
             @if (! empty($item['compare_at_price']))
                 <span class="is-old">₹{{ number_format($item['compare_at_price']) }}</span>
             @endif
-            @if (! empty($item['discount_label']))
-                <span class="is-off">{{ $item['discount_label'] }}</span>
+            @if ($itemDiscount)
+                <span class="is-off">{{ $itemDiscount }}</span>
             @endif
         </div>
 
         <div class="wishlist-card__actions">
-            <button type="button" class="wishlist-card__btn wishlist-card__btn--bag" data-wishlist-move>
-                Move to Bag
-            </button>
+            @if ($readonly)
+                <button type="button" class="wishlist-card__btn wishlist-card__btn--bag" data-shared-add>
+                    Add to Bag
+                </button>
+            @else
+                <button type="button" class="wishlist-card__btn wishlist-card__btn--bag" data-wishlist-move>
+                    Move to Bag
+                </button>
+            @endif
             <a href="{{ $viewUrl }}" class="wishlist-card__btn wishlist-card__btn--view">
                 View
             </a>

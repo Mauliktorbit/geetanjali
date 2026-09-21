@@ -23,9 +23,52 @@ class WishlistController extends Controller
 
         return view('frontend.wishlist.index', [
             'wishlist' => $summary,
+            'isShared' => false,
+            'shareOwner' => null,
             'breadcrumb' => [
                 ['label' => 'Home', 'url' => route('home')],
                 ['label' => 'My Wishlist', 'url' => null],
+            ],
+            'trustItems' => [
+                ['icon' => 'bi-heart', 'title' => 'Skin-friendly', 'subtitle' => 'Anti-tarnish finish'],
+                ['icon' => 'bi-bag-check', 'title' => 'Secure Payment', 'subtitle' => '100% Safe & Secure'],
+                ['icon' => 'bi-box-seam', 'title' => 'Secure Packaging', 'subtitle' => 'Packed with care'],
+                ['icon' => 'bi-arrow-repeat', 'title' => 'Easy Returns', 'subtitle' => '15 Day Return Policy'],
+                ['icon' => 'bi-stars', 'title' => 'Quality-checked', 'subtitle' => 'Premium finish'],
+            ],
+        ]);
+    }
+
+    public function share(Request $request): JsonResponse
+    {
+        $result = $this->wishlist->createShare();
+
+        if ($result === null) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Your wishlist is empty.',
+            ], 422);
+        }
+
+        return response()->json([
+            'success' => true,
+            'url' => $result['url'],
+            'message' => 'Wishlist link ready.',
+        ]);
+    }
+
+    public function shared(string $token): View
+    {
+        $shared = $this->wishlist->sharedSummary($token);
+        abort_if($shared === null, 404);
+
+        return view('frontend.wishlist.index', [
+            'wishlist' => $shared,
+            'isShared' => true,
+            'shareOwner' => $shared['owner'],
+            'breadcrumb' => [
+                ['label' => 'Home', 'url' => route('home')],
+                ['label' => 'Shared Wishlist', 'url' => null],
             ],
             'trustItems' => [
                 ['icon' => 'bi-heart', 'title' => 'Skin-friendly', 'subtitle' => 'Anti-tarnish finish'],

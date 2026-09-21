@@ -43,6 +43,14 @@
                     <p>Discover our latest jewellery collections and add pieces you love.</p>
                     <a href="{{ route('products.new-arrivals') }}" class="cart-btn cart-btn--primary">Continue Shopping</a>
                 </div>
+                @include('frontend.components.product.related', [
+                    'products' => $recentlyViewed ?? [],
+                    'title' => 'Recently Viewed',
+                ])
+                @include('frontend.components.product.related', [
+                    'products' => $recommendedProducts ?? [],
+                    'title' => 'You May Also Like',
+                ])
             @else
                 <div class="cart-layout">
                     <div class="cart-main">
@@ -76,6 +84,15 @@
                             <textarea id="gift-message" name="gift_message" rows="4" maxlength="500" placeholder="Write a short message for your gift...">{{ $cart['gift_message'] }}</textarea>
                             <button type="button" class="cart-btn cart-btn--primary" data-gift-save>Save Gift Message</button>
                         </div>
+
+                        @include('frontend.components.product.related', [
+                            'products' => $recentlyViewed ?? [],
+                            'title' => 'Recently Viewed',
+                        ])
+                        @include('frontend.components.product.related', [
+                            'products' => $recommendedProducts ?? [],
+                            'title' => 'You May Also Like',
+                        ])
                     </div>
 
                     <aside class="cart-sidebar">

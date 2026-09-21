@@ -9,6 +9,7 @@ use App\Services\CartService;
 use App\Services\StorefrontCatalogService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\View\View;
 
 class ProductController extends Controller
@@ -23,15 +24,38 @@ class ProductController extends Controller
         $model->increment('view_count');
 
         $product = $this->catalog->toDetail($model);
-        $relatedProducts = $this->catalog->relatedCards($model);
+        $relatedProducts = $this->catalog->relatedCards($model, 4);
+        $recentlyViewed = $this->catalog->rememberAndRecentlyViewed($model, 4);
+        $trendingProducts = $this->catalog->trendingCards(
+            array_merge(
+                [(int) $model->id],
+                $relatedProducts->pluck('id')->map(fn ($id) => (int) $id)->all(),
+                $recentlyViewed->pluck('id')->map(fn ($id) => (int) $id)->all()
+            ),
+            4,
+            $model
+        );
+
+        $collection = $model->collections->first(fn ($item) => $item->slug === 'kundan')
+            ?? $model->collections->first(fn ($item) => (bool) $item->is_active)
+            ?? $model->collections->first();
+        $shopUrl = $collection
+            ? StorefrontCatalogService::storefrontUrl($collection)
+            : route('products.new-arrivals');
+        $categorySlug = $product->type;
+        $categoryUrl = ($categorySlug && ! StorefrontCatalogService::isPlaceholderCategory(null, $categorySlug))
+            ? $shopUrl.(str_contains($shopUrl, '?') ? '&' : '?').'category='.urlencode($categorySlug)
+            : $shopUrl;
 
         return view('frontend.products.show', [
             'product' => $product,
             'relatedProducts' => $relatedProducts,
+            'recentlyViewed' => $recentlyViewed,
+            'trendingProducts' => $trendingProducts,
             'breadcrumb' => [
                 ['label' => 'Home', 'url' => route('home')],
-                ['label' => 'Shop', 'url' => route('products.new-arrivals')],
-                ['label' => $product->category, 'url' => route('collections.kundan')],
+                ['label' => 'Shop', 'url' => $shopUrl],
+                ['label' => $product->category, 'url' => $categoryUrl],
                 ['label' => $product->name, 'url' => null],
             ],
         ]);
@@ -39,25 +63,43 @@ class ProductController extends Controller
 
     public function checkDelivery(Request $request): JsonResponse
     {
-        $request->merge([
-            'pincode' => digits_only($request->input('pincode')),
-        ]);
+        $pincode = digits_only($request->input('pincode'));
+        $productId = $request->input('product_id');
+        $productId = ($productId === '' || $productId === null) ? null : (int) $productId;
 
-        $validated = $request->validate([
-            'pincode' => indian_pincode_rules(true),
-            'product_id' => ['nullable', 'integer'],
-        ], [
-            'pincode.regex' => 'Enter a valid 6-digit pincode.',
-        ]);
+        $validator = Validator::make(
+            [
+                'pincode' => $pincode,
+                'product_id' => $productId,
+            ],
+            [
+                'pincode' => indian_pincode_rules(true),
+                'product_id' => ['nullable', 'integer'],
+            ],
+            [
+                'pincode.regex' => 'Enter a valid 6-digit pincode.',
+            ]
+        );
 
-        $pincode = $validated['pincode'];
-        $available = strlen((string) $pincode) === 6;
+        if ($validator->fails()) {
+            return response()->json([
+                'available' => false,
+                'message' => $validator->errors()->first('pincode') ?: 'Enter a valid 6-digit pincode.',
+                'estimated_delivery' => null,
+            ], 422);
+        }
 
+        $available = strlen($pincode) === 6;
         $eta = '3–5 business days';
-        if (! empty($validated['product_id'])) {
-            $product = Product::query()->storefront()->find($validated['product_id']);
-            if ($product?->estimated_delivery) {
-                $eta = $product->estimated_delivery;
+
+        if ($available && (int) $productId > 0) {
+            try {
+                $product = Product::query()->storefront()->find((int) $productId);
+                if (filled($product?->estimated_delivery)) {
+                    $eta = (string) $product->estimated_delivery;
+                }
+            } catch (\Throwable) {
+                // Keep the default ETA if the product lookup fails.
             }
         }
 
@@ -74,7 +116,7 @@ class ProductController extends Controller
     {
         $validated = $request->validate([
             'product_id' => ['required', 'integer'],
-            'quantity' => ['required', 'integer', 'min:1', 'max:10'],
+            'quantity' => ['required', 'integer', 'min:1', 'max:'.CartService::MAX_QUANTITY],
             'name' => ['nullable', 'string', 'max:180'],
             'slug' => ['nullable', 'string', 'max:180'],
             'image' => ['nullable', 'string', 'max:255'],

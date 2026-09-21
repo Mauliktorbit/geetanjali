@@ -7,10 +7,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!page) return;
 
     const csrf = page.dataset.csrf || document.querySelector('meta[name="csrf-token"]')?.content || '';
+    const isShared = page.dataset.shared === '1';
 
-    initShare(page);
-    initMoveAll(page, csrf);
-    initCards(page, csrf);
+    if (!isShared) {
+        initShare(page, csrf);
+        initMoveAll(page, csrf);
+        initCards(page, csrf);
+    } else {
+        initSharedAdd(page, csrf);
+    }
 });
 
 function updateCount(page, count) {
@@ -57,17 +62,38 @@ function confirmRemove() {
     return Promise.resolve(window.confirm('Remove this item from your wishlist?'));
 }
 
-function initShare(page) {
+function initShare(page, csrf) {
     const btn = page.querySelector('[data-share-wishlist]');
     if (!btn) return;
 
     btn.addEventListener('click', async () => {
-        const url = page.dataset.shareUrl || window.location.href;
+        btn.disabled = true;
+        let url = '';
+        try {
+            const endpoint = page.dataset.shareEndpoint;
+            if (endpoint) {
+                const data = await requestJson(endpoint, 'POST', csrf);
+                if (data.success && data.url) {
+                    url = data.url;
+                    page.dataset.shareUrl = url;
+                }
+            }
+        } catch {
+            url = '';
+        }
+
+        if (!url) {
+            btn.disabled = false;
+            window.alert('Add items to your wishlist before sharing.');
+            return;
+        }
+
         const title = 'My Geetanjali Jewellers Wishlist';
 
         try {
             if (navigator.share) {
                 await navigator.share({ title, url });
+                btn.disabled = false;
                 return;
             }
             await navigator.clipboard.writeText(url);
@@ -77,10 +103,51 @@ function initShare(page) {
             setTimeout(() => {
                 btn.innerHTML = original;
                 btn.classList.remove('is-copied');
+                btn.disabled = false;
             }, 1800);
         } catch {
+            btn.disabled = false;
             window.prompt('Copy this wishlist link:', url);
         }
+    });
+}
+
+function initSharedAdd(page, csrf) {
+    const cartUrl = window.Geetanjali?.routes?.cartAdd;
+    if (!cartUrl) return;
+
+    page.querySelectorAll('[data-shared-add]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+            const card = btn.closest('[data-wishlist-item]');
+            if (!card) return;
+            btn.disabled = true;
+            try {
+                const data = await requestJson(cartUrl, 'POST', csrf, {
+                    product_id: Number(card.dataset.productId || 0),
+                    quantity: 1,
+                    name: card.dataset.productName || '',
+                    slug: card.dataset.productSlug || '',
+                    image: card.dataset.productImage || '',
+                    price: card.dataset.productPrice || '',
+                    compare_at_price: card.dataset.productCompare || '',
+                    discount_label: card.dataset.productDiscount || '',
+                    metal: card.dataset.productMetal || '',
+                    weight: card.dataset.productWeight || '',
+                    url: card.dataset.productUrl || '',
+                });
+                if (data.success) {
+                    document.querySelectorAll('[data-cart-badge], .cart-badge').forEach((badge) => {
+                        badge.textContent = String(data.cart_count ?? badge.textContent);
+                    });
+                    btn.textContent = 'Added';
+                    return;
+                }
+                window.alert(data.message || 'Could not add item to bag.');
+            } catch {
+                window.alert('Could not add item to bag.');
+            }
+            btn.disabled = false;
+        });
     });
 }
 

@@ -89,6 +89,10 @@ Route::middleware(['auth', 'account.active'])->group(function () {
 });
 
 Route::get('/wishlist', [WishlistController::class, 'index'])->name('wishlist.index');
+Route::post('/wishlist/share', [WishlistController::class, 'share'])->name('wishlist.share');
+Route::get('/wishlist/shared/{token}', [WishlistController::class, 'shared'])
+    ->where('token', '[A-Za-z0-9]{16,64}')
+    ->name('wishlist.shared');
 Route::post('/wishlist/add', [WishlistController::class, 'add'])->name('wishlist.add');
 Route::post('/wishlist/toggle', [WishlistController::class, 'toggle'])->name('wishlist.toggle');
 Route::delete('/wishlist/remove/{id}', [WishlistController::class, 'remove'])->name('wishlist.remove');

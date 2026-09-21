@@ -62,20 +62,87 @@ function initGallery(root) {
 
 function initQuantity(root) {
     const input = root.querySelector('[data-qty-input]');
-    const max = Number(root.dataset.stock || input?.max || 10);
+    const minus = root.querySelector('[data-qty-minus]');
+    const plus = root.querySelector('[data-qty-plus]');
     if (!input) return;
 
-    const clamp = (value) => Math.min(Math.max(1, value), max || 10);
+    const bounds = () => {
+        const min = Math.max(1, parseInt(input.getAttribute('min') || root.dataset.qtyMin || '1', 10) || 1);
+        let max = parseInt(input.getAttribute('max') || root.dataset.qtyMax || '', 10);
+        const stock = parseInt(root.dataset.stock || '', 10);
 
-    root.querySelector('[data-qty-minus]')?.addEventListener('click', () => {
-        input.value = String(clamp(Number(input.value || 1) - 1));
+        if (!Number.isFinite(max) || max < min) {
+            max = Number.isFinite(stock) && stock > 0 ? stock : min;
+        }
+        if (Number.isFinite(stock) && stock > 0) {
+            max = Math.min(max, stock);
+        }
+
+        return { min, max: Math.max(min, max) };
+    };
+
+    const parseQty = (raw) => {
+        const n = parseInt(String(raw ?? '').replace(/[^\d]/g, ''), 10);
+        return Number.isFinite(n) ? n : bounds().min;
+    };
+
+    const syncButtons = (qty) => {
+        const { min, max } = bounds();
+        if (minus) {
+            minus.disabled = qty <= min;
+            minus.setAttribute('aria-disabled', qty <= min ? 'true' : 'false');
+        }
+        if (plus) {
+            plus.disabled = qty >= max;
+            plus.setAttribute('aria-disabled', qty >= max ? 'true' : 'false');
+        }
+    };
+
+    const setQty = (value) => {
+        const { min, max } = bounds();
+        let qty = parseQty(value);
+        if (qty < min) qty = min;
+        if (qty > max) qty = max;
+        input.value = String(qty);
+        syncButtons(qty);
+        return qty;
+    };
+
+    minus?.addEventListener('click', () => {
+        setQty(parseQty(input.value) - 1);
     });
-    root.querySelector('[data-qty-plus]')?.addEventListener('click', () => {
-        input.value = String(clamp(Number(input.value || 1) + 1));
+    plus?.addEventListener('click', () => {
+        setQty(parseQty(input.value) + 1);
     });
-    input.addEventListener('change', () => {
-        input.value = String(clamp(Number(input.value || 1)));
+
+    input.addEventListener('keydown', (event) => {
+        if (['e', 'E', '+', '-', '.', ',', ' '].includes(event.key)) {
+            event.preventDefault();
+            return;
+        }
+        if (event.key === 'ArrowDown') {
+            event.preventDefault();
+            setQty(parseQty(input.value) - 1);
+        }
+        if (event.key === 'ArrowUp') {
+            event.preventDefault();
+            setQty(parseQty(input.value) + 1);
+        }
     });
+
+    input.addEventListener('input', () => {
+        if (input.value === '') {
+            syncButtons(bounds().min);
+            return;
+        }
+        setQty(input.value);
+    });
+
+    input.addEventListener('blur', () => setQty(input.value === '' ? bounds().min : input.value));
+    input.addEventListener('change', () => setQty(input.value));
+    input.addEventListener('wheel', (event) => event.preventDefault(), { passive: false });
+
+    setQty(input.value);
 }
 
 function initWishlist(root) {
@@ -122,40 +189,111 @@ function initTabs(root) {
     });
 }
 
+function deliveryCheckUrl(form) {
+    const configured = window.Geetanjali?.routes?.deliveryCheck;
+    const fallbackPath = () => {
+        const prefix = window.location.pathname.replace(/\/product\/[\s\S]*$/, '');
+        return `${window.location.origin}${prefix}/product/delivery-check`;
+    };
+
+    const raw = configured || form?.getAttribute('action') || form?.action || fallbackPath();
+    try {
+        const url = new URL(raw, window.location.href);
+        url.protocol = window.location.protocol;
+        url.host = window.location.host;
+        const herePrefix = window.location.pathname.split('/product/')[0];
+        const therePrefix = url.pathname.split('/product/')[0];
+        if (herePrefix && therePrefix && herePrefix.toLowerCase() === therePrefix.toLowerCase()) {
+            url.pathname = herePrefix + url.pathname.slice(therePrefix.length);
+        }
+        return url.toString();
+    } catch (error) {
+        return fallbackPath();
+    }
+}
+
 function initDelivery(root) {
     const form = root.querySelector('[data-delivery-form]');
     const result = root.querySelector('[data-delivery-result]');
-    if (!form || !result) return;
+    const input = form?.querySelector('[name="pincode"]');
+    const submit = form?.querySelector('[data-delivery-submit], button[type="submit"]');
+    if (!form || !result || !input) return;
 
-    form.addEventListener('submit', async (event) => {
-        event.preventDefault();
-        const pincode = form.querySelector('[name="pincode"]')?.value?.trim() || '';
-        result.textContent = 'Checking...';
+    const showResult = (message, ok) => {
+        result.textContent = message;
         result.className = 'delivery-result';
+        if (ok === true) result.classList.add('is-ok');
+        if (ok === false) result.classList.add('is-fail');
+    };
+
+    const setBusy = (busy) => {
+        form.classList.toggle('is-busy', busy);
+        if (submit) {
+            submit.disabled = busy;
+            submit.classList.toggle('is-busy', busy);
+            submit.setAttribute('aria-busy', busy ? 'true' : 'false');
+        }
+    };
+
+    const checkPincode = async () => {
+        const pincode = String(input.value || '').replace(/\D/g, '').slice(0, 6);
+        input.value = pincode;
+
+        if (pincode.length !== 6) {
+            showResult('Enter a valid 6-digit pincode.', false);
+            input.focus();
+            return;
+        }
+
+        if (form.classList.contains('is-busy')) {
+            return;
+        }
+
+        setBusy(true);
+        showResult('Checking delivery…', null);
 
         try {
-            const response = await fetch(form.action, {
+            const body = new FormData(form);
+            body.set('pincode', pincode);
+            body.set('product_id', String(root.dataset.productId || ''));
+
+            const headers = {
+                Accept: 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': csrfToken(),
+            };
+            const xsrf = document.cookie.match(/(?:^|; )XSRF-TOKEN=([^;]*)/);
+            if (xsrf) {
+                headers['X-XSRF-TOKEN'] = decodeURIComponent(xsrf[1]);
+            }
+
+            const response = await fetch(deliveryCheckUrl(form), {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Accept: 'application/json',
-                    'X-CSRF-TOKEN': csrfToken(),
-                    'X-Requested-With': 'XMLHttpRequest',
-                },
-                body: JSON.stringify({
-                    pincode,
-                    product_id: Number(root.dataset.productId || 0),
-                }),
+                credentials: 'same-origin',
+                redirect: 'error',
+                headers,
+                body,
             });
-            const data = await response.json();
-            result.textContent = data.available
-                ? `✓ ${data.message}${data.estimated_delivery ? ` · ${data.estimated_delivery}` : ''}`
-                : `✕ ${data.message || 'Delivery not available'}`;
-            result.classList.add(data.available ? 'is-ok' : 'is-fail');
+            const data = await response.json().catch(() => ({}));
+            const available = Boolean(data.available);
+            const message = data.message || (available ? 'Delivery available' : 'Delivery not available');
+            showResult(
+                available
+                    ? `✓ ${message}${data.estimated_delivery ? ` · ${data.estimated_delivery}` : ''}`
+                    : `✕ ${message}`,
+                available
+            );
         } catch (error) {
-            result.textContent = 'Unable to check delivery right now.';
-            result.classList.add('is-fail');
+            showResult('Unable to check delivery right now. Please try again.', false);
+        } finally {
+            setBusy(false);
         }
+    };
+
+    form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        checkPincode();
     });
 }
 

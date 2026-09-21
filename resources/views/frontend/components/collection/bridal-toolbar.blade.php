@@ -1,12 +1,20 @@
-@props(['filters' => [], 'listingUrl' => null, 'showBridalSets' => true])
+@props([
+    'filters' => [],
+    'listingUrl' => null,
+    'showBridalSets' => true,
+    'formPrefix' => 'bridal',
+    'drawerId' => 'bridalFilterDrawer',
+    'filterCounts' => [],
+])
 
 @php
     $listingUrl = $listingUrl ?? route('collections.bridal');
+    $formId = $formPrefix.'-filter-form';
 @endphp
 
 <div class="bridal-toolbar">
     <div class="bridal-toolbar__mobile d-lg-none">
-        <button type="button" class="bridal-toolbar__chip" data-bridal-drawer-open aria-controls="bridalFilterDrawer" aria-expanded="false">
+        <button type="button" class="bridal-toolbar__chip" data-bridal-drawer-open aria-controls="{{ $drawerId }}" aria-expanded="false">
             <i class="bi bi-sliders" aria-hidden="true"></i>
             Filter
         </button>
@@ -18,8 +26,8 @@
                 @endif
             @endforeach
             <input type="hidden" name="view" value="{{ $filters['view'] ?? 'grid' }}">
-            <label class="visually-hidden" for="bridal-sort-mobile">Sort by</label>
-            <select id="bridal-sort-mobile" name="sort" class="bridal-select" data-auto-submit onchange="this.form.dataset.listingSubmitting='1'; this.form.submit()">
+            <label class="visually-hidden" for="{{ $formPrefix }}-sort-mobile">Sort by</label>
+            <select id="{{ $formPrefix }}-sort-mobile" name="sort" class="bridal-select" data-auto-submit onchange="this.form.dataset.listingSubmitting='1'; this.form.submit()">
                 <option value="featured" @selected(($filters['sort'] ?? '') === 'featured')>Featured</option>
                 <option value="newest" @selected(($filters['sort'] ?? '') === 'newest')>Newest</option>
                 <option value="price_low" @selected(($filters['sort'] ?? '') === 'price_low')>Price: Low to High</option>
@@ -33,11 +41,12 @@
     <div class="bridal-toolbar__desktop d-none d-lg-flex">
         @include('frontend.components.collection.bridal-filter-form', [
             'filters' => $filters,
-            'formId' => 'bridal-filter-form',
+            'formId' => $formId,
             'showSort' => true,
             'compact' => true,
             'listingUrl' => $listingUrl,
             'showBridalSets' => $showBridalSets,
+            'filterCounts' => $filterCounts,
         ])
     </div>
 </div>

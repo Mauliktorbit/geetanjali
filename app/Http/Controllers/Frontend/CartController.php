@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Frontend;
 use App\Http\Controllers\Controller;
 use App\Models\Coupon;
 use App\Services\CartService;
+use App\Services\StorefrontCatalogService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -12,15 +13,26 @@ use Illuminate\View\View;
 
 class CartController extends Controller
 {
-    public function __construct(private readonly CartService $cart) {}
+    public function __construct(
+        private readonly CartService $cart,
+        private readonly StorefrontCatalogService $catalog,
+    ) {}
 
     public function index(): View
     {
         $summary = $this->cart->summary();
         $applied = $summary['coupon'] ?? null;
+        $excludeIds = collect($summary['items'] ?? [])->pluck('id')->map(fn ($id) => (int) $id)->all();
+        $recentlyViewed = $this->catalog->recentlyViewedCards($excludeIds, 4);
+        $recommendExclude = array_values(array_unique(array_merge(
+            $excludeIds,
+            $recentlyViewed->pluck('id')->map(fn ($id) => (int) $id)->all()
+        )));
 
         return view('frontend.cart.index', [
             'cart' => $summary,
+            'recommendedProducts' => $this->catalog->trendingCards($recommendExclude, 8),
+            'recentlyViewed' => $recentlyViewed,
             'availableCoupons' => Coupon::query()
                 ->available()
                 ->latest('id')
@@ -44,7 +56,7 @@ class CartController extends Controller
     {
         $validated = $request->validate([
             'product_id' => ['required', 'integer'],
-            'quantity' => ['required', 'integer', 'min:1', 'max:10'],
+            'quantity' => ['required', 'integer', 'min:1', 'max:'.CartService::MAX_QUANTITY],
             'name' => ['nullable', 'string', 'max:180'],
             'slug' => ['nullable', 'string', 'max:180'],
             'image' => ['nullable', 'string', 'max:255'],
@@ -84,7 +96,7 @@ class CartController extends Controller
     {
         $validated = $request->validate([
             'product_id' => ['required', 'integer'],
-            'quantity' => ['required', 'integer', 'min:1', 'max:10'],
+            'quantity' => ['required', 'integer', 'min:1', 'max:'.CartService::MAX_QUANTITY],
         ]);
 
         $this->cart->update((int) $validated['product_id'], (int) $validated['quantity']);

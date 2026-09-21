@@ -30,6 +30,59 @@ if (! function_exists('setting')) {
     }
 }
 
+if (! function_exists('price_discount_label')) {
+    /**
+     * Discount badge from the same rupee amounts shown on screen.
+     * "N% OFF" is used only when N% of MRP rounds to the sale price.
+     */
+    function price_discount_label(float|int|string|null $price, float|int|string|null $compare): ?string
+    {
+        $price = (int) round((float) $price);
+        $compare = (int) round((float) $compare);
+
+        if ($price <= 0 || $compare <= $price) {
+            return null;
+        }
+
+        $saved = $compare - $price;
+        $raw = ($saved / $compare) * 100;
+
+        $matches = static function (float $percent) use ($compare, $price): bool {
+            if ($percent < 0.01 || $percent > 99.99) {
+                return false;
+            }
+
+            return (int) round($compare * (1 - $percent / 100)) === $price;
+        };
+
+        $whole = (int) round($raw);
+        if ($matches($whole)) {
+            return $whole.'% OFF';
+        }
+
+        foreach ([1, 2] as $decimals) {
+            $candidate = round($raw, $decimals);
+            if ($matches($candidate)) {
+                $label = rtrim(rtrim(number_format($candidate, $decimals, '.', ''), '0'), '.');
+
+                return $label.'% OFF';
+            }
+        }
+
+        return 'Save ₹'.number_format($saved);
+    }
+}
+
+if (! function_exists('review_count_label')) {
+    function review_count_label(mixed $count, bool $parentheses = false): string
+    {
+        $n = max(0, (int) $count);
+        $label = $n.' '.($n === 1 ? 'Review' : 'Reviews');
+
+        return $parentheses ? '('.$label.')' : $label;
+    }
+}
+
 if (! function_exists('storefront_image')) {
     function storefront_image(?string $path, string $fallback = 'public/assets/images/categories/kundan.jpg'): string
     {
@@ -55,7 +108,16 @@ if (! function_exists('storefront_image')) {
             }
         }
 
-        return asset('storage/'.$relative);
+        $relative = ltrim($relative, '/');
+
+        try {
+            $request = request();
+            $base = rtrim(str_replace('\\', '/', (string) $request->getBasePath()), '/');
+
+            return $request->getSchemeAndHttpHost().$base.'/storage/'.$relative;
+        } catch (\Throwable $e) {
+            return asset('storage/'.$relative);
+        }
     }
 }
 

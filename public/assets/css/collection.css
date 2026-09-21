@@ -518,8 +518,8 @@
 
 .kundan-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 14px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1.35rem;
 }
 
 .kundan-grid--list {
@@ -528,45 +528,64 @@
 
 .kundan-grid--list .product-card {
     display: grid;
-    grid-template-columns: 200px 1fr;
+    grid-template-columns: 200px minmax(0, 1fr);
+    grid-template-areas:
+        "media body"
+        "media actions";
     align-items: stretch;
 }
 
 .kundan-grid--list .product-card__media {
+    grid-area: media;
     aspect-ratio: auto;
     min-height: 200px;
 }
 
 .kundan-grid--list .product-card__body {
+    grid-area: body;
     display: flex;
     flex-direction: column;
     justify-content: center;
 }
 
 .kundan-grid--list .product-card__actions {
+    grid-area: actions;
     opacity: 1;
     transform: none;
     pointer-events: auto;
+    margin: 0 1rem 1rem 0;
+    padding: 0;
 }
 
-.kundan-page .product-card {
-    border-radius: 6px;
+.kundan-grid .btn-add-cart,
+.bridal-grid .btn-add-cart,
+.na-grid .btn-add-cart {
+    display: none !important;
 }
 
-.kundan-page .product-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 18px rgba(34, 34, 34, 0.06);
+.kundan-page .product-card,
+.kundan-listing .product-card {
+    border-radius: 8px;
 }
 
-.kundan-page .product-card__media img {
+.kundan-page .product-card:hover,
+.kundan-listing .product-card:hover {
+    transform: translateY(-6px);
+    box-shadow: var(--shadow-card);
+}
+
+.kundan-page .product-card__media img,
+.kundan-listing .product-card__media img {
     transition: transform 0.3s ease;
 }
 
-.kundan-page .product-card:hover .product-card__media img {
-    transform: scale(1.03);
+.kundan-page .product-card:hover .product-card__media img,
+.kundan-listing .product-card:hover .product-card__media img {
+    transform: scale(1.04);
 }
 
-.kundan-page .product-card--oos:hover .product-card__media img {
+.kundan-page .product-card--oos:hover .product-card__media img,
+.kundan-listing .product-card--oos:hover .product-card__media img {
     transform: none;
 }
 
@@ -637,29 +656,35 @@
     color: #666;
 }
 
-.kundan-page .product-card__wishlist {
+.kundan-page .product-card__wishlist,
+.kundan-listing .product-card__wishlist {
     color: #555;
 }
 
 .kundan-page .product-card__wishlist:hover,
-.kundan-page .product-card__wishlist.is-active {
+.kundan-page .product-card__wishlist.is-active,
+.kundan-listing .product-card__wishlist:hover,
+.kundan-listing .product-card__wishlist.is-active {
     color: var(--gold);
 }
 
-.kundan-page .product-card__name {
+.kundan-page .product-card__name,
+.kundan-listing .product-card__name {
     font-size: 20px;
     font-weight: 700;
-    min-height: 2.5em;
+    min-height: 2.4em;
+    margin: 0 0 0.55rem;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
 
-.kundan-page .price-current {
+.kundan-page .price-current,
+.kundan-listing .price-current {
     font-size: 16.5px;
-    font-weight: 700;
-    color: #111;
+    font-weight: 600;
+    color: var(--text-dark);
 }
 
 .kundan-pagination {
@@ -775,42 +800,59 @@
     padding: 0;
 }
 
-/* ----- Service strip ----- */
+/* ----- Service strip (matches New Arrivals) ----- */
 .kundan-services {
-    background: var(--ivory);
-    padding: 2.25rem 0;
+    background: #f8f5ed;
+    padding: 1.75rem 0;
+    margin-top: 0.5rem;
 }
 
 .kundan-services__grid {
     display: grid;
     grid-template-columns: repeat(6, 1fr);
-    gap: 1rem;
+    gap: 0.75rem;
 }
 
 .kundan-services__item {
-    text-align: center;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.55rem;
+    padding: 0.35rem 0.5rem;
+    position: relative;
+    text-align: left;
+}
+
+.kundan-services__item:not(:last-child)::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    top: 10%;
+    bottom: 10%;
+    width: 1px;
+    background: #eeeae1;
 }
 
 .kundan-services__item i {
-    font-size: 1.45rem;
+    font-size: 1.35rem;
     color: var(--gold);
+    flex-shrink: 0;
     display: block;
-    margin-bottom: 0.55rem;
+    margin: 0.1rem 0 0;
 }
 
 .kundan-services__item h3 {
-    margin: 0 0 0.2rem;
+    margin: 0;
     font-family: var(--font-body);
     font-size: 12.5px;
     font-weight: 600;
-    color: #16352d;
+    color: #333;
 }
 
 .kundan-services__item p {
-    margin: 0;
-    font-size: 11px;
-    color: #666;
-    line-height: 1.4;
+    margin: 0.1rem 0 0;
+    font-size: 10.5px;
+    color: #555;
+    line-height: 1.35;
 }
 
 /* ----- Why Kundan ----- */
@@ -882,7 +924,8 @@ body:has(.kundan-page) .newsletter {
     }
 
     .kundan-grid {
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1.35rem;
     }
 
     .kundan-grid--list {
@@ -895,7 +938,11 @@ body:has(.kundan-page) .newsletter {
 
     .kundan-services__grid {
         grid-template-columns: repeat(3, 1fr);
-        row-gap: 1.5rem;
+        row-gap: 1.1rem;
+    }
+
+    .kundan-services__item:nth-child(3n)::after {
+        display: none;
     }
 }
 
@@ -907,6 +954,11 @@ body:has(.kundan-page) .newsletter {
 
     .kundan-listing__layout {
         grid-template-columns: 1fr;
+    }
+
+    .kundan-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1.35rem;
     }
 
     .kundan-cat-nav__list {
@@ -992,22 +1044,26 @@ body:has(.kundan-page) .newsletter {
         gap: 1rem;
     }
 
-    .kundan-page .product-card__name {
+    .kundan-page .product-card__name,
+    .kundan-listing .product-card__name {
         font-size: 18px;
         font-weight: 700;
     }
 
-    .kundan-page .price-current {
+    .kundan-page .price-current,
+    .kundan-listing .price-current {
         font-size: 15.5px;
         font-weight: 700;
     }
 
-    .kundan-page .btn-add-cart {
+    .kundan-page .btn-add-cart,
+    .kundan-listing .btn-add-cart {
         width: 32px;
         height: 32px;
     }
 
-    .kundan-page .product-card__wishlist {
+    .kundan-page .product-card__wishlist,
+    .kundan-listing .product-card__wishlist {
         width: 30px;
         height: 30px;
         top: 8px;
@@ -1016,6 +1072,10 @@ body:has(.kundan-page) .newsletter {
 
     .kundan-services__grid {
         grid-template-columns: repeat(2, 1fr);
+    }
+
+    .kundan-services__item::after {
+        display: none;
     }
 
     .kundan-why__grid {

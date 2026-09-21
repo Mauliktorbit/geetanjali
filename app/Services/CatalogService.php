@@ -32,12 +32,23 @@ class CatalogService
      */
     public function present(int $id, ?array $snapshot = null): ?array
     {
+        $product = Product::query()
+            ->with('category')
+            ->whereKey($id)
+            ->where('is_active', true)
+            ->where('is_archived', false)
+            ->first();
+
+        if ($product) {
+            return $this->fromProduct($product);
+        }
+
         $fromSnap = $this->normalizeSnapshot($id, $snapshot);
         if ($fromSnap) {
             return $fromSnap;
         }
 
-        return $this->find($id);
+        return $this->demo()->firstWhere('id', $id);
     }
 
     /**
@@ -70,9 +81,7 @@ class CatalogService
     {
         $price = (float) $product->effective_price;
         $compare = (float) $product->regular_price;
-        $discount = ($compare > $price && $compare > 0)
-            ? (int) round((1 - ($price / $compare)) * 100).'% OFF'
-            : null;
+        $discount = price_discount_label($price, $compare);
 
         $image = $product->main_image ?: 'public/assets/images/categories/rings.jpg';
         $weight = $product->weight ? rtrim(rtrim(number_format((float) $product->weight, 3, '.', ''), '0'), '.').' g' : null;
@@ -99,16 +108,16 @@ class CatalogService
         $url = fn (string $slug) => route('products.show', $slug);
 
         return collect([
-            $this->demoItem(1, 'Gold Floral Pendant Set', 'gold-floral-pendant-set', 'public/assets/images/products/gold-floral-pendant.jpg', 48750, 54200, '10% OFF', '22KT Gold', '18.250 g', $url('kundan-emerald-drop-earrings')),
-            $this->demoItem(2, 'Kundan Jhumka Earrings', 'kundan-jhumka-earrings', 'public/assets/images/products/gold-drop-earrings.jpg', 62400, 69500, '10% OFF', '22KT Gold', '22.100 g', $url('kundan-emerald-drop-earrings')),
-            $this->demoItem(3, 'Diamond Solitaire Ring', 'diamond-solitaire-ring', 'public/assets/images/categories/rings.jpg', 98500, 109000, '10% OFF', '18KT Gold', 'Diamond: 0.50 CT', $url('kundan-emerald-drop-earrings')),
-            $this->demoItem(4, 'Classic Gold Bangles', 'classic-gold-bangles', 'public/assets/images/products/classic-gold-bangle.jpg', 158900, 175000, '9% OFF', '22KT Gold', '36.500 g', $url('kundan-emerald-drop-earrings')),
-            $this->demoItem(5, 'Traditional Gold Necklace', 'traditional-gold-necklace', 'public/assets/images/products/traditional-gold-necklace.jpg', 215000, 238000, '10% OFF', '22KT Gold', '42.800 g', $url('kundan-emerald-drop-earrings')),
-            $this->demoItem(6, 'Emerald Drop Earrings', 'emerald-drop-earrings', 'public/assets/images/categories/earrings.jpg', 36800, 42000, '12% OFF', '18KT Gold', '12.400 g', $url('kundan-emerald-drop-earrings')),
-            $this->demoItem(7, 'Pearl Choker Set', 'pearl-choker-set', 'public/assets/images/categories/necklaces.jpg', 72500, 85000, '15% OFF', '22KT Gold', '28.750 g', $url('kundan-emerald-drop-earrings')),
-            $this->demoItem(8, 'Antique Gold Ring', 'antique-gold-ring', 'public/assets/images/categories/diamond.jpg', 28900, 32500, '11% OFF', '22KT Gold', '6.200 g', $url('kundan-emerald-drop-earrings')),
-            $this->demoItem(9, 'Temple Jewellery Set', 'temple-jewellery-set', 'public/assets/images/categories/bridal.jpg', 185000, 210000, '12% OFF', '22KT Gold', '58.300 g', $url('kundan-emerald-drop-earrings')),
-            $this->demoItem(10, 'Rose Gold Bracelet', 'rose-gold-bracelet', 'public/assets/images/categories/bangles.jpg', 45600, 52000, '12% OFF', '18KT Rose Gold', '14.800 g', $url('kundan-emerald-drop-earrings')),
+            $this->demoItem(1, 'Gold Floral Pendant Set', 'gold-floral-pendant-set', 'public/assets/images/products/gold-floral-pendant.jpg', 48750, 54200, '22KT Gold', '18.250 g', $url('kundan-emerald-drop-earrings')),
+            $this->demoItem(2, 'Kundan Jhumka Earrings', 'kundan-jhumka-earrings', 'public/assets/images/products/gold-drop-earrings.jpg', 62400, 69500, '22KT Gold', '22.100 g', $url('kundan-emerald-drop-earrings')),
+            $this->demoItem(3, 'Diamond Solitaire Ring', 'diamond-solitaire-ring', 'public/assets/images/categories/rings.jpg', 98500, 109000, '18KT Gold', 'Diamond: 0.50 CT', $url('kundan-emerald-drop-earrings')),
+            $this->demoItem(4, 'Classic Gold Bangles', 'classic-gold-bangles', 'public/assets/images/products/classic-gold-bangle.jpg', 158900, 175000, '22KT Gold', '36.500 g', $url('kundan-emerald-drop-earrings')),
+            $this->demoItem(5, 'Traditional Gold Necklace', 'traditional-gold-necklace', 'public/assets/images/products/traditional-gold-necklace.jpg', 215000, 238000, '22KT Gold', '42.800 g', $url('kundan-emerald-drop-earrings')),
+            $this->demoItem(6, 'Emerald Drop Earrings', 'emerald-drop-earrings', 'public/assets/images/categories/earrings.jpg', 36800, 42000, '18KT Gold', '12.400 g', $url('kundan-emerald-drop-earrings')),
+            $this->demoItem(7, 'Pearl Choker Set', 'pearl-choker-set', 'public/assets/images/categories/necklaces.jpg', 72500, 85000, '22KT Gold', '28.750 g', $url('kundan-emerald-drop-earrings')),
+            $this->demoItem(8, 'Antique Gold Ring', 'antique-gold-ring', 'public/assets/images/categories/diamond.jpg', 28900, 32500, '22KT Gold', '6.200 g', $url('kundan-emerald-drop-earrings')),
+            $this->demoItem(9, 'Temple Jewellery Set', 'temple-jewellery-set', 'public/assets/images/categories/bridal.jpg', 185000, 210000, '22KT Gold', '58.300 g', $url('kundan-emerald-drop-earrings')),
+            $this->demoItem(10, 'Rose Gold Bracelet', 'rose-gold-bracelet', 'public/assets/images/categories/bangles.jpg', 45600, 52000, '18KT Rose Gold', '14.800 g', $url('kundan-emerald-drop-earrings')),
         ]);
     }
 
@@ -122,7 +131,6 @@ class CatalogService
         string $image,
         float $price,
         float $compare,
-        string $discount,
         string $metal,
         string $weight,
         string $url,
@@ -134,7 +142,7 @@ class CatalogService
             'image' => $image,
             'price' => $price,
             'compare_at_price' => $compare,
-            'discount_label' => $discount,
+            'discount_label' => price_discount_label($price, $compare),
             'metal' => $metal,
             'weight' => $weight,
             'url' => $url,
@@ -168,7 +176,7 @@ class CatalogService
             'image' => $snapshot['image'] ?: 'public/assets/images/categories/rings.jpg',
             'price' => $price,
             'compare_at_price' => $compare && $compare > $price ? $compare : null,
-            'discount_label' => $snapshot['discount_label'] ?? null,
+            'discount_label' => price_discount_label($price, $compare ?? 0),
             'metal' => $snapshot['metal'] ?? null,
             'weight' => $snapshot['weight'] ?? null,
             'url' => $snapshot['url'] ?: route('products.show', $snapshot['slug'] ?? 'kundan-emerald-drop-earrings'),

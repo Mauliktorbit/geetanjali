@@ -49,7 +49,9 @@ class ProductController extends AdminController
     public function store(ProductRequest $request)
     {
         $data = $this->prepareProductData($request);
+        $quantity = (int) ($data['quantity'] ?? 0);
         $product = $this->service->create($data);
+        $this->inventoryService->setProductAvailableStock($product->id, $quantity);
 
         return $this->success('Product created successfully.', 'admin.products.show', [$product]);
     }
@@ -68,7 +70,7 @@ class ProductController extends AdminController
 
     public function edit(Product $product)
     {
-        $product->load(['tags', 'variants.attributeValues', 'relatedProducts', 'frequentlyBoughtTogether', 'collections']);
+        $product->load(['tags', 'variants.attributeValues', 'relatedProducts', 'frequentlyBoughtTogether', 'collections', 'inventories']);
 
         $data = $this->formData();
         if ($product->category_id && ! $data['categories']->contains('id', $product->category_id)) {
@@ -82,7 +84,9 @@ class ProductController extends AdminController
     public function update(ProductRequest $request, Product $product)
     {
         $data = $this->prepareProductData($request, $product);
+        $quantity = (int) ($data['quantity'] ?? 0);
         $this->service->update($product, $data);
+        $this->inventoryService->setProductAvailableStock($product->id, $quantity);
 
         return $this->success('Product updated successfully.', 'admin.products.show', [$product]);
     }
@@ -246,21 +250,42 @@ class ProductController extends AdminController
                 Storage::disk('public')->delete($product->main_image);
             }
             $data['main_image'] = $request->file('main_image')->store('uploads/products', 'public');
+        } elseif (! empty($data['remove_main_image'])) {
+            if ($product?->main_image) {
+                Storage::disk('public')->delete($product->main_image);
+            }
+            $data['main_image'] = null;
         } else {
             unset($data['main_image']);
         }
 
+        $gallery = array_values(array_filter(
+            ! empty($data['gallery_sync'])
+                ? (array) ($data['keep_gallery'] ?? [])
+                : ($product?->gallery_images ?? [])
+        ));
+
         if ($request->hasFile('gallery_images')) {
-            $gallery = array_values(array_filter($product?->gallery_images ?? []));
             foreach ((array) $request->file('gallery_images') as $file) {
                 if ($file && $file->isValid()) {
                     $gallery[] = $file->store('uploads/products/gallery', 'public');
                 }
             }
-            $data['gallery_images'] = $gallery;
-        } else {
-            unset($data['gallery_images']);
         }
+
+        if ($product) {
+            foreach (array_diff($product->gallery_images ?? [], $gallery) as $removed) {
+                Storage::disk('public')->delete($removed);
+            }
+        }
+
+        $data['gallery_images'] = array_values(array_unique($gallery));
+        unset($data['keep_gallery'], $data['remove_main_image'], $data['gallery_sync']);
+
+        $data['sold_count'] = max(0, (int) ($data['sold_count'] ?? 0));
+        $data['care_instructions'] = filled($data['care_instructions'] ?? null) ? trim((string) $data['care_instructions']) : null;
+        $data['shipping_information'] = filled($data['shipping_information'] ?? null) ? trim((string) $data['shipping_information']) : null;
+        $data['return_policy'] = filled($data['return_policy'] ?? null) ? trim((string) $data['return_policy']) : null;
 
         return $data;
     }

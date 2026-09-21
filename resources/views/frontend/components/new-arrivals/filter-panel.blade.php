@@ -8,11 +8,7 @@
     $categories = ! empty($categoryOptions)
         ? $categoryOptions
         : \App\Services\StorefrontCatalogService::jewelleryTypeOptions();
-    $metals = [
-        '18k' => '18K Gold',
-        '22k' => '22K Gold',
-        '24k' => '24K Gold',
-    ];
+    $metals = \App\Services\StorefrontCatalogService::METAL_LABELS;
     $stones = [
         'diamond' => 'Diamond',
         'emerald' => 'Emerald',
@@ -49,7 +45,7 @@
     </fieldset>
 
     <fieldset class="na-filter-group">
-        <legend>Metal</legend>
+        <legend>Finish</legend>
         @foreach ($metals as $key => $label)
             <label class="na-check">
                 <input type="checkbox" name="metal[]" value="{{ $key }}" @checked(in_array($key, $filters['metal'] ?? [], true))>

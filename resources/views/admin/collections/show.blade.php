@@ -43,12 +43,28 @@
                 <span class="value">{{ $item->name }}</span>
             </div>
             <div class="detail-item">
+                <span class="label">URL slug</span>
+                <span class="value">{{ $item->slug }}</span>
+            </div>
+            <div class="detail-item">
                 <span class="label">Status</span>
                 <span class="value">@include('admin.components.status-badge', ['status' => $item->is_active ? 'active' : 'inactive', 'label' => $item->is_active ? 'Active' : 'Inactive'])</span>
             </div>
             <div class="detail-item">
+                <span class="label">Display order</span>
+                <span class="value">{{ $item->sort_order }}</span>
+            </div>
+            <div class="detail-item">
                 <span class="label">Details</span>
                 <span class="value">{{ $item->description ?: '—' }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="label">SEO title</span>
+                <span class="value">{{ $item->seo_title ?: '—' }}</span>
+            </div>
+            <div class="detail-item">
+                <span class="label">SEO description</span>
+                <span class="value">{{ $item->seo_description ?: '—' }}</span>
             </div>
             <div class="detail-item">
                 <span class="label">Products</span>

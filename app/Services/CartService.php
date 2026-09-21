@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Session;
 
 class CartService
 {
+    public const MAX_QUANTITY = 10;
+
     private const SESSION_KEY = 'cart';
 
     private const COUPON_KEY = 'cart_coupon';
@@ -71,7 +73,7 @@ class CartService
                 return null;
             }
 
-            $qty = max(1, (int) ($row['quantity'] ?? 1));
+            $qty = max(1, min(self::MAX_QUANTITY, (int) ($row['quantity'] ?? 1)));
             $price = (float) $product['price'];
 
             return array_merge($product, [
@@ -98,7 +100,7 @@ class CartService
             return false;
         }
 
-        $qty = max(1, min(10, $quantity, $available));
+        $qty = max(1, min(self::MAX_QUANTITY, $quantity, $available));
         $customer = $this->customer(true);
 
         if ($customer) {
@@ -106,7 +108,7 @@ class CartService
                 'customer_id' => $customer->id,
                 'product_id' => $productId,
             ]);
-            $item->quantity = min(10, $available, (int) $item->quantity + $qty);
+            $item->quantity = min(self::MAX_QUANTITY, $available, (int) $item->quantity + $qty);
             $item->payload = $product;
             $item->save();
             $this->forgetSessionCart();
@@ -117,7 +119,7 @@ class CartService
         $cart = $this->sessionMap();
         $key = (string) $productId;
         if (isset($cart[$key])) {
-            $cart[$key]['quantity'] = min(10, $available, ((int) $cart[$key]['quantity']) + $qty);
+            $cart[$key]['quantity'] = min(self::MAX_QUANTITY, $available, ((int) $cart[$key]['quantity']) + $qty);
         } else {
             $cart[$key] = array_merge($product, ['quantity' => $qty]);
         }
@@ -147,7 +149,7 @@ class CartService
                 if ($available <= 0) {
                     $item->delete();
                 } else {
-                    $item->quantity = min(10, $quantity, $available);
+                    $item->quantity = min(self::MAX_QUANTITY, $quantity, $available);
                     $item->save();
                 }
             }
@@ -167,7 +169,7 @@ class CartService
             if ($available <= 0) {
                 unset($cart[$key]);
             } else {
-                $cart[$key]['quantity'] = min(10, $quantity, $available);
+                $cart[$key]['quantity'] = min(self::MAX_QUANTITY, $quantity, $available);
             }
         }
         Session::put(self::SESSION_KEY, $cart);

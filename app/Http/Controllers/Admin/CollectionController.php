@@ -113,18 +113,25 @@ class CollectionController extends AdminController
     }
 
     /**
-     * @return array{name: string, description?: string|null, image?: string, is_active: bool}
+     * @return array<string, mixed>
      */
     private function payload(CollectionRequest $request, ?Collection $collection = null): array
     {
         $data = $request->validated();
         $data['is_active'] = $request->boolean('is_active');
+        $data['remove_image'] = $request->boolean('remove_image');
 
         if ($request->hasFile('image')) {
             if ($collection?->image) {
                 Storage::disk('public')->delete($collection->image);
             }
             $data['image'] = $request->file('image')->store('uploads/collections', 'public');
+            $data['remove_image'] = false;
+        } elseif ($data['remove_image']) {
+            if ($collection?->image) {
+                Storage::disk('public')->delete($collection->image);
+            }
+            $data['image'] = null;
         } else {
             unset($data['image']);
         }

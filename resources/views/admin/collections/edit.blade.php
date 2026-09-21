@@ -10,13 +10,13 @@
 </div>
 @include('admin.components.alerts')
 <div class="card product-form-card">
-    <form method="POST" action="{{ route('admin.collections.update', $item) }}" enctype="multipart/form-data">
+    <form method="POST" action="{{ route('admin.collections.update', $item) }}" enctype="multipart/form-data" data-unsaved-guard>
         @csrf
         @method('PUT')
         @include('admin.collections._form')
         <div class="form-actions">
             <button class="btn btn-primary" type="submit">Update</button>
-            <a href="{{ route('admin.collections.index') }}" class="btn btn-ghost">Cancel</a>
+            <a href="{{ route('admin.collections.index') }}" class="btn btn-ghost" data-unsaved-cancel>Cancel</a>
         </div>
     </form>
 </div>

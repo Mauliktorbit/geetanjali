@@ -151,6 +151,83 @@
 <script src="{{ asset('js/input-masks.js') }}?v={{ filemtime(public_path('js/input-masks.js')) }}"></script>
 <script src="{{ asset('js/input-filled.js') }}?v={{ filemtime(public_path('js/input-filled.js')) }}"></script>
 <script src="{{ asset('js/password-toggle.js') }}?v={{ filemtime(public_path('js/password-toggle.js')) }}"></script>
+<script src="{{ asset('js/admin-image-preview.js') }}?v={{ filemtime(public_path('js/admin-image-preview.js')) }}"></script>
+<script>
+(function () {
+  function isImage(file) {
+    if (!file) return false;
+    if (file.type && file.type.indexOf('image/') === 0) return true;
+    return /\.(jpe?g|png|webp|gif|bmp|svg)$/i.test(file.name || '');
+  }
+
+  function paint(box, src) {
+    if (!box || !src) return;
+    var img = box.querySelector('[data-preview-image]') || box.querySelector('img.category-form__photo');
+    var ph = box.querySelector('[data-preview-placeholder], .category-form__placeholder');
+    if (!img) {
+      img = document.createElement('img');
+      img.className = 'category-form__photo';
+      img.setAttribute('data-preview-image', '1');
+      box.insertBefore(img, ph || box.firstChild);
+    }
+    img.onload = function () {
+      box.classList.add('is-previewing');
+      img.style.setProperty('display', 'block', 'important');
+      if (ph) ph.style.setProperty('display', 'none', 'important');
+    };
+    img.removeAttribute('hidden');
+    img.style.setProperty('display', 'block', 'important');
+    img.src = src;
+    box.classList.add('is-previewing');
+    if (ph) ph.style.setProperty('display', 'none', 'important');
+    var label = box.querySelector('.label');
+    if (label) label.textContent = 'Image preview';
+  }
+
+  function readFile(file, box) {
+    if (!isImage(file) || !box) return;
+    var reader = new FileReader();
+    reader.onload = function (e) { paint(box, e.target.result); };
+    reader.readAsDataURL(file);
+  }
+
+  function boxFor(input) {
+    var sel = input.getAttribute('data-preview-target');
+    if (sel) return document.querySelector(sel);
+    return (input.form || document).querySelector('[data-image-preview]');
+  }
+
+  function run(input) {
+    if (!input || input.type !== 'file' || input.hasAttribute('data-no-preview')) return;
+    var file = input.files && input.files[0];
+    if (!file) return;
+    if (input.hasAttribute('data-gallery-input')) {
+      var gal = document.querySelector('[data-gallery-previews]');
+      if (!gal) return;
+      gal.querySelectorAll('[data-gallery-item="pending"]').forEach(function (n) { n.remove(); });
+      Array.prototype.forEach.call(input.files, function (f) {
+        if (!isImage(f)) return;
+        var wrap = document.createElement('div');
+        wrap.className = 'gallery-preview-item';
+        wrap.setAttribute('data-gallery-item', 'pending');
+        var img = document.createElement('img');
+        wrap.appendChild(img);
+        gal.appendChild(wrap);
+        var r = new FileReader();
+        r.onload = function (e) { img.src = e.target.result; };
+        r.readAsDataURL(f);
+      });
+      return;
+    }
+    readFile(file, boxFor(input));
+  }
+
+  window.previewAdminImage = run;
+  document.addEventListener('change', function (e) {
+    if (e.target && e.target.matches && e.target.matches('input[type="file"]')) run(e.target);
+  }, true);
+})();
+</script>
 <script src="{{ asset('js/admin.js') }}?v={{ filemtime(public_path('js/admin.js')) }}"></script>
 @stack('scripts')
 </body>

@@ -18,14 +18,19 @@ class NewArrivalsController extends Controller
     {
         abort_unless(StorefrontCatalogService::isActiveSlug('new-arrivals'), 404);
 
-        $filters = $this->normalizeFilters($request);
-        $paginator = $this->catalog->paginateCollection('new-arrivals', $this->catalog->filtersFromNewArrivals($filters));
+        $filters = $this->catalog->normalizeListingFilters($request);
+        if (! $request->filled('sort')) {
+            $filters['sort'] = 'newest';
+        }
+
+        $paginator = $this->catalog->paginateCollection('new-arrivals', $this->catalog->filtersFromBridal($filters));
         $products = $paginator->through(fn ($product) => $this->catalog->toCard($product));
 
         return view('frontend.products.new-arrivals', [
             'products' => $products,
             'filters' => $filters,
-            'categoryOptions' => StorefrontCatalogService::jewelleryTypeOptions(),
+            'filterCounts' => $this->catalog->filterCounts('new-arrivals'),
+            'listingUrl' => route('products.new-arrivals'),
             'viewMode' => $filters['view'],
             'services' => $this->services(),
             'breadcrumb' => [
@@ -39,57 +44,6 @@ class NewArrivalsController extends Controller
                 'image_alt' => 'Latest gold and kundan jewellery arrivals',
             ],
         ]);
-    }
-
-    /**
-     * @return array{
-     *     category: list<string>,
-     *     metal: list<string>,
-     *     stone: list<string>,
-     *     occasion: list<string>,
-     *     min_price: int|null,
-     *     max_price: int|null,
-     *     sort: string,
-     *     view: string
-     * }
-     */
-    private function normalizeFilters(Request $request): array
-    {
-        $allowedCategories = array_values(array_unique(array_merge(
-            StorefrontCatalogService::jewelleryTypeSlugs(),
-            ['mangalsutra', 'bridal', 'kundan', 'diamond']
-        )));
-        $allowedMetals = ['18k', '22k', '24k'];
-        $allowedStones = ['diamond', 'emerald', 'ruby', 'kundan', 'pearl'];
-        $allowedOccasions = ['wedding', 'engagement', 'festival', 'daily-wear'];
-        $allowedSorts = ['newest', 'price_low', 'price_high', 'popularity', 'rating', 'name_asc', 'name_desc'];
-        $allowedViews = ['grid', 'list'];
-
-        $category = array_values(array_intersect((array) $request->input('category', []), $allowedCategories));
-        $metal = array_values(array_intersect((array) $request->input('metal', []), $allowedMetals));
-        $stone = array_values(array_intersect((array) $request->input('stone', []), $allowedStones));
-        $occasion = array_values(array_intersect((array) $request->input('occasion', []), $allowedOccasions));
-
-        $min = $request->filled('min_price') ? max(0, (int) $request->input('min_price')) : null;
-        $max = $request->filled('max_price') ? max(0, (int) $request->input('max_price')) : null;
-
-        if ($min !== null && $max !== null && $min > $max) {
-            [$min, $max] = [$max, $min];
-        }
-
-        $sort = (string) $request->input('sort', 'newest');
-        $view = (string) $request->input('view', 'grid');
-
-        return [
-            'category' => $category,
-            'metal' => $metal,
-            'stone' => $stone,
-            'occasion' => $occasion,
-            'min_price' => $min,
-            'max_price' => $max,
-            'sort' => in_array($sort, $allowedSorts, true) ? $sort : 'newest',
-            'view' => in_array($view, $allowedViews, true) ? $view : 'grid',
-        ];
     }
 
     /**

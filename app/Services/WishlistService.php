@@ -5,8 +5,10 @@ namespace App\Services;
 use App\Models\Customer;
 use App\Models\User;
 use App\Models\Wishlist;
+use App\Models\WishlistShare;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Str;
 
 class WishlistService
 {
@@ -35,17 +37,7 @@ class WishlistService
         $customer = $this->customer();
         $raw = $customer ? $this->databaseRows($customer) : $this->sessionMap();
 
-        $items = [];
-        foreach ($raw as $row) {
-            $id = (int) (is_array($row) ? ($row['id'] ?? $row['product_id'] ?? 0) : 0);
-            $snapshot = is_array($row) ? ($row['payload'] ?? $row) : null;
-            $product = $this->catalog->present($id, is_array($snapshot) ? $snapshot : null);
-            if ($product) {
-                $items[] = $product;
-            }
-        }
-
-        return array_values($items);
+        return $this->presentRows($raw);
     }
 
     public function count(): int
@@ -224,9 +216,111 @@ class WishlistService
     /**
      * @return Collection<int, array<string, mixed>>
      */
+    /**
+     * @return array{token: string, url: string}|null
+     */
+    public function createShare(): ?array
+    {
+        $items = $this->items();
+        if ($items === []) {
+            return null;
+        }
+
+        $productIds = array_values(array_filter(array_map(
+            fn (array $item) => (int) ($item['id'] ?? 0),
+            $items
+        )));
+
+        $customer = $this->customer();
+        $sessionId = Session::getId();
+        $share = $customer
+            ? WishlistShare::query()->firstOrNew(['customer_id' => $customer->id])
+            : WishlistShare::query()->firstOrNew(['session_id' => $sessionId, 'customer_id' => null]);
+
+        if (! $share->exists || blank($share->token)) {
+            $share->token = Str::lower(Str::random(40));
+        }
+
+        $share->session_id = $customer ? null : $sessionId;
+        $share->owner_name = $customer?->name ?: 'A Geetanjali customer';
+        $share->product_ids = $productIds;
+        $share->save();
+
+        return [
+            'token' => $share->token,
+            'url' => route('wishlist.shared', $share->token),
+        ];
+    }
+
+    /**
+     * @return array{owner: string, items: list<array<string, mixed>>, count: int}|null
+     */
+    public function sharedSummary(string $token): ?array
+    {
+        $token = trim($token);
+        if ($token === '' || strlen($token) < 16) {
+            return null;
+        }
+
+        $share = WishlistShare::query()
+            ->with('customer')
+            ->where('token', $token)
+            ->first();
+
+        if (! $share) {
+            return null;
+        }
+
+        $items = $share->customer
+            ? $this->presentRows($this->databaseRows($share->customer))
+            : $this->itemsByProductIds((array) ($share->product_ids ?? []));
+
+        return [
+            'owner' => $share->owner_name ?: ($share->customer?->name ?: 'A Geetanjali customer'),
+            'items' => $items,
+            'count' => count($items),
+        ];
+    }
+
     public function catalog(): Collection
     {
         return $this->catalog->demo();
+    }
+
+    /**
+     * @param  list<int|string>  $productIds
+     * @return list<array<string, mixed>>
+     */
+    private function itemsByProductIds(array $productIds): array
+    {
+        $items = [];
+        foreach ($productIds as $id) {
+            $product = $this->catalog->present((int) $id);
+            if ($product) {
+                $items[] = $product;
+            }
+        }
+
+        return array_values($items);
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $raw
+     * @return list<array<string, mixed>>
+     */
+    private function presentRows(array $raw): array
+    {
+        $items = [];
+        foreach ($raw as $row) {
+            $id = (int) (is_array($row) ? ($row['id'] ?? $row['product_id'] ?? 0) : 0);
+            $snapshot = is_array($row) ? ($row['payload'] ?? $row) : null;
+            $product = $this->catalog->present($id, is_array($snapshot) ? $snapshot : null);
+            if ($product) {
+                $items[] = $product;
+            }
+        }
+
+        return array_values($items);
     }
 
     private function customer(bool $create = false): ?Customer

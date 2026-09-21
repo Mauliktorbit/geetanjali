@@ -27,7 +27,7 @@ class ProductService extends BaseService
             $fbt = $data['frequently_bought_together'] ?? [];
             $collections = $data['collections'] ?? [];
             $attributeMatrix = $data['attribute_matrix'] ?? [];
-            unset($data['variants'], $data['tags'], $data['related_products'], $data['frequently_bought_together'], $data['attribute_matrix'], $data['collections'], $data['highlights_text']);
+            unset($data['variants'], $data['tags'], $data['related_products'], $data['frequently_bought_together'], $data['attribute_matrix'], $data['collections'], $data['highlights_text'], $data['quantity'], $data['stock_status'], $data['keep_gallery'], $data['remove_main_image'], $data['gallery_sync']);
 
             $data['slug'] = $this->uniqueSlug($data['slug'] ?? $data['name']);
             $data['sku'] = $data['sku'] ?? $this->generateSku($data['name']);
@@ -67,7 +67,7 @@ class ProductService extends BaseService
             $related = $data['related_products'] ?? null;
             $fbt = $data['frequently_bought_together'] ?? null;
             $collections = $data['collections'] ?? null;
-            unset($data['variants'], $data['tags'], $data['related_products'], $data['frequently_bought_together'], $data['attribute_matrix'], $data['collections'], $data['highlights_text']);
+            unset($data['variants'], $data['tags'], $data['related_products'], $data['frequently_bought_together'], $data['attribute_matrix'], $data['collections'], $data['highlights_text'], $data['quantity'], $data['stock_status'], $data['keep_gallery'], $data['remove_main_image'], $data['gallery_sync']);
 
             if (! empty($data['name']) && empty($data['slug'])) {
                 $data['slug'] = $this->uniqueSlug($data['name'], $product->id);

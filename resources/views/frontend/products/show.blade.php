@@ -16,6 +16,8 @@
         data-product-metal="{{ $product->metal ?? '' }}"
         data-product-weight="{{ $product->weight ?? '' }}"
         data-stock="{{ $product->stock }}"
+        data-qty-min="{{ max(1, (int) ($product->qty_min ?? 1)) }}"
+        data-qty-max="{{ max(1, (int) ($product->qty_max ?? $product->stock ?? 1)) }}"
         @if (($product->stock_status ?? '') === 'out_of_stock' || (int) $product->stock <= 0) data-out-of-stock="1" @endif
         data-cart-url="{{ route('cart.add') }}"
         data-checkout-url="{{ route('checkout.index') }}"
@@ -29,7 +31,20 @@
             </div>
 
             @include('frontend.components.product.tabs', ['product' => $product])
-            @include('frontend.components.product.related', ['products' => $relatedProducts])
+            @include('frontend.components.product.related', [
+                'products' => $relatedProducts,
+                'title' => $product->category ? 'Similar '.$product->category : 'You May Also Like',
+                'viewAllUrl' => $product->similar_url ?? route('products.new-arrivals'),
+            ])
+            @include('frontend.components.product.related', [
+                'products' => $recentlyViewed ?? [],
+                'title' => 'Recently Viewed',
+            ])
+            @include('frontend.components.product.related', [
+                'products' => $trendingProducts ?? [],
+                'title' => $product->category ? 'More '.$product->category : 'More like this',
+                'viewAllUrl' => $product->similar_url ?? route('products.new-arrivals'),
+            ])
         </div>
 
         @include('frontend.components.product.service-strip')

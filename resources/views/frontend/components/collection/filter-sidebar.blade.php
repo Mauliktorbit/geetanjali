@@ -4,14 +4,12 @@
     'minPriceBound' => 2000,
     'maxPriceBound' => 500000,
     'formId' => 'kundan-filter-form',
+    'actionUrl' => null,
 ])
 
 @php
     $typeOptions = $typeOptions ?? \App\Services\StorefrontCatalogService::jewelleryTypeOptions();
-    $metalOptions = [
-        '22k' => '22K Yellow Gold',
-        '18k' => '18K Gold',
-    ];
+    $metalOptions = \App\Services\StorefrontCatalogService::METAL_LABELS;
     $stoneOptions = [
         'emerald' => 'Emerald',
         'ruby' => 'Ruby',
@@ -25,13 +23,14 @@
     $minPrice = $filters['min_price'] ?? $minPriceBound;
     $maxPrice = $filters['max_price'] ?? $maxPriceBound;
     $sort = $filters['sort'] ?? 'popularity';
+    $actionUrl = $actionUrl ?: route('collections.kundan');
 @endphp
 
 <form
     id="{{ $formId }}"
     class="kundan-filters"
     method="get"
-    action="{{ route('collections.kundan') }}"
+    action="{{ $actionUrl }}"
     data-filter-form
 >
     <input type="hidden" name="sort" value="{{ $sort }}">
@@ -39,7 +38,7 @@
 
     <div class="kundan-filters__head">
         <h3>Filters</h3>
-        <a href="{{ route('collections.kundan') }}" class="kundan-filters__clear">Clear All</a>
+        <a href="{{ $actionUrl }}" class="kundan-filters__clear">Clear All</a>
     </div>
 
     <fieldset class="kundan-filters__group">
@@ -93,7 +92,7 @@
     </fieldset>
 
     <fieldset class="kundan-filters__group">
-        <legend>Metal</legend>
+        <legend>Finish</legend>
         @foreach ($metalOptions as $key => $label)
             <label class="kundan-check">
                 <input

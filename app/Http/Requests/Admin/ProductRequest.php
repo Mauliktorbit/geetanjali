@@ -61,11 +61,20 @@ class ProductRequest extends FormRequest
             'highlights' => ['nullable', 'array'],
             'highlights.*' => ['nullable', 'string', 'max:255'],
             'highlights_text' => ['nullable', 'string'],
-            'sold_count' => ['nullable', 'integer', 'min:0'],
+            'care_instructions' => ['nullable', 'string', 'max:5000'],
+            'sold_count' => ['required', 'integer', 'min:0'],
+            'quantity' => ['required', 'integer', 'min:0'],
+            'stock_status' => ['required', Rule::in(['in_stock', 'out_of_stock'])],
             'collections' => ['required', 'array', 'min:1'],
             'collections.*' => ['integer', Rule::exists('collections', 'id')],
+            'keep_gallery' => ['nullable', 'array'],
+            'keep_gallery.*' => ['nullable', 'string', 'max:500'],
+            'remove_main_image' => ['nullable', 'boolean'],
+            'gallery_sync' => ['nullable', 'boolean'],
             'shipping_class_id' => ['nullable', 'exists:shipping_classes,id'],
             'estimated_delivery' => ['nullable', 'string', 'max:100'],
+            'shipping_information' => ['nullable', 'string', 'max:5000'],
+            'return_policy' => ['nullable', 'string', 'max:5000'],
             'cod_available' => ['nullable', 'boolean'],
             'is_featured' => ['nullable', 'boolean'],
             'is_new_arrival' => ['nullable', 'boolean'],
@@ -109,7 +118,27 @@ class ProductRequest extends FormRequest
             'gallery_images.*.image' => 'Each extra photo must be a JPG, PNG or WebP image.',
             'gallery_images.*.uploaded' => 'An extra photo could not be uploaded. Please use JPG, PNG or WebP files under 10 MB.',
             'gallery_images.*.max' => 'Each extra photo must be 10 MB or smaller.',
+            'sold_count.required' => 'Enter how many pieces have been sold, or 0.',
+            'sold_count.integer' => 'Sold count must be a whole number.',
+            'sold_count.min' => 'Sold count cannot be negative.',
+            'quantity.required' => 'Enter the available quantity, or 0.',
+            'quantity.integer' => 'Quantity must be a whole number.',
+            'quantity.min' => 'Quantity cannot be negative.',
+            'stock_status.required' => 'Choose whether this product is in stock.',
+            'stock_status.in' => 'Choose In Stock or Out of Stock.',
         ];
+    }
+
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            $status = (string) $this->input('stock_status', 'out_of_stock');
+            $quantity = (int) $this->input('quantity', 0);
+
+            if ($status === 'in_stock' && $quantity < 1) {
+                $validator->errors()->add('quantity', 'Enter a quantity of at least 1 for in-stock products, or mark it Out of Stock.');
+            }
+        });
     }
 
     protected function prepareForValidation(): void
@@ -136,6 +165,15 @@ class ProductRequest extends FormRequest
             $collections = filled($collections) ? [$collections] : [];
         }
         $merged['collections'] = array_values(array_filter($collections));
+        $merged['sold_count'] = max(0, (int) $this->input('sold_count', 0));
+        $merged['quantity'] = max(0, (int) $this->input('quantity', 0));
+        $merged['stock_status'] = $this->input('stock_status') === 'in_stock' ? 'in_stock' : 'out_of_stock';
+        $merged['remove_main_image'] = $this->boolean('remove_main_image');
+        $merged['gallery_sync'] = $this->boolean('gallery_sync');
+
+        if ($merged['stock_status'] === 'out_of_stock') {
+            $merged['quantity'] = 0;
+        }
 
         $this->merge($merged);
         $this->dropEmptyUploads('gallery_images');

@@ -3,7 +3,7 @@
 <section class="kundan-hero" aria-labelledby="kundan-hero-heading">
     <div class="kundan-hero__bg" aria-hidden="true">
         <img
-            src="{{ asset($hero['image'] ?? 'public/assets/images/collections/kundan/hero.jpg') }}"
+            src="{{ str_starts_with((string) ($hero['image'] ?? ''), 'http') ? $hero['image'] : asset($hero['image'] ?? 'public/assets/images/collections/kundan/hero.jpg') }}"
             alt="{{ $hero['image_alt'] ?? 'Premium Kundan jewellery on emerald silk' }}"
             width="1600"
             height="900"

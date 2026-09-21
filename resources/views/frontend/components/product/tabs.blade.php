@@ -24,15 +24,19 @@
                     </ul>
                 </div>
 
+                @if (!empty($product->about_points))
                 <aside class="why-card">
-                    <h3>Why Choose Geetanjali Jewellers?</h3>
+                    <h3>About this piece</h3>
                     <ul>
-                        <li><i class="bi bi-award" aria-hidden="true"></i><span>Premium artificial jewellery, quality checked</span></li>
-                        <li><i class="bi bi-stars" aria-hidden="true"></i><span>Exquisite Craftsmanship</span></li>
-                        <li><i class="bi bi-geo-alt" aria-hidden="true"></i><span>Visit our Ahmedabad showroom</span></li>
-                        <li><i class="bi bi-headset" aria-hidden="true"></i><span>Helpful after-sales support</span></li>
+                        @foreach ($product->about_points as $point)
+                            <li>
+                                <i class="bi {{ $point['icon'] ?? 'bi-check-circle' }}" aria-hidden="true"></i>
+                                <span>{{ $point['label'] }}</span>
+                            </li>
+                        @endforeach
                     </ul>
                 </aside>
+                @endif
             </div>
         </div>
 
@@ -41,36 +45,84 @@
                 <tbody>
                     <tr><td>SKU</td><td>{{ $product->sku }}</td></tr>
                     <tr><td>Category</td><td>{{ $product->category }}</td></tr>
-                    <tr><td>Metal</td><td>{{ $product->metal }}</td></tr>
-                    <tr><td>Purity</td><td>{{ $product->purity }}</td></tr>
-                    <tr><td>Stone</td><td>{{ $product->stone }}</td></tr>
-                    <tr><td>Weight</td><td>{{ $product->weight }}</td></tr>
-                    <tr><td>Dimensions</td><td>{{ $product->dimensions }}</td></tr>
-                    <tr><td>Occasion</td><td>{{ $product->occasion }}</td></tr>
-                    <tr><td>Style</td><td>{{ $product->style }}</td></tr>
-                    <tr><td>Certification</td><td>{{ $product->certification }}</td></tr>
+                    @if (filled($product->metal))
+                        <tr><td>Material</td><td>{{ $product->metal }}</td></tr>
+                    @endif
+                    @if (filled($product->stone))
+                        <tr><td>Stone</td><td>{{ $product->stone }}</td></tr>
+                    @endif
+                    @if (filled($product->weight))
+                        <tr><td>Weight</td><td>{{ $product->weight }}</td></tr>
+                    @endif
+                    @if (filled($product->dimensions))
+                        <tr><td>Dimensions</td><td>{{ $product->dimensions }}</td></tr>
+                    @endif
+                    @if (filled($product->occasion))
+                        <tr><td>Occasion</td><td>{{ $product->occasion }}</td></tr>
+                    @endif
+                    @if (filled($product->style))
+                        <tr><td>Style</td><td>{{ $product->style }}</td></tr>
+                    @endif
+                    @if (filled($product->certification))
+                        <tr><td>Quality</td><td>{{ $product->certification }}</td></tr>
+                    @endif
                 </tbody>
             </table>
         </div>
 
         <div class="tab-panel" data-product-panel="shipping" role="tabpanel">
             <ul class="check-list">
-                <li><i class="bi bi-check-circle-fill" aria-hidden="true"></i><span>Shipping charges calculated at checkout</span></li>
-                <li><i class="bi bi-check-circle-fill" aria-hidden="true"></i><span>Estimated delivery in 3–5 business days</span></li>
-                <li><i class="bi bi-check-circle-fill" aria-hidden="true"></i><span>Easy 15-day returns on unused jewellery</span></li>
-                <li><i class="bi bi-check-circle-fill" aria-hidden="true"></i><span>Exchange available as per store policy</span></li>
-                <li><i class="bi bi-check-circle-fill" aria-hidden="true"></i><span>Insured delivery for complete peace of mind</span></li>
-                <li><i class="bi bi-check-circle-fill" aria-hidden="true"></i><span>Premium gift packaging on request</span></li>
+                @php
+                    $shippingItems = $product->shipping_information ?? [];
+                    $returnItems = $product->return_policy ?? [];
+                    if ($shippingItems === [] && $returnItems === []) {
+                        $shippingItems = [
+                            'Shipping charges calculated at checkout',
+                            'Estimated delivery in '.($product->estimated_delivery ?: '3–5 business days'),
+                            'Insured delivery for complete peace of mind',
+                            'Premium gift packaging on request',
+                        ];
+                        $returnItems = [
+                            'Easy 15-day returns on unused jewellery',
+                            'Exchange available as per store policy',
+                        ];
+                    } else {
+                        $hasEta = collect($shippingItems)->contains(
+                            fn ($line) => str_contains(strtolower((string) $line), 'deliver')
+                        );
+                        if (! $hasEta) {
+                            array_unshift(
+                                $shippingItems,
+                                'Estimated delivery in '.($product->estimated_delivery ?: '3–5 business days')
+                            );
+                        }
+                    }
+                @endphp
+                @foreach (array_merge($shippingItems, $returnItems) as $item)
+                    @if (filled($item))
+                        <li><i class="bi bi-check-circle-fill" aria-hidden="true"></i><span>{{ $item }}</span></li>
+                    @endif
+                @endforeach
             </ul>
         </div>
 
         <div class="tab-panel" data-product-panel="care" role="tabpanel">
             <ul class="check-list">
-                <li><i class="bi bi-check-circle-fill" aria-hidden="true"></i><span>Keep away from chemicals, perfumes and sprays</span></li>
-                <li><i class="bi bi-check-circle-fill" aria-hidden="true"></i><span>Store separately in a soft jewellery pouch or box</span></li>
-                <li><i class="bi bi-check-circle-fill" aria-hidden="true"></i><span>Avoid water and moisture exposure</span></li>
-                <li><i class="bi bi-check-circle-fill" aria-hidden="true"></i><span>Wipe gently with a soft dry cloth after use</span></li>
-                <li><i class="bi bi-check-circle-fill" aria-hidden="true"></i><span>Professional cleaning recommended periodically</span></li>
+                @php
+                    $careItems = $product->care_instructions ?? [];
+                    if ($careItems === []) {
+                        $careItems = [
+                            'Keep away from perfumes, sprays and household chemicals',
+                            'Store in a dry pouch, away from other jewellery',
+                            'Avoid water, sweat and prolonged moisture',
+                            'Wipe gently with a soft dry cloth after wearing',
+                            'Do not use jewellery cleaning dips or ultrasonic cleaners',
+                        ];
+                    }
+                @endphp
+                @foreach ($careItems as $item)
+                    <li><i class="bi bi-check-circle-fill" aria-hidden="true"></i><span>{{ $item }}</span></li>
+                @endforeach
             </ul>
         </div>
 
@@ -87,13 +139,13 @@
                             <i class="bi bi-star-fill"></i>
                         @endfor
                     </div>
-                    <div class="meta">{{ $product->review_count }} Reviews</div>
+                    <div class="meta">{{ review_count_label($product->review_count) }}</div>
                 </div>
                 <div>
                     @for ($star = 5; $star >= 1; $star--)
                         @php $count = (int) ($breakdown[$star] ?? 0); @endphp
                         <div class="bar-row">
-                            <span>{{ $star }} Stars</span>
+                            <span>{{ $star }} {{ $star === 1 ? 'Star' : 'Stars' }}</span>
                             <div class="bar-track"><div class="bar-fill" style="width: {{ ($count / $totalReviews) * 100 }}%"></div></div>
                             <span>{{ $count }}</span>
                         </div>

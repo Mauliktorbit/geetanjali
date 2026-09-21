@@ -70,16 +70,29 @@ function storefrontToast(message) {
 
 function productPayload(el) {
     const card = el.closest('.product-card, [data-product-page]') || el.closest('[data-product-id]') || el;
-    const qty = card.querySelector?.('[data-qty-input]')?.value;
+    const qtyInput = card.querySelector?.('[data-qty-input]');
+    const min = Math.max(1, parseInt(qtyInput?.min || card.dataset.qtyMin || '1', 10) || 1);
+    let max = parseInt(qtyInput?.max || card.dataset.qtyMax || '', 10);
+    const stock = parseInt(card.dataset.stock || '', 10);
+    if (!Number.isFinite(max) || max < min) {
+        max = Number.isFinite(stock) && stock > 0 ? stock : min;
+    }
+    if (Number.isFinite(stock) && stock > 0) {
+        max = Math.min(max, stock);
+    }
+    let quantity = parseInt(String(qtyInput?.value ?? '1'), 10);
+    if (!Number.isFinite(quantity)) quantity = min;
+    quantity = Math.min(max, Math.max(min, quantity));
+
     return {
         product_id: Number(el.dataset.productId || card.dataset.productId || 0),
-        quantity: Number(qty || 1),
+        quantity,
         name: card.dataset.productName || '',
         slug: card.dataset.productSlug || '',
         image: card.dataset.productImage || '',
         price: card.dataset.productPrice || '',
         compare_at_price: card.dataset.productCompare || '',
-        discount_label: card.dataset.productDiscount || '',
+        discount_label: priceDiscountLabel(card.dataset.productPrice, card.dataset.productCompare),
         metal: card.dataset.productMetal || '',
         weight: card.dataset.productWeight || '',
         url: card.dataset.productUrl || '',
@@ -309,6 +322,33 @@ function rupee(value) {
     return `₹${amount.toLocaleString('en-IN')}`;
 }
 
+function priceDiscountLabel(price, compare) {
+    price = Math.round(Number(price) || 0);
+    compare = Math.round(Number(compare) || 0);
+    if (price <= 0 || compare <= price) {
+        return '';
+    }
+
+    const saved = compare - price;
+    const raw = (saved / compare) * 100;
+    const matches = (percent) => Math.round(compare * (1 - percent / 100)) === price;
+
+    const whole = Math.round(raw);
+    if (matches(whole)) {
+        return whole + '% OFF';
+    }
+
+    for (let decimals = 1; decimals <= 2; decimals += 1) {
+        const factor = 10 ** decimals;
+        const candidate = Math.round(raw * factor) / factor;
+        if (matches(candidate)) {
+            return Number(candidate.toFixed(decimals)) + '% OFF';
+        }
+    }
+
+    return 'Save ₹' + saved.toLocaleString('en-IN');
+}
+
 function fillQuickView(card) {
     const modal = quickViewModal();
     if (!modal) {
@@ -373,8 +413,8 @@ function fillQuickView(card) {
 
     const discount = modal.querySelector('[data-qv-discount]');
     if (discount) {
-        discount.textContent = payload.discount_label || '';
-        discount.hidden = !payload.discount_label;
+        discount.textContent = priceDiscountLabel(payload.price, payload.compare_at_price);
+        discount.hidden = !discount.textContent;
     }
 
     const link = modal.querySelector('[data-qv-link]');

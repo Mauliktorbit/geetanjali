@@ -18,6 +18,8 @@ class BridalCollectionController extends Controller
     {
         abort_unless(StorefrontCatalogService::isActiveSlug('bridal'), 404);
 
+        $collection = \App\Models\Collection::query()->where('slug', 'bridal')->first();
+        $details = trim((string) ($collection?->description ?? ''));
         $listingUrl = route('collections.bridal');
         $filters = $this->catalog->normalizeListingFilters($request);
         $paginator = $this->catalog->paginateCollection('bridal', $this->catalog->filtersFromBridal($filters));
@@ -26,24 +28,21 @@ class BridalCollectionController extends Controller
         return view('frontend.collections.bridal', [
             'products' => $products,
             'filters' => $filters,
-            'categoryOptions' => StorefrontCatalogService::jewelleryTypeOptions(),
+            'filterCounts' => $this->catalog->filterCounts('bridal'),
             'listingUrl' => $listingUrl,
             'canonicalUrl' => url('/bridal-collection'),
-            'pageTitle' => 'Bridal Jewellery Collection | Geetanjali Jewellers',
-            'metaDescription' => "Explore Geetanjali Jewellers' bridal jewellery collection featuring Kundan bridal sets, gold necklaces, earrings, bangles, rings and traditional wedding jewellery.",
-            'introHeading' => 'Bridal Jewellery Collection',
-            'introText' => 'Discover our stunning range of bridal jewellery including necklaces, earrings, bangles, rings and complete bridal sets.',
+            'pageTitle' => ($collection?->seo_title ?: 'Bridal Jewellery Collection').' | Geetanjali Jewellers',
+            'metaDescription' => $collection?->seo_description
+                ?: "Explore Geetanjali Jewellers' bridal jewellery collection featuring Kundan bridal sets, necklaces, earrings, bangles, rings and traditional wedding jewellery.",
+            'introHeading' => $collection?->name ?: 'Bridal Jewellery Collection',
+            'introText' => $details !== ''
+                ? $details
+                : 'Discover our stunning range of bridal jewellery including necklaces, earrings, bangles, rings and complete bridal sets.',
             'showBridalSets' => true,
-            'hero' => [
-                'label' => 'Bridal Collection',
-                'heading_line_1' => 'Timeless Beauty for',
-                'heading_line_2' => 'Your Special Day',
-                'description' => 'Exquisite bridal jewellery crafted in gold, kundan and diamonds to make your wedding moments truly unforgettable.',
-                'cta_label' => 'Explore Collection',
-                'cta_url' => $listingUrl.'#collection-products',
-                'image' => asset('public/assets/images/collections/bridal/hero.jpg'),
-                'image_alt' => 'Indian bride in traditional bridal jewellery',
-            ],
+            'hero' => StorefrontCatalogService::listingHero(
+                $collection ?? new \App\Models\Collection(['name' => 'Bridal Collection', 'description' => $details, 'image' => null]),
+                $listingUrl
+            ),
             'promos' => StorefrontCatalogService::listingPromos(),
             'viewMode' => $filters['view'],
             'breadcrumb' => [

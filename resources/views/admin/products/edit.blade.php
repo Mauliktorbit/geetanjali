@@ -14,12 +14,12 @@
 </div>
 @include('admin.components.alerts')
 <div class="card product-form-card">
-    <form method="POST" action="{{ route('admin.products.update', $item) }}" enctype="multipart/form-data">
+    <form method="POST" action="{{ route('admin.products.update', $item) }}" enctype="multipart/form-data" data-unsaved-guard>
         @csrf @method('PUT')
         @include('admin.products._form', ['item' => $item])
         <div class="form-actions">
             <button class="btn btn-primary" type="submit">Update product</button>
-            <a href="{{ route('admin.products.show', $item) }}" class="btn btn-ghost">Cancel</a>
+            <a href="{{ route('admin.products.show', $item) }}" class="btn btn-ghost" data-unsaved-cancel>Cancel</a>
         </div>
     </form>
 </div>

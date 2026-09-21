@@ -4,7 +4,7 @@
     <div class="cart-item__product">
         <a href="{{ $item['url'] ?? '#' }}" class="cart-item__image">
             <img
-                src="{{ asset($item['image']) }}"
+                src="{{ storefront_image($item['image'] ?? null) }}"
                 alt="{{ $item['name'] }}"
                 width="110"
                 height="110"
@@ -20,13 +20,14 @@
         </div>
     </div>
 
+    @php $itemDiscount = price_discount_label($item['price'] ?? 0, $item['compare_at_price'] ?? 0); @endphp
     <div class="cart-item__price">
         <span class="is-current">₹{{ number_format($item['price']) }}</span>
         @if (!empty($item['compare_at_price']))
             <span class="is-old">₹{{ number_format($item['compare_at_price']) }}</span>
         @endif
-        @if (!empty($item['discount_label']))
-            <span class="is-off">{{ $item['discount_label'] }}</span>
+        @if ($itemDiscount)
+            <span class="is-off">{{ $itemDiscount }}</span>
         @endif
     </div>
 

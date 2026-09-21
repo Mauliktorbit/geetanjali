@@ -3,12 +3,12 @@
 */
 @import url('theme.css');
 @import url('layout.css');
-@import url('home.css');
+@import url('home.css?v=20260921l');
 @import url('about.css');
-@import url('product.css');
-@import url('collection.css');
-@import url('bridal.css');
-@import url('new-arrivals.css');
+@import url('product.css?v=20260921c');
+@import url('collection.css?v=20260921l');
+@import url('bridal.css?v=20260921l');
+@import url('new-arrivals.css?v=20260921l');
 @import url('offers.css');
 @import url('auth.css');
 @import url('cart.css');
@@ -17,7 +17,7 @@
 @import url('account.css');
 @import url('contact.css');
 @import url('pages.css');
-@import url('responsive.css');
+@import url('responsive.css?v=20260921l');
 
 .password-field {
     position: relative;

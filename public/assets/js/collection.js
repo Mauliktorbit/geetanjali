@@ -4,10 +4,6 @@
 
 document.addEventListener('DOMContentLoaded', () => {
     initAutoSubmitFilters();
-
-    const page = document.querySelector('[data-kundan-page]');
-    if (!page) return;
-
     initPriceSliders();
     initFilterDrawer();
 });
@@ -57,32 +53,33 @@ function initPriceSliders() {
 }
 
 function initFilterDrawer() {
-    const drawer = document.querySelector('[data-filter-drawer]');
-    if (!drawer) return;
+    document.querySelectorAll('[data-filter-drawer]').forEach((drawer) => {
+        const openBtns = document.querySelectorAll(
+            drawer.id ? `[data-filter-open][aria-controls="${drawer.id}"]` : '[data-filter-open]'
+        );
+        const closeEls = drawer.querySelectorAll('[data-filter-close]');
 
-    const openBtns = document.querySelectorAll('[data-filter-open]');
-    const closeEls = drawer.querySelectorAll('[data-filter-close]');
+        const open = () => {
+            drawer.hidden = false;
+            requestAnimationFrame(() => drawer.classList.add('is-open'));
+            document.body.style.overflow = 'hidden';
+            openBtns.forEach((btn) => btn.setAttribute('aria-expanded', 'true'));
+        };
 
-    const open = () => {
-        drawer.hidden = false;
-        requestAnimationFrame(() => drawer.classList.add('is-open'));
-        document.body.style.overflow = 'hidden';
-        openBtns.forEach((btn) => btn.setAttribute('aria-expanded', 'true'));
-    };
+        const close = () => {
+            drawer.classList.remove('is-open');
+            openBtns.forEach((btn) => btn.setAttribute('aria-expanded', 'false'));
+            document.body.style.overflow = '';
+            setTimeout(() => {
+                if (!drawer.classList.contains('is-open')) drawer.hidden = true;
+            }, 280);
+        };
 
-    const close = () => {
-        drawer.classList.remove('is-open');
-        openBtns.forEach((btn) => btn.setAttribute('aria-expanded', 'false'));
-        document.body.style.overflow = '';
-        setTimeout(() => {
-            if (!drawer.classList.contains('is-open')) drawer.hidden = true;
-        }, 280);
-    };
-
-    openBtns.forEach((btn) => btn.addEventListener('click', open));
-    closeEls.forEach((el) => el.addEventListener('click', close));
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && drawer.classList.contains('is-open')) close();
+        openBtns.forEach((btn) => btn.addEventListener('click', open));
+        closeEls.forEach((el) => el.addEventListener('click', close));
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && drawer.classList.contains('is-open')) close();
+        });
     });
 }
 

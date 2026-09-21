@@ -125,18 +125,34 @@ function initCoupon(page, couponUrl, csrf) {
             const isOn = applied !== '' && cardCode === applied;
             card.classList.toggle('is-applied', isOn);
             const btn = card.querySelector('[data-coupon-apply], [data-coupon-remove]');
-            if (!btn || btn.disabled) return;
+            if (!btn) return;
+            if (btn.disabled && !isOn) return;
             if (isOn) {
+                btn.disabled = false;
                 btn.textContent = 'Remove';
                 btn.removeAttribute('data-coupon-apply');
                 btn.setAttribute('data-coupon-remove', '');
-            } else {
+            } else if (!btn.disabled || btn.hasAttribute('data-coupon-remove')) {
                 btn.textContent = 'Apply';
                 btn.removeAttribute('data-coupon-remove');
                 btn.setAttribute('data-coupon-apply', card.dataset.couponCode || '');
             }
         });
+        setFormApplied(applied !== '');
     };
+
+    const setFormApplied = (applied) => {
+        const submit = form.querySelector('[data-coupon-submit], button[type="submit"]');
+        if (submit) {
+            submit.disabled = Boolean(applied);
+            submit.textContent = applied ? 'Applied' : 'Apply';
+        }
+        if (input) {
+            input.readOnly = Boolean(applied);
+        }
+    };
+
+    setFormApplied(Boolean((input?.value || '').trim()));
 
     const submitCode = async (code) => {
         try {
@@ -169,6 +185,8 @@ function initCoupon(page, couponUrl, csrf) {
 
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
+        const submit = form.querySelector('[data-coupon-submit], button[type="submit"]');
+        if (submit?.disabled) return;
         await submitCode(input?.value || '');
     });
 

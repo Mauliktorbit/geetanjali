@@ -19,6 +19,56 @@ class InventoryService
         return (int) Inventory::query()->where('product_id', $productId)->sum('available_stock');
     }
 
+    public function setProductAvailableStock(int $productId, int $quantity): Inventory
+    {
+        $quantity = max(0, $quantity);
+        $warehouseId = $this->defaultWarehouseId();
+
+        return DB::transaction(function () use ($productId, $quantity, $warehouseId) {
+            Inventory::query()
+                ->where('product_id', $productId)
+                ->whereNull('product_variant_id')
+                ->where('warehouse_id', '!=', $warehouseId)
+                ->get()
+                ->each(function (Inventory $row) {
+                    $reserved = (int) $row->reserved_stock;
+                    $row->update([
+                        'available_stock' => 0,
+                        'current_stock' => $reserved,
+                    ]);
+                });
+
+            $inventory = $this->getOrCreateInventory($productId, null, $warehouseId);
+            $previous = (int) $inventory->available_stock;
+            $reserved = (int) $inventory->reserved_stock;
+            $change = $quantity - $previous;
+
+            $inventory->update([
+                'available_stock' => $quantity,
+                'current_stock' => $quantity + $reserved,
+            ]);
+
+            if ($change !== 0) {
+                $this->writeMovement(
+                    $productId,
+                    null,
+                    $warehouseId,
+                    null,
+                    null,
+                    'adjustment',
+                    $previous,
+                    $quantity,
+                    $change,
+                    'Admin product stock',
+                    'product',
+                    $productId
+                );
+            }
+
+            return $inventory->fresh();
+        });
+    }
+
     public function defaultWarehouseId(): int
     {
         $id = Warehouse::query()->where('is_default', true)->where('is_active', true)->value('id')

@@ -6,18 +6,33 @@
 
   const Admin = {
     init() {
-      this.initSidebar();
-      this.initMobileMenu();
-      this.initDropdowns();
-      this.initCheckAll();
-      this.initFlashToasts();
-      this.initConfirmModals();
-      this.initImagePreview();
-      this.initFormLoading();
-      this.initFilterDropdowns();
-      this.initCharts();
-      this.initAlertDismiss();
-      this.initNotifications();
+      const steps = [
+        'initSidebar',
+        'initMobileMenu',
+        'initDropdowns',
+        'initCheckAll',
+        'initFlashToasts',
+        'initConfirmModals',
+        'initImagePreview',
+        'initProductMedia',
+        'initCollectionChecks',
+        'initStockFields',
+        'initUnsavedGuard',
+        'initFormLoading',
+        'initFilterDropdowns',
+        'initCharts',
+        'initAlertDismiss',
+        'initNotifications',
+      ];
+      steps.forEach((name) => {
+        try {
+          this[name]();
+        } catch (err) {
+          if (window.console && console.error) {
+            console.error('Admin UI ' + name + ' failed', err);
+          }
+        }
+      });
     },
 
     /* ------------------------------------------------------------------ */
@@ -318,33 +333,293 @@
     /* ------------------------------------------------------------------ */
     initImagePreview() {
       document.querySelectorAll('input[type="file"][accept*="image"], input[type="file"][data-preview]').forEach((input) => {
-        if (input.hasAttribute('data-no-preview')) {
+        if (input.hasAttribute('data-no-preview') || input.hasAttribute('data-gallery-input') || input.hasAttribute('data-main-image-input')) {
           return;
         }
+
+        const target = input.getAttribute('data-preview-target');
+        const targetEl = target ? document.querySelector(target) : null;
+        const removeField = input.form && input.form.querySelector('[data-remove-image]');
+
+        const showTarget = (src) => {
+          if (!targetEl) return;
+          const img = targetEl.querySelector('[data-preview-image], img');
+          const placeholder = targetEl.querySelector('[data-preview-placeholder]');
+          const label = targetEl.querySelector('.label');
+          if (img) {
+            img.src = src;
+            img.hidden = false;
+            img.onerror = () => {
+              img.hidden = true;
+              if (placeholder) placeholder.hidden = false;
+            };
+          }
+          if (placeholder) placeholder.hidden = true;
+          if (label) label.textContent = 'Image preview';
+          const clearBtn = targetEl.querySelector('[data-clear-preview]');
+          if (clearBtn) clearBtn.hidden = false;
+          targetEl.hidden = false;
+        };
+
+        const hideTarget = () => {
+          if (!targetEl) return;
+          const img = targetEl.querySelector('[data-preview-image], img');
+          const placeholder = targetEl.querySelector('[data-preview-placeholder]');
+          if (img) {
+            img.removeAttribute('src');
+            img.hidden = true;
+          }
+          if (placeholder) placeholder.hidden = false;
+          const clearBtn = targetEl.querySelector('[data-clear-preview]');
+          if (clearBtn) clearBtn.hidden = true;
+        };
+
+        if (targetEl) {
+          const clearBtn = targetEl.querySelector('[data-clear-preview]');
+          if (clearBtn) {
+            clearBtn.addEventListener('click', () => {
+              input.value = '';
+              hideTarget();
+              if (removeField) removeField.value = '1';
+            });
+          }
+        }
+
         input.addEventListener('change', () => {
           const file = input.files && input.files[0];
-          let preview = input.parentElement.querySelector('.image-preview');
+          if (!file || !file.type || file.type.indexOf('image/') !== 0) {
+            return;
+          }
 
+          const url = URL.createObjectURL(file);
+          if (removeField) removeField.value = '0';
+
+          if (targetEl) {
+            showTarget(url);
+            return;
+          }
+
+          let preview = input.parentElement.querySelector('.image-preview');
           if (!preview) {
             preview = document.createElement('div');
             preview.className = 'image-preview';
             preview.innerHTML = '<img alt="Preview">';
             input.parentElement.appendChild(preview);
           }
-
           const img = preview.querySelector('img');
-          if (!file || !file.type.startsWith('image/')) {
-            preview.classList.remove('visible');
-            if (img) img.removeAttribute('src');
+          if (img) img.src = url;
+          preview.classList.add('visible');
+        });
+      });
+    },
+
+    initProductMedia() {
+      const mainInput = document.querySelector('[data-main-image-input]');
+      const mainBox = document.querySelector('[data-main-preview]');
+      const mainImg = document.querySelector('[data-main-preview-img]');
+      const removeMainField = document.querySelector('[data-remove-main-image]');
+      const removeMainBtn = document.querySelector('[data-remove-main]');
+
+      const showMain = (src) => {
+        if (!mainBox || !mainImg) return;
+        mainImg.src = src;
+        mainBox.hidden = false;
+        mainImg.onerror = () => {
+          mainBox.hidden = true;
+        };
+      };
+
+      const hideMain = () => {
+        if (mainInput) mainInput.value = '';
+        if (mainImg) mainImg.removeAttribute('src');
+        if (mainBox) mainBox.hidden = true;
+        if (removeMainField) removeMainField.value = '1';
+      };
+
+      if (mainInput) {
+        mainInput.addEventListener('change', () => {
+          const file = mainInput.files && mainInput.files[0];
+          if (!file || !file.type || file.type.indexOf('image/') !== 0) return;
+          if (removeMainField) removeMainField.value = '0';
+          showMain(URL.createObjectURL(file));
+        });
+      }
+      if (removeMainBtn) {
+        removeMainBtn.addEventListener('click', hideMain);
+      }
+
+      const galleryInput = document.querySelector('[data-gallery-input]');
+      const galleryBox = document.querySelector('[data-gallery-previews]');
+      if (!galleryInput || !galleryBox) return;
+
+      const transfer = new DataTransfer();
+
+      const syncInputFiles = () => {
+        galleryInput.files = transfer.files;
+      };
+
+      const addPendingThumb = (file, index) => {
+        const item = document.createElement('div');
+        item.className = 'gallery-preview-item';
+        item.setAttribute('data-gallery-item', 'pending');
+        item.innerHTML = '<img alt=""><button type="button" class="media-preview__remove" aria-label="Remove photo">×</button>';
+        const img = item.querySelector('img');
+        img.src = URL.createObjectURL(file);
+        img.onerror = () => item.remove();
+        item.querySelector('button').addEventListener('click', () => {
+          transfer.items.remove(index);
+          item.remove();
+          rebuildPending();
+        });
+        galleryBox.appendChild(item);
+      };
+
+      const rebuildPending = () => {
+        galleryBox.querySelectorAll('[data-gallery-item="pending"]').forEach((el) => el.remove());
+        const next = new DataTransfer();
+        Array.from(transfer.files).forEach((file) => next.items.add(file));
+        transfer.items.clear();
+        Array.from(next.files).forEach((file, i) => {
+          transfer.items.add(file);
+          addPendingThumb(file, i);
+        });
+        syncInputFiles();
+      };
+
+      galleryBox.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-remove-gallery]');
+        if (!btn) return;
+        const item = btn.closest('[data-gallery-item]');
+        if (item) item.remove();
+      });
+
+      galleryInput.addEventListener('change', () => {
+        Array.from(galleryInput.files || []).forEach((file) => {
+          if (file && file.type && file.type.indexOf('image/') === 0) {
+            transfer.items.add(file);
+          }
+        });
+        rebuildPending();
+      });
+    },
+
+    initCollectionChecks() {
+      const root = document.querySelector('[data-collection-picker]');
+      if (!root) return;
+      const chips = root.querySelector('[data-collection-chips]');
+      const checks = root.querySelectorAll('input[type="checkbox"][name="collections[]"]');
+      if (!chips) return;
+
+      const render = () => {
+        const selected = Array.prototype.filter.call(checks, (input) => input.checked);
+        chips.replaceChildren();
+        selected.forEach((input) => {
+          const chip = document.createElement('span');
+          chip.className = 'collection-picker__chip';
+          const text = document.createElement('span');
+          text.textContent = input.getAttribute('data-label') || '';
+          const remove = document.createElement('button');
+          remove.type = 'button';
+          remove.setAttribute('aria-label', 'Remove ' + (input.getAttribute('data-label') || 'collection'));
+          remove.textContent = '×';
+          remove.addEventListener('click', () => {
+            input.checked = false;
+            render();
+          });
+          chip.appendChild(text);
+          chip.appendChild(remove);
+          chips.appendChild(chip);
+        });
+        chips.hidden = selected.length === 0;
+      };
+
+      Array.prototype.forEach.call(checks, (input) => input.addEventListener('change', render));
+      render();
+    },
+
+    initStockFields() {
+      const root = document.querySelector('[data-stock-fields]');
+      if (!root) return;
+      const qty = root.querySelector('[data-stock-quantity]');
+      const radios = root.querySelectorAll('[data-stock-status]');
+      if (!qty || !radios.length) return;
+
+      const setStatus = (value) => {
+        radios.forEach((radio) => {
+          radio.checked = radio.value === value;
+        });
+      };
+
+      radios.forEach((radio) => {
+        radio.addEventListener('change', () => {
+          if (radio.value === 'out_of_stock') {
+            qty.value = '0';
+          } else if (parseInt(qty.value || '0', 10) < 1) {
+            qty.value = '1';
+          }
+        });
+      });
+
+      qty.addEventListener('input', () => {
+        const value = parseInt(qty.value || '0', 10);
+        setStatus(value > 0 ? 'in_stock' : 'out_of_stock');
+      });
+    },
+
+    initUnsavedGuard() {
+      document.querySelectorAll('form[data-unsaved-guard]').forEach((form) => {
+        let dirty = false;
+        let submitting = false;
+
+        const markDirty = () => {
+          dirty = true;
+        };
+
+        form.addEventListener('input', markDirty);
+        form.addEventListener('change', markDirty);
+        form.addEventListener('submit', () => {
+          submitting = true;
+        });
+
+        const confirmLeave = (href) => {
+          const go = () => {
+            submitting = true;
+            window.location.href = href;
+          };
+          if (window.Swal) {
+            window.Swal.fire({
+              title: 'You have unsaved changes. Are you sure you want to leave?',
+              icon: 'warning',
+              showCancelButton: true,
+              reverseButtons: true,
+              focusCancel: true,
+              confirmButtonText: 'Discard Changes',
+              cancelButtonText: 'Stay',
+              confirmButtonColor: '#b42318',
+              cancelButtonColor: '#6b7280',
+              customClass: { popup: 'gj-swal' },
+            }).then((result) => {
+              if (result.isConfirmed) go();
+            });
             return;
           }
+          if (window.confirm('You have unsaved changes. Are you sure you want to leave?')) {
+            go();
+          }
+        };
 
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            if (img) img.src = e.target.result;
-            preview.classList.add('visible');
-          };
-          reader.readAsDataURL(file);
+        form.querySelectorAll('[data-unsaved-cancel]').forEach((link) => {
+          link.addEventListener('click', (e) => {
+            if (!dirty) return;
+            e.preventDefault();
+            confirmLeave(link.href);
+          });
+        });
+
+        window.addEventListener('beforeunload', (e) => {
+          if (!dirty || submitting) return;
+          e.preventDefault();
+          e.returnValue = '';
         });
       });
     },

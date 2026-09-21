@@ -216,6 +216,7 @@
 
 /* ----- Toolbar / filters ----- */
 .bridal-listing {
+    padding-top: 2.5rem;
     padding-bottom: 3rem;
 }
 
@@ -365,69 +366,110 @@
 /* ----- Product grid ----- */
 .bridal-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 18px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1.35rem;
 }
 
-.bridal-grid--list {
+.bridal-grid--list,
+.product-grid.bridal-grid--list {
     grid-template-columns: 1fr;
 }
 
 .bridal-grid--list .product-card {
     display: grid;
-    grid-template-columns: 200px 1fr;
+    grid-template-columns: 200px minmax(0, 1fr);
+    grid-template-areas:
+        "media body"
+        "media actions";
     align-items: stretch;
 }
 
 .bridal-grid--list .product-card__media {
+    grid-area: media;
     aspect-ratio: auto;
     min-height: 200px;
 }
 
 .bridal-grid--list .product-card__body {
+    grid-area: body;
     display: flex;
     flex-direction: column;
     justify-content: center;
 }
 
-.bridal-page .product-card {
-    border-radius: 7px;
+.bridal-grid--list .product-card__actions {
+    grid-area: actions;
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+    margin: 0 1rem 1rem 0;
+    padding: 0;
 }
 
-.bridal-page .product-card:hover {
-    transform: translateY(-2px);
-    border-color: rgba(201, 162, 77, 0.55);
-    box-shadow: 0 8px 20px rgba(34, 34, 34, 0.06);
+.bridal-page .product-card,
+.bridal-listing .product-card,
+.bridal-grid .product-card,
+.kundan-page .product-card,
+.new-arrivals-page .product-card {
+    border-radius: 8px;
 }
 
-.bridal-page .product-card:hover .product-card__media img {
-    transform: scale(1.03);
+.bridal-page .product-card:hover,
+.bridal-grid .product-card:hover,
+.kundan-page .product-card:hover,
+.new-arrivals-page .product-card:hover {
+    transform: translateY(-6px);
+    border-color: var(--border);
+    box-shadow: var(--shadow-card);
 }
 
-.bridal-page .product-card__wishlist {
-    color: #555;
+.bridal-page .product-card:hover .product-card__media img,
+.bridal-grid .product-card:hover .product-card__media img {
+    transform: scale(1.04);
+}
+
+.bridal-page .product-card__wishlist,
+.bridal-grid .product-card__wishlist {
+    color: var(--text-muted);
 }
 
 .bridal-page .product-card__wishlist:hover,
-.bridal-page .product-card__wishlist.is-active {
+.bridal-page .product-card__wishlist.is-active,
+.bridal-grid .product-card__wishlist:hover,
+.bridal-grid .product-card__wishlist.is-active {
     color: var(--gold);
 }
 
-.bridal-page .product-card__name {
+.bridal-page .product-card__name,
+.bridal-listing .product-card__name,
+.bridal-grid .product-card__name,
+.kundan-page .product-card__name,
+.new-arrivals-page .product-card__name {
     font-size: 20px;
     font-weight: 700;
-    color: #222;
-    min-height: 2.5em;
+    color: var(--text-dark);
+    min-height: 2.4em;
+    margin: 0 0 0.55rem;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
 
-.bridal-page .price-current {
+.bridal-page .price-current,
+.bridal-grid .price-current,
+.kundan-page .price-current,
+.new-arrivals-page .price-current {
     font-size: 16.5px;
-    font-weight: 700;
-    color: #222;
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+.bridal-grid .product-card__body,
+.kundan-page .product-card__body,
+.new-arrivals-page .product-card__body,
+.bridal-page .product-card__body {
+    padding: 1rem 1rem 1.15rem;
 }
 
 .bridal-page .product-card__rating {
@@ -437,12 +479,6 @@
 
 .bridal-page .product-card__pricing {
     justify-content: space-between;
-}
-
-.bridal-grid--list .product-card__actions {
-    opacity: 1;
-    transform: none;
-    pointer-events: auto;
 }
 
 .bridal-pagination {
@@ -574,6 +610,7 @@
     position: fixed;
     inset: 0;
     z-index: 1080;
+    display: block;
 }
 
 .bridal-filter-drawer__backdrop {
@@ -631,7 +668,7 @@
 /* ----- Responsive ----- */
 @media (max-width: 1199.98px) {
     .bridal-grid {
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
     .bridal-services__grid {
@@ -647,6 +684,15 @@
 @media (max-width: 991.98px) {
     .listing-view-toggle {
         display: none !important;
+    }
+
+    .bridal-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .bridal-listing {
+        padding-top: 2rem;
+        padding-bottom: 2.5rem;
     }
 
     .bridal-promos__grid {
@@ -717,6 +763,10 @@
     .bridal-intro h2 {
         font-size: 26px;
         letter-spacing: 0.02em;
+    }
+
+    .bridal-listing {
+        padding-top: 1.75rem;
     }
 
     .bridal-grid,

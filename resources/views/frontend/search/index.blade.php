@@ -8,7 +8,7 @@
     @include('frontend.components.breadcrumb', ['items' => $breadcrumb])
 
     <section class="na-listing" id="collection-products" aria-label="Search results">
-        <div class="na-container">
+        <div class="site-container">
             <header class="search-page__head">
                 <h1 class="font-heading">
                     @if ($query !== '')
@@ -35,9 +35,9 @@
                     <p>Use the search box above to find necklaces, earrings, rings, and more.</p>
                 </div>
             @elseif ($products->count() > 0)
-                <div class="na-grid">
+                <div class="product-grid bridal-grid">
                     @foreach ($products as $product)
-                        @include('frontend.components.product-card', ['product' => $product])
+                        @include('frontend.components.product-card', ['product' => $product, 'showCart' => false])
                     @endforeach
                 </div>
                 <div class="na-pagination">

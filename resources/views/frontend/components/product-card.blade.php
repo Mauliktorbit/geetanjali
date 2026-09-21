@@ -8,7 +8,7 @@
     $image = $product['image'] ?? '';
     $price = $product['price'] ?? 0;
     $compareAt = $product['compare_at_price'] ?? null;
-    $discount = $product['discount_label'] ?? null;
+    $discount = price_discount_label($price, $compareAt);
     $badge = $product['badge'] ?? null;
     $productId = $product['id'] ?? null;
     $url = $product['url'] ?? (! empty($product['slug']) ? route('products.show', $product['slug']) : null);
@@ -71,51 +71,51 @@
         >
             <i class="bi {{ $inWishlist ? 'bi-heart-fill' : 'bi-heart' }}" aria-hidden="true"></i>
         </button>
-        <div class="product-card__actions">
+    </div>
+    <div class="product-card__actions">
+        <button
+            type="button"
+            class="product-card__action product-card__action--view"
+            data-quick-view
+            data-no-loading
+        >
+            <i class="bi bi-eye" aria-hidden="true"></i>
+            <span>Quick View</span>
+        </button>
+        @if (! $outOfStock)
             <button
                 type="button"
-                class="product-card__action product-card__action--view"
-                data-quick-view
+                class="product-card__action product-card__action--cart"
+                aria-label="Add {{ $name }} to cart"
+                data-add-to-cart
                 data-no-loading
+                @if ($productId) data-product-id="{{ $productId }}" @endif
             >
-                <i class="bi bi-eye" aria-hidden="true"></i>
-                <span>Quick View</span>
+                <i class="bi bi-bag" aria-hidden="true"></i>
+                <span>Add to Cart</span>
             </button>
-            @if (! $outOfStock)
-                <button
-                    type="button"
-                    class="product-card__action product-card__action--cart"
-                    aria-label="Add {{ $name }} to cart"
-                    data-add-to-cart
-                    data-no-loading
-                    @if ($productId) data-product-id="{{ $productId }}" @endif
+        @else
+            <button
+                type="button"
+                class="product-card__action product-card__action--notify"
+                aria-label="Notify me when {{ $name }} is back in stock"
+                data-stock-notify
+                data-no-loading
+                @if ($productId) data-product-id="{{ $productId }}" @endif
+            >
+                <i class="bi bi-bell" aria-hidden="true"></i>
+                <span>Notify me</span>
+            </button>
+            @if ($similarUrl)
+                <a
+                    href="{{ $similarUrl }}"
+                    class="product-card__action product-card__action--similar"
                 >
-                    <i class="bi bi-bag" aria-hidden="true"></i>
-                    <span>Add to Cart</span>
-                </button>
-            @else
-                <button
-                    type="button"
-                    class="product-card__action product-card__action--notify"
-                    aria-label="Notify me when {{ $name }} is back in stock"
-                    data-stock-notify
-                    data-no-loading
-                    @if ($productId) data-product-id="{{ $productId }}" @endif
-                >
-                    <i class="bi bi-bell" aria-hidden="true"></i>
-                    <span>Notify me</span>
-                </button>
-                @if ($similarUrl)
-                    <a
-                        href="{{ $similarUrl }}"
-                        class="product-card__action product-card__action--similar"
-                    >
-                        <i class="bi bi-arrow-left-right" aria-hidden="true"></i>
-                        <span>View similar</span>
-                    </a>
-                @endif
+                    <i class="bi bi-arrow-left-right" aria-hidden="true"></i>
+                    <span>View similar</span>
+                </a>
             @endif
-        </div>
+        @endif
     </div>
     <div class="product-card__body">
         <h3 class="product-card__name">
@@ -145,7 +145,7 @@
                 >
                     <i class="bi bi-bag" aria-hidden="true"></i>
                 </button>
-            @elseif ($outOfStock)
+            @elseif ($showCart && $outOfStock)
                 <button
                     type="button"
                     class="btn-add-cart btn-add-cart--notify"
