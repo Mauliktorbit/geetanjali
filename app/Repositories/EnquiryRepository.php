@@ -7,6 +7,11 @@ use Illuminate\Database\Eloquent\Builder;
 
 class EnquiryRepository extends BaseRepository
 {
+    protected array $sortable = [
+        'date' => 'created_at',
+        'message' => 'created_at',
+    ];
+
     protected array $searchable = [
         'name',
         'email',

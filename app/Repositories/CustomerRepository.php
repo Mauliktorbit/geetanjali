@@ -9,6 +9,14 @@ class CustomerRepository extends BaseRepository
 {
     protected array $searchable = ['name', 'email', 'phone'];
 
+    protected array $sortable = [
+        'orders' => 'total_orders',
+        'spent' => 'total_spent',
+        'status' => 'is_blocked',
+        'total_orders',
+        'total_spent',
+    ];
+
     public function __construct(Customer $model)
     {
         parent::__construct($model);

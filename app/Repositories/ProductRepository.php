@@ -9,6 +9,14 @@ class ProductRepository extends BaseRepository
 {
     protected array $searchable = ['name', 'sku', 'barcode', 'slug'];
 
+    protected array $sortable = [
+        'product' => 'name',
+        'price' => 'regular_price',
+        'status' => 'is_active',
+        'regular_price',
+        'sale_price',
+    ];
+
     public function __construct(Product $model)
     {
         parent::__construct($model);

@@ -43,45 +43,44 @@ class StorefrontCatalogService
 
     /**
      * Active jewellery types from Admin → Categories.
+     * Pass a collection slug to only include types that have products in that collection.
      *
      * @return Collection<int, Category|object{id: int|null, name: string, slug: string, image: string|null}>
      */
-    public static function jewelleryTypes(): Collection
+    public static function jewelleryTypes(?string $collectionSlug = null): Collection
     {
         $types = Category::query()
             ->where('is_active', true)
+            ->whereHas('products', function (Builder $products) use ($collectionSlug) {
+                if (is_string($collectionSlug) && $collectionSlug !== '') {
+                    $products->inCollection($collectionSlug);
+                } else {
+                    $products->storefront();
+                }
+            })
             ->orderBy('display_order')
             ->orderBy('name')
             ->get(['id', 'name', 'slug', 'image'])
             ->filter(fn ($type) => ! self::isPlaceholderCategory($type->name, $type->slug))
             ->values();
 
-        if ($types->isNotEmpty()) {
-            return $types;
-        }
-
-        return collect(self::TYPE_KEYS)->map(fn (string $slug) => (object) [
-            'id' => null,
-            'name' => Str::title(str_replace('-', ' ', $slug)),
-            'slug' => $slug,
-            'image' => null,
-        ]);
+        return $types;
     }
 
     /**
      * @return array<string, string>
      */
-    public static function jewelleryTypeOptions(): array
+    public static function jewelleryTypeOptions(?string $collectionSlug = null): array
     {
-        return self::jewelleryTypes()->mapWithKeys(fn ($type) => [$type->slug => $type->name])->all();
+        return self::jewelleryTypes($collectionSlug)->mapWithKeys(fn ($type) => [$type->slug => $type->name])->all();
     }
 
     /**
      * @return list<string>
      */
-    public static function jewelleryTypeSlugs(): array
+    public static function jewelleryTypeSlugs(?string $collectionSlug = null): array
     {
-        return self::jewelleryTypes()->pluck('slug')->filter()->values()->all();
+        return self::jewelleryTypes($collectionSlug)->pluck('slug')->filter()->values()->all();
     }
 
     public static function categoryImage(?string $slug, ?string $image = null): string
@@ -389,22 +388,16 @@ class StorefrontCatalogService
         $catalog = Product::query()->inCollection($collectionSlug)->with('category')->get();
 
         $type = [];
-        foreach (self::jewelleryTypeSlugs() as $key) {
+        foreach (self::jewelleryTypeSlugs($collectionSlug) as $key) {
             $type[$key] = 0;
         }
 
         foreach ($catalog as $product) {
-            $slug = (string) ($product->category?->slug ?? '');
-            if ($slug === '' && str_contains(strtolower((string) $product->name), 'set')) {
-                $slug = 'sets';
-            }
-            if ($slug === '') {
+            $slug = strtolower(trim((string) ($product->category?->slug ?? '')));
+            if ($slug === '' || self::isPlaceholderCategory($product->category?->name, $slug)) {
                 continue;
             }
-            if (! array_key_exists($slug, $type)) {
-                $type[$slug] = 0;
-            }
-            $type[$slug]++;
+            $type[$slug] = ($type[$slug] ?? 0) + 1;
         }
 
         $metal = [];
@@ -512,7 +505,7 @@ class StorefrontCatalogService
                     ->latest()
                     ->limit($limit - $related->count())
                     ->get();
-                $related = $related->concat($extra);
+            $related = $related->concat($extra);
             }
         }
 
@@ -826,12 +819,7 @@ class StorefrontCatalogService
         }
 
         if ($paths === []) {
-            $paths[] = self::categoryImage($product->category?->slug);
-        } else {
-            $paths = array_values(array_unique(array_map(
-                fn (string $path) => $this->storefrontImagePath($product, $path),
-                $paths
-            )));
+            $paths[] = self::categoryImage($this->typeKey($product) ?: $product->category?->slug);
         }
 
         return array_map(fn (string $path) => (object) [
@@ -1457,9 +1445,12 @@ class StorefrontCatalogService
         $allowedPrices = ['', 'under-50000', '50000-100000', '100000-200000', '200000-plus'];
         $allowedSorts = ['featured', 'newest', 'price_low', 'price_high', 'bestselling', 'rating'];
         $allowedViews = ['grid', 'list'];
+        $category = strtolower(trim($category));
+        $categoryAllowed = in_array($category, $allowedCategories, true)
+            || ($category !== '' && (bool) preg_match('/^[a-z0-9]+(?:-[a-z0-9]+)*$/', $category));
 
         return [
-            'category' => in_array($category, $allowedCategories, true) ? $category : '',
+            'category' => $categoryAllowed ? $category : '',
             'metal' => in_array($metal, $allowedMetals, true) ? $metal : '',
             'stone' => in_array($stone, $allowedStones, true) ? $stone : '',
             'price' => in_array($price, $allowedPrices, true) ? $price : '',
@@ -1527,12 +1518,12 @@ class StorefrontCatalogService
         return [
             [
                 'theme' => 'dark',
-                'heading' => "Visit Our\nShowroom",
-                'description' => 'See our bridal jewellery in person and get help choosing from the collection.',
-                'cta_label' => 'Find the Store',
-                'cta_url' => route('pages.store-locator'),
+                'heading' => "Handcrafted\nfor Weddings",
+                'description' => 'Every bridal piece is made in our Ahmedabad workshop. Tell us your occasion and we will help you choose.',
+                'cta_label' => 'Contact Us',
+                'cta_url' => route('contact'),
                 'image' => 'public/assets/images/collections/bridal/promo-custom.jpg',
-                'image_alt' => 'Gold jewellery on display',
+                'image_alt' => 'Handcrafted bridal jewellery',
             ],
             [
                 'theme' => 'light',

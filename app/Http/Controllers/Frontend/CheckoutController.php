@@ -9,6 +9,7 @@ use App\Services\CartService;
 use App\Services\CheckoutService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class CheckoutController extends Controller
@@ -43,7 +44,7 @@ class CheckoutController extends Controller
             'addressPayloads' => $addressPayloads,
             'selectedAddressId' => $selectedId,
             'cart' => $summary,
-            'shippingOptions' => CheckoutService::SHIPPING,
+            'shippingOptions' => $this->checkout->shippingOptions((float) $summary['total']),
             'paymentOptions' => CheckoutService::PAYMENTS,
             'states' => $this->indianStates(),
             'breadcrumb' => [
@@ -119,9 +120,11 @@ class CheckoutController extends Controller
             return redirect()->route('cart.index')->with('error', 'Your cart is empty.');
         }
 
+        $shippingKeys = array_keys($this->checkout->shippingOptions((float) $summary['total']));
+
         $data = $request->validate([
             'address_id' => ['required', 'integer'],
-            'shipping_method' => ['required', 'in:standard,express'],
+            'shipping_method' => ['required', Rule::in($shippingKeys ?: ['standard'])],
             'payment_method' => ['required', 'in:upi,card,netbanking,cod,wallet'],
         ], [
             'address_id.required' => 'Please select a delivery address.',
@@ -157,8 +160,8 @@ class CheckoutController extends Controller
         return view('frontend.checkout.success', [
             'order' => $order,
             'expectedDelivery' => $this->checkout->expectedDelivery($order),
-            'shippingLabel' => CheckoutService::SHIPPING[$order->shipping_method]['label'] ?? 'Standard Delivery',
-            'shippingEta' => CheckoutService::SHIPPING[$order->shipping_method]['eta'] ?? '3–5 business days',
+            'shippingLabel' => $this->checkout->shippingMeta((string) $order->shipping_method)['label'],
+            'shippingEta' => $this->checkout->shippingMeta((string) $order->shipping_method)['eta'],
             'paymentLabel' => CheckoutService::PAYMENTS[$order->payment_method] ?? ucfirst((string) $order->payment_method),
             'breadcrumb' => [
                 ['label' => 'Home', 'url' => route('home')],

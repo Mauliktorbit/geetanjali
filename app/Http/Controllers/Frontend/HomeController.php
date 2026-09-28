@@ -143,8 +143,8 @@ class HomeController extends Controller
     {
         return [
             ['name' => 'Wedding', 'image' => 'public/assets/images/occasions/wedding.jpg', 'url' => route('collections.bridal')],
-            ['name' => 'Engagement', 'image' => 'public/assets/images/occasions/engagement.jpg', 'url' => route('collections.bridal')],
-            ['name' => 'Festival', 'image' => 'public/assets/images/occasions/festival.jpg', 'url' => route('products.new-arrivals')],
+            ['name' => 'Party', 'image' => 'public/assets/images/occasions/engagement.jpg', 'url' => route('collections.kundan')],
+            ['name' => 'Festival', 'image' => 'public/assets/images/occasions/festival.jpg', 'url' => route('offers.index')],
             ['name' => 'Daily Wear', 'image' => 'public/assets/images/occasions/daily-wear.jpg', 'url' => route('products.new-arrivals')],
         ];
     }

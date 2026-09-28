@@ -24,8 +24,9 @@ class PolicyPageService
     public function catalog(): array
     {
         $brand = config('brand.name');
-        $phone = config('brand.contact.phone');
-        $email = config('brand.contact.email');
+        $contact = storefront_contact();
+        $phone = $contact['phone'];
+        $email = $contact['email'];
 
         return [
             'shipping' => [

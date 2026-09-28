@@ -18,11 +18,11 @@ return [
     ],
 
     'contact' => [
-        'address' => 'C - 1209/1210, PNTC Tower, Times of India Press Road, Vejalpur, Ahmedabad - 380015',
-        'phone' => '+91 9583959503',
-        'email' => 'maulik@torbitmultisoft.com',
-        'hours' => 'Mon - Sat: 10:00 AM - 7:00 PM',
-        'hours_sunday' => 'Sunday: Closed',
+        'address' => env('BRAND_CONTACT_ADDRESS', 'C - 1209/1210, PNTC Tower, Times of India Press Road, Vejalpur, Ahmedabad - 380015'),
+        'phone' => env('BRAND_CONTACT_PHONE', '+91 95839 59503'),
+        'email' => env('BRAND_CONTACT_EMAIL', 'info@geetanjalijewellers.com'),
+        'hours' => env('BRAND_CONTACT_HOURS', 'Mon - Sat: 10:00 AM - 7:00 PM'),
+        'hours_sunday' => env('BRAND_CONTACT_HOURS_SUNDAY', 'Sunday: Closed'),
         'map_embed' => 'https://maps.google.com/maps?q=PNTC%20Tower%2C%20Times%20of%20India%20Press%20Road%2C%20Vejalpur%2C%20Ahmedabad%20380015&t=&z=15&ie=UTF8&iwloc=&output=embed',
         'map_directions' => 'https://www.google.com/maps/dir/?api=1&destination=PNTC+Tower,+Times+of+India+Press+Road,+Vejalpur,+Ahmedabad+380015',
     ],

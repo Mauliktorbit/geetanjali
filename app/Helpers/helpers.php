@@ -90,7 +90,7 @@ if (! function_exists('storefront_image')) {
             return asset($fallback);
         }
 
-        $path = trim($path);
+        $path = str_replace('\\', '/', trim($path));
 
         if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
             return $path;
@@ -108,16 +108,7 @@ if (! function_exists('storefront_image')) {
             }
         }
 
-        $relative = ltrim($relative, '/');
-
-        try {
-            $request = request();
-            $base = rtrim(str_replace('\\', '/', (string) $request->getBasePath()), '/');
-
-            return $request->getSchemeAndHttpHost().$base.'/storage/'.$relative;
-        } catch (\Throwable $e) {
-            return asset('storage/'.$relative);
-        }
+        return asset('storage/'.ltrim($relative, '/'));
     }
 }
 
@@ -198,13 +189,21 @@ if (! function_exists('parse_dmy')) {
     function parse_dmy(mixed $value, bool $endOfDay = false): ?\Carbon\Carbon
     {
         $value = trim((string) $value);
-        if ($value === '' || ! preg_match('/^(\d{2})\/(\d{2})\/(\d{4})$/', $value, $parts)) {
+        if ($value === '') {
             return null;
         }
 
-        $day = (int) $parts[1];
-        $month = (int) $parts[2];
-        $year = (int) $parts[3];
+        if (preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $value, $iso)) {
+            $year = (int) $iso[1];
+            $month = (int) $iso[2];
+            $day = (int) $iso[3];
+        } elseif (preg_match('/^(\d{2})\/(\d{2})\/(\d{4})$/', $value, $parts)) {
+            $day = (int) $parts[1];
+            $month = (int) $parts[2];
+            $year = (int) $parts[3];
+        } else {
+            return null;
+        }
 
         if ($year < 2000 || $year > 2100 || ! checkdate($month, $day, $year)) {
             return null;
@@ -224,14 +223,14 @@ if (! function_exists('dmy_date_rules')) {
     {
         $rules = [
             $required ? 'required' : 'nullable',
-            'regex:/^\d{2}\/\d{2}\/\d{4}$/',
+            'regex:/^(\d{2}\/\d{2}\/\d{4}|\d{4}-\d{2}-\d{2})$/',
             function (string $attribute, mixed $value, \Closure $fail): void {
                 if ($value === null || trim((string) $value) === '') {
                     return;
                 }
 
                 if (parse_dmy($value) === null) {
-                    $fail('Enter a valid date as DD/MM/YYYY, for example 26/12/2026.');
+                    $fail('Choose a valid date.');
                 }
             },
         ];
@@ -248,5 +247,115 @@ if (! function_exists('dmy_date_rules')) {
         }
 
         return $rules;
+    }
+}
+
+if (! function_exists('admin_sort_state')) {
+    function admin_sort_state(string $column): ?string
+    {
+        $sort = trim((string) request('sort', ''));
+        $direction = strtolower(trim((string) request('direction', '')));
+
+        if ($sort !== '' && preg_match('/^([a-z0-9_]+)_(asc|desc)$/i', $sort, $matches)) {
+            $sort = $matches[1];
+            $direction = strtolower($matches[2]);
+        }
+
+        if ($sort !== $column || ! in_array($direction, ['asc', 'desc'], true)) {
+            return null;
+        }
+
+        return $direction;
+    }
+}
+
+if (! function_exists('admin_sort_url')) {
+    function admin_sort_url(string $column, string $defaultDirection = 'asc'): string
+    {
+        $defaultDirection = strtolower($defaultDirection) === 'desc' ? 'desc' : 'asc';
+        $current = admin_sort_state($column);
+        $next = $current === 'asc' ? 'desc' : ($current === 'desc' ? 'asc' : $defaultDirection);
+
+        $query = request()->except(['page']);
+        $query['sort'] = $column;
+        $query['direction'] = $next;
+
+        return request()->url().'?'.http_build_query($query);
+    }
+}
+
+if (! function_exists('storefront_contact')) {
+    /**
+     * Public phone, email and address for the website.
+     *
+     * @return array{address: string, phone: string, phone_href: string, email: string, hours: string, hours_sunday: string, map_embed: string, map_directions: string}
+     */
+    function storefront_contact(): array
+    {
+        $base = (array) config('brand.contact', []);
+        $email = storefront_contact_email(
+            setting('store_email'),
+            setting('general.contact_email'),
+            $base['email'] ?? null
+        );
+        $phone = storefront_contact_phone(
+            setting('store_phone'),
+            setting('general.contact_phone'),
+            $base['phone'] ?? null
+        );
+
+        return [
+            'address' => trim((string) (setting('store_address') ?: setting('general.business_address') ?: ($base['address'] ?? ''))),
+            'phone' => $phone,
+            'phone_href' => preg_replace('/\s+/', '', $phone) ?: '',
+            'email' => $email,
+            'hours' => (string) ($base['hours'] ?? 'Mon - Sat: 10:00 AM - 7:00 PM'),
+            'hours_sunday' => (string) ($base['hours_sunday'] ?? 'Sunday: Closed'),
+            'map_embed' => (string) ($base['map_embed'] ?? ''),
+            'map_directions' => (string) ($base['map_directions'] ?? ''),
+        ];
+    }
+}
+
+if (! function_exists('storefront_contact_email')) {
+    function storefront_contact_email(mixed ...$candidates): string
+    {
+        foreach ($candidates as $candidate) {
+            $email = strtolower(trim((string) $candidate));
+            if ($email === '' || ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                continue;
+            }
+            if (preg_match('/torbitmultisoft\.com$|@example\.com$|@ecommerce\.test$|@geetanjali\.test$/i', $email)) {
+                continue;
+            }
+
+            return $email;
+        }
+
+        return 'info@geetanjalijewellers.com';
+    }
+}
+
+if (! function_exists('storefront_contact_phone')) {
+    function storefront_contact_phone(mixed ...$candidates): string
+    {
+        foreach ($candidates as $candidate) {
+            $raw = trim((string) $candidate);
+            $digits = preg_replace('/\D+/', '', $raw) ?? '';
+            if ($digits === '' || $digits === '0000000000' || str_contains($raw, '1800-000')) {
+                continue;
+            }
+            if (strlen($digits) === 12 && str_starts_with($digits, '91')) {
+                $digits = substr($digits, 2);
+            }
+            if (strlen($digits) === 10) {
+                return '+91 '.substr($digits, 0, 5).' '.substr($digits, 5);
+            }
+            if ($raw !== '') {
+                return $raw;
+            }
+        }
+
+        return '+91 95839 59503';
     }
 }

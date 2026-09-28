@@ -5,14 +5,12 @@
 
 @section('content')
     <div class="about-page">
-        @include('frontend.components.breadcrumb', [
-            'items' => [
+        @include('frontend.components.about-hero', $hero + [
+            'breadcrumb' => [
                 ['label' => 'Home', 'url' => route('home')],
                 ['label' => 'About Us', 'url' => null],
             ],
         ])
-
-        @include('frontend.components.about-hero', $hero)
 
         @include('frontend.components.story-section', $story)
 

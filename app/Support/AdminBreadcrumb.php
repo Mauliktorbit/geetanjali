@@ -145,7 +145,7 @@ class AdminBreadcrumb
             'gift-cards' => 'Gift Cards',
             'tax-rates' => 'Tax Rates',
             'shipping-classes' => 'Shipping Classes',
-            'shipping-methods' => 'Shipping Methods',
+            'shipping-methods' => 'Shipping Rules',
             'shipping-zones' => 'Shipping Zones',
             'store-locations' => 'Store Locations',
             'customer-groups' => 'Customer Groups',

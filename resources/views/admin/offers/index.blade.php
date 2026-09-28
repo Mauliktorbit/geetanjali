@@ -26,6 +26,7 @@
             <option value="1" @selected(request('status') === '1')>Active</option>
             <option value="0" @selected(request('status') === '0')>Inactive</option>
         </select>
+        @include('admin.components.sort-fields')
         <button class="btn btn-secondary" type="submit">Filter</button>
         @if (request()->hasAny(['search', 'status', 'category']))
             <a href="{{ route('admin.offers.index') }}" class="btn btn-ghost">Clear</a>
@@ -37,10 +38,10 @@
             <thead>
                 <tr>
                     <th class="col-image">Photo</th>
-                    <th>Offer</th>
-                    <th>Category</th>
-                    <th>Valid till</th>
-                    <th>Status</th>
+                    @include('admin.components.sortable-th', ['column' => 'offer', 'label' => 'Offer'])
+                    @include('admin.components.sortable-th', ['column' => 'category', 'label' => 'Category'])
+                    @include('admin.components.sortable-th', ['column' => 'valid', 'label' => 'Valid till'])
+                    @include('admin.components.sortable-th', ['column' => 'status', 'label' => 'Status'])
                     <th class="col-actions">Actions</th>
                 </tr>
             </thead>

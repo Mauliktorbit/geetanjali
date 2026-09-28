@@ -47,7 +47,7 @@
                 <thead>
                     <tr>
                         <th><input type="checkbox" data-check-all></th>
-                    <th>Code</th>
+                    <th data-sort="code">Code</th>
                     <th>Initial Balance</th>
                     <th>Balance</th>
                     <th>Expires At</th>

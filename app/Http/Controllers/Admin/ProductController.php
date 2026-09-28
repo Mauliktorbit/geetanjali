@@ -220,29 +220,61 @@ class ProductController extends AdminController
         $data = $request->validated();
 
         $data['product_type'] = $data['product_type'] ?? ProductType::SIMPLE;
-        $data['min_order_qty'] = $data['min_order_qty'] ?? 1;
-        $data['tax_note'] = filled($data['tax_note'] ?? null) ? $data['tax_note'] : 'Inclusive of all taxes';
-        $data['estimated_delivery'] = filled($data['estimated_delivery'] ?? null) ? $data['estimated_delivery'] : '3–5 business days';
-        $data['return_eligible'] = true;
-        $data['return_days'] = $data['return_days'] ?? 15;
-        $data['cod_available'] = $data['cod_available'] ?? true;
-        if ($product === null) {
-            $data['published_at'] = $data['published_at'] ?? now();
-        } else {
-            unset($data['published_at']);
-        }
+        $data['is_featured'] = (bool) ($data['is_featured'] ?? false);
+        $data['is_new_arrival'] = (bool) ($data['is_new_arrival'] ?? false);
+        $data['is_bestseller'] = (bool) ($data['is_bestseller'] ?? false);
 
-        $badge = strtoupper((string) ($data['badge'] ?? ''));
-        if ($badge !== '') {
-            $data['is_bestseller'] = str_contains($badge, 'BEST');
-            $data['is_new_arrival'] = str_contains($badge, 'NEW');
-            $data['is_featured'] = str_contains($badge, 'LIMITED') || ($data['is_bestseller'] ?? false);
+        if ($product) {
+            unset(
+                $data['sold_count'],
+                $data['tax_note'],
+                $data['estimated_delivery'],
+                $data['return_eligible'],
+                $data['return_days'],
+                $data['cod_available'],
+                $data['min_order_qty'],
+                $data['care_instructions'],
+                $data['shipping_information'],
+                $data['return_policy'],
+                $data['published_at'],
+                $data['barcode'],
+                $data['subcategory_id'],
+                $data['brand_id'],
+                $data['cost_price'],
+                $data['tax_rate_id'],
+                $data['hsn_sac'],
+                $data['max_order_qty'],
+                $data['purity'],
+                $data['certification'],
+                $data['length'],
+                $data['width'],
+                $data['height'],
+                $data['dimensions_text'],
+                $data['video_url'],
+                $data['seo_title'],
+                $data['seo_description'],
+                $data['seo_keywords'],
+                $data['warranty'],
+                $data['shipping_class_id'],
+                $data['tags'],
+                $data['related_products'],
+                $data['frequently_bought_together']
+            );
+        } else {
+            $data['min_order_qty'] = $data['min_order_qty'] ?? 1;
+            $data['tax_note'] = filled($data['tax_note'] ?? null) ? $data['tax_note'] : 'Inclusive of all taxes';
+            $data['estimated_delivery'] = filled($data['estimated_delivery'] ?? null) ? $data['estimated_delivery'] : '3–5 business days';
+            $data['return_eligible'] = (bool) ($data['return_eligible'] ?? true);
+            $data['return_days'] = $data['return_days'] ?? 15;
+            $data['cod_available'] = (bool) ($data['cod_available'] ?? true);
+            $data['sold_count'] = max(0, (int) ($data['sold_count'] ?? 0));
+            $data['published_at'] = now();
         }
 
         $collectionIds = array_values(array_filter(array_map('intval', $data['collections'] ?? [])));
         if ($collectionIds !== []) {
             $slugs = Collection::query()->whereIn('id', $collectionIds)->pluck('slug');
-            $data['is_new_arrival'] = $slugs->contains('new-arrivals') || ($data['is_new_arrival'] ?? false);
+            $data['is_new_arrival'] = $slugs->contains('new-arrivals') || $data['is_new_arrival'];
         }
 
         if ($request->hasFile('main_image') && $request->file('main_image')->isValid()) {
@@ -281,11 +313,6 @@ class ProductController extends AdminController
 
         $data['gallery_images'] = array_values(array_unique($gallery));
         unset($data['keep_gallery'], $data['remove_main_image'], $data['gallery_sync']);
-
-        $data['sold_count'] = max(0, (int) ($data['sold_count'] ?? 0));
-        $data['care_instructions'] = filled($data['care_instructions'] ?? null) ? trim((string) $data['care_instructions']) : null;
-        $data['shipping_information'] = filled($data['shipping_information'] ?? null) ? trim((string) $data['shipping_information']) : null;
-        $data['return_policy'] = filled($data['return_policy'] ?? null) ? trim((string) $data['return_policy']) : null;
 
         return $data;
     }

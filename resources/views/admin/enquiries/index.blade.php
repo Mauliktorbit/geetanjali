@@ -28,6 +28,7 @@
     @if ($tab === 'subscriptions')
         <form method="GET" class="filters-bar product-list-filters">
             <input type="hidden" name="tab" value="subscriptions">
+            @include('admin.components.sort-fields')
             <input type="text" name="search" value="{{ request('search') }}" class="form-control" placeholder="Search email">
             <button class="btn btn-secondary" type="submit">Search</button>
             @if (request('search'))
@@ -39,8 +40,8 @@
             <table class="data-table">
                 <thead>
                     <tr>
-                        <th>Email</th>
-                        <th>Date</th>
+                        @include('admin.components.sortable-th', ['column' => 'email', 'label' => 'Email'])
+                        @include('admin.components.sortable-th', ['column' => 'date', 'label' => 'Date', 'default' => 'desc'])
                         <th class="col-actions">Actions</th>
                     </tr>
                 </thead>
@@ -76,6 +77,7 @@
                     <option value="{{ $key }}" @selected(request('status') === $key)>{{ $label }}</option>
                 @endforeach
             </select>
+            @include('admin.components.sort-fields')
             <button class="btn btn-secondary" type="submit">Filter</button>
             @if (request()->hasAny(['search', 'status']))
                 <a href="{{ route('admin.enquiries.index') }}" class="btn btn-ghost">Clear</a>
@@ -86,11 +88,11 @@
             <table class="data-table">
                 <thead>
                     <tr>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Phone</th>
+                        @include('admin.components.sortable-th', ['column' => 'name', 'label' => 'Name'])
+                        @include('admin.components.sortable-th', ['column' => 'email', 'label' => 'Email'])
+                        @include('admin.components.sortable-th', ['column' => 'phone', 'label' => 'Phone'])
                         <th>Message</th>
-                        <th>Date</th>
+                        @include('admin.components.sortable-th', ['column' => 'date', 'label' => 'Date', 'default' => 'desc'])
                         <th class="col-actions">Actions</th>
                     </tr>
                 </thead>

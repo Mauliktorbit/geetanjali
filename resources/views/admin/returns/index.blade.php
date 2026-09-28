@@ -18,6 +18,7 @@
                 <option value="{{ $key }}" @selected(request('status') === $key)>{{ $label }}</option>
             @endforeach
         </select>
+        @include('admin.components.sort-fields')
         <button class="btn btn-secondary" type="submit">Filter</button>
         @if (request()->hasAny(['search', 'status']))
             <a href="{{ route('admin.returns.index') }}" class="btn btn-ghost">Clear</a>
@@ -28,12 +29,12 @@
         <table class="data-table">
             <thead>
                 <tr>
-                    <th>Return</th>
+                    @include('admin.components.sortable-th', ['column' => 'return', 'label' => 'Return', 'default' => 'desc'])
                     <th>Product</th>
-                    <th>Order</th>
-                    <th>Customer</th>
-                    <th>Status</th>
-                    <th>Amount</th>
+                    @include('admin.components.sortable-th', ['column' => 'order', 'label' => 'Order'])
+                    @include('admin.components.sortable-th', ['column' => 'customer', 'label' => 'Customer'])
+                    @include('admin.components.sortable-th', ['column' => 'status', 'label' => 'Status'])
+                    @include('admin.components.sortable-th', ['column' => 'amount', 'label' => 'Amount', 'default' => 'desc'])
                     <th class="col-actions">Actions</th>
                 </tr>
             </thead>

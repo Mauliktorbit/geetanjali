@@ -47,8 +47,8 @@
                 <thead>
                     <tr>
                         <th><input type="checkbox" data-check-all></th>
-                    <th>Title</th>
-                    <th>Slug</th>
+                    <th data-sort="title">Title</th>
+                    <th data-sort="slug">Slug</th>
                     <th>Type</th>
                     <th>Content</th>
                     <th>Seo Title</th>

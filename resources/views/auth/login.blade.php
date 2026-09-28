@@ -12,7 +12,7 @@
                 @include('frontend.components.gold-divider', ['align' => 'center'])
 
                 @if (str_contains((string) session('url.intended'), '/checkout'))
-                    <div class="auth-alert auth-alert--success" role="status">
+                    <div class="auth-alert auth-alert--success" role="status" data-auth-persist>
                         Please sign in to continue to checkout.
                     </div>
                 @endif
@@ -26,12 +26,6 @@
                 @if (session('error'))
                     <div class="auth-alert" role="alert">
                         {{ session('error') }}
-                    </div>
-                @endif
-
-                @if ($errors->any())
-                    <div class="auth-alert" role="alert">
-                        {{ $errors->first() }}
                     </div>
                 @endif
 
@@ -76,7 +70,7 @@
                         <div class="auth-forgot">
                             <label class="auth-remember">
                                 <input type="checkbox" name="remember" value="1" @checked(old('remember', true))>
-                                Remember me
+                                Keep me signed in for 1 week
                             </label>
                             <a href="{{ route('password.request') }}">Forgot Password?</a>
                         </div>

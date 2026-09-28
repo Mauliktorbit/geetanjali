@@ -36,7 +36,7 @@
                         <div class="hero-slide__overlay" aria-hidden="true"></div>
 
                         <div class="hero-slide__content">
-                            <div class="container">
+                            <div class="site-container">
                                 <div class="hero-slide__copy">
                                     @if (!empty($slide['kicker']))
                                         <span class="hero-kicker">{{ $slide['kicker'] }}</span>

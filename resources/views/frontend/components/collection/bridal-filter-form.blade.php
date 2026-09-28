@@ -6,11 +6,12 @@
     'listingUrl' => null,
     'showBridalSets' => true,
     'filterCounts' => [],
+    'collectionSlug' => null,
 ])
 
 @php
     $view = $filters['view'] ?? 'grid';
-    $categoryOptions = $categoryOptions ?? \App\Services\StorefrontCatalogService::jewelleryTypeOptions();
+    $categoryOptions = $categoryOptions ?? \App\Services\StorefrontCatalogService::jewelleryTypeOptions($collectionSlug);
     $listingUrl = $listingUrl ?? route('collections.bridal');
     $typeCounts = $filterCounts['type'] ?? [];
     $metalCounts = $filterCounts['metal'] ?? [];
@@ -31,30 +32,24 @@
 >
     <div class="bridal-filter-form__filters">
         <label class="visually-hidden" for="{{ $formId }}-category">Category</label>
-        <select id="{{ $formId }}-category" name="category" class="bridal-select" @if ($compact) data-auto-submit onchange="this.form.dataset.listingSubmitting='1'; this.form.submit()" @endif>
+        <select id="{{ $formId }}-category" name="category" class="bridal-select" @if ($compact) data-auto-submit @endif>
             <option value="" @selected($selectedCategory === '')>All Categories{{ $listingTotal > 0 ? ' ('.$listingTotal.')' : '' }}</option>
             @if ($showBridalSets && ($bridalSetsCount > 0 || $selectedCategory === 'bridal-sets'))
                 <option value="bridal-sets" @selected($selectedCategory === 'bridal-sets')>Bridal Sets ({{ $bridalSetsCount }})</option>
             @endif
             @foreach ($categoryOptions as $key => $label)
                 @php $count = (int) ($typeCounts[$key] ?? 0); @endphp
-                @if ($key === 'sets')
-                    @if (! $showBridalSets && ($count > 0 || $selectedCategory === 'sets'))
-                        <option value="sets" @selected($selectedCategory === 'sets')>{{ $label }} ({{ $count }})</option>
-                    @endif
+                @if ($showBridalSets && $key === 'sets')
                     @continue
                 @endif
                 @if ($count > 0 || $selectedCategory === $key)
                     <option value="{{ $key }}" @selected($selectedCategory === $key)>{{ $label }} ({{ $count }})</option>
                 @endif
             @endforeach
-            @if (! $showBridalSets && ! isset($categoryOptions['sets']) && (((int) ($typeCounts['sets'] ?? 0)) > 0 || $selectedCategory === 'sets'))
-                <option value="sets" @selected($selectedCategory === 'sets')>Sets ({{ (int) ($typeCounts['sets'] ?? 0) }})</option>
-            @endif
         </select>
 
         <label class="visually-hidden" for="{{ $formId }}-metal">Finish</label>
-        <select id="{{ $formId }}-metal" name="metal" class="bridal-select" @if ($compact) data-auto-submit onchange="this.form.dataset.listingSubmitting='1'; this.form.submit()" @endif>
+        <select id="{{ $formId }}-metal" name="metal" class="bridal-select" @if ($compact) data-auto-submit @endif>
             <option value="" @selected(($filters['metal'] ?? '') === '')>All Finishes</option>
             @foreach (\App\Services\StorefrontCatalogService::METAL_LABELS as $key => $label)
                 @php $count = (int) ($metalCounts[$key] ?? 0); @endphp
@@ -65,7 +60,7 @@
         </select>
 
         <label class="visually-hidden" for="{{ $formId }}-stone">Stone</label>
-        <select id="{{ $formId }}-stone" name="stone" class="bridal-select" @if ($compact) data-auto-submit onchange="this.form.dataset.listingSubmitting='1'; this.form.submit()" @endif>
+        <select id="{{ $formId }}-stone" name="stone" class="bridal-select" @if ($compact) data-auto-submit @endif>
             <option value="" @selected(($filters['stone'] ?? '') === '')>All Stones</option>
             @foreach (['kundan' => 'Kundan', 'emerald' => 'Emerald', 'ruby' => 'Ruby', 'diamond' => 'Diamond', 'pearl' => 'Pearl'] as $key => $label)
                 @php $count = (int) ($stoneCounts[$key] ?? 0); @endphp
@@ -76,7 +71,7 @@
         </select>
 
         <label class="visually-hidden" for="{{ $formId }}-price">Price range</label>
-        <select id="{{ $formId }}-price" name="price" class="bridal-select" @if ($compact) data-auto-submit onchange="this.form.dataset.listingSubmitting='1'; this.form.submit()" @endif>
+        <select id="{{ $formId }}-price" name="price" class="bridal-select" @if ($compact) data-auto-submit @endif>
             <option value="" @selected(($filters['price'] ?? '') === '')>Price Range</option>
             <option value="under-50000" @selected(($filters['price'] ?? '') === 'under-50000')>Under ₹50,000</option>
             <option value="50000-100000" @selected(($filters['price'] ?? '') === '50000-100000')>₹50,000 – ₹1,00,000</option>
@@ -89,7 +84,7 @@
         @if ($showSort)
             <div class="bridal-sort">
                 <label for="{{ $formId }}-sort">Sort By:</label>
-                <select id="{{ $formId }}-sort" name="sort" class="bridal-select bridal-select--sort" data-auto-submit onchange="this.form.dataset.listingSubmitting='1'; this.form.submit()">
+                <select id="{{ $formId }}-sort" name="sort" class="bridal-select bridal-select--sort" data-auto-submit>
                     <option value="featured" @selected(($filters['sort'] ?? '') === 'featured')>Featured</option>
                     <option value="newest" @selected(($filters['sort'] ?? '') === 'newest')>Newest</option>
                     <option value="price_low" @selected(($filters['sort'] ?? '') === 'price_low')>Price: Low to High</option>

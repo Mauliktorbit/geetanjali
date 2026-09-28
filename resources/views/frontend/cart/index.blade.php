@@ -24,7 +24,7 @@
                     @include('frontend.components.gold-divider', ['align' => 'left'])
                     <p class="cart-header__sub">Review your items and proceed to checkout.</p>
                 </div>
-                <a href="{{ route('products.new-arrivals') }}" class="cart-continue">
+                <a href="{{ route('products.new-arrivals') }}" class="cart-continue" data-storefront-back>
                     <i class="bi bi-arrow-left" aria-hidden="true"></i>
                     Continue Shopping
                 </a>
@@ -41,7 +41,7 @@
                 <div class="cart-empty">
                     <h2 class="font-heading">Your cart is empty</h2>
                     <p>Discover our latest jewellery collections and add pieces you love.</p>
-                    <a href="{{ route('products.new-arrivals') }}" class="cart-btn cart-btn--primary">Continue Shopping</a>
+                    <a href="{{ route('products.new-arrivals') }}" class="cart-btn cart-btn--primary" data-storefront-back>Continue Shopping</a>
                 </div>
                 @include('frontend.components.product.related', [
                     'products' => $recentlyViewed ?? [],

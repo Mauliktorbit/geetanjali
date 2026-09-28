@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\AdminNotification;
 use App\Models\Order;
+use App\Models\Product;
 use App\Models\ReturnRequest;
 use App\Models\User;
 use Illuminate\Support\Collection;
@@ -17,7 +18,7 @@ class NotificationService
      */
     public static function alertTypes(): array
     {
-        return ['order_created', 'return_requested', 'enquiry_created', 'newsletter_subscribed', 'review_created'];
+        return ['order_created', 'return_requested', 'enquiry_created', 'newsletter_subscribed', 'review_created', 'low_stock'];
     }
 
     public function notifyAdmins(
@@ -157,6 +158,34 @@ class NotificationService
         ]);
     }
 
+    public function notifyLowStock(int $productId, int $available, int $limit): void
+    {
+        if ($this->hasOpenLowStockAlert($productId)) {
+            return;
+        }
+
+        $product = Product::query()->find($productId);
+        $name = $product?->name ?: 'A product';
+        $sku = $product?->sku;
+        $pieces = $available <= 0 ? 'out of stock' : $available.' left';
+        $message = $name.' is '.$pieces.' (low-stock limit '.$limit.').';
+        if ($sku) {
+            $message .= ' · '.$sku;
+        }
+
+        $this->notifyAdmins(
+            'low_stock',
+            'Low stock alert',
+            $message,
+            $this->inventoryLink($productId),
+            [
+                'product_id' => $productId,
+                'available' => $available,
+                'limit' => $limit,
+            ]
+        );
+    }
+
     public function notifyStockEvent(string $event, int $productId, string $title, ?string $message = null): void
     {
         $link = Route::has('admin.products.show') ? route('admin.products.show', $productId) : url('admin/products/'.$productId);
@@ -194,6 +223,21 @@ class NotificationService
                 'is_read' => true,
                 'read_at' => now(),
             ]);
+    }
+
+    public function belongsToUser(AdminNotification $notification, ?int $userId): bool
+    {
+        return $notification->user_id === null || (int) $notification->user_id === (int) $userId;
+    }
+
+    public function clear(AdminNotification $notification): bool
+    {
+        return (bool) $notification->delete();
+    }
+
+    public function clearAll(?int $userId = null): int
+    {
+        return $this->queryFor($userId)->delete();
     }
 
     public function queryFor(?int $userId)
@@ -237,6 +281,22 @@ class NotificationService
             'items' => $items->map(fn (AdminNotification $row) => $row->toFeed())->values()->all(),
             'alerts' => $this->unreadAlerts($userId)->map(fn (AdminNotification $row) => $row->toFeed())->values()->all(),
         ];
+    }
+
+    protected function hasOpenLowStockAlert(int $productId): bool
+    {
+        return AdminNotification::query()
+            ->where('type', 'low_stock')
+            ->where('is_read', false)
+            ->get()
+            ->contains(fn (AdminNotification $row) => (int) data_get($row->data, 'product_id') === $productId);
+    }
+
+    protected function inventoryLink(int $productId): string
+    {
+        return Route::has('admin.inventory.show')
+            ? route('admin.inventory.show', $productId)
+            : url('admin/inventory/view/'.$productId);
     }
 
     protected function orderLink(int $orderId): string

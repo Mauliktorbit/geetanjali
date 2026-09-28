@@ -5,8 +5,8 @@
     $showNewCategory = $category === '__new__' || $categories->isEmpty();
     $label = old('label', $item?->label ?? 'Flat');
     $theme = old('theme', $item?->theme ?? 'dark');
-    $starts = old('starts_at', $item?->starts_at?->format('d/m/Y') ?: now()->format('d/m/Y'));
-    $ends = old('ends_at', $item?->ends_at?->format('d/m/Y'));
+    $starts = old('starts_at', $item?->starts_at?->format('Y-m-d') ?: now()->format('Y-m-d'));
+    $ends = old('ends_at', $item?->ends_at?->format('Y-m-d'));
     $currentPhotoUrl = (! old('remove_image') && $item?->image) ? storefront_image($item->image) : null;
 @endphp
 
@@ -85,12 +85,13 @@
                 <label for="offer-min">Minimum order (₹)</label>
                 <input
                     id="offer-min"
-                    type="number"
+                    type="text"
                     name="minimum_order"
                     class="form-control @error('minimum_order') is-invalid @enderror"
-                    value="{{ old('minimum_order', $item?->minimum_order ?? '') }}"
-                    min="0"
-                    step="1"
+                    value="{{ old('minimum_order', $item?->minimum_order !== null ? (int) $item->minimum_order : '') }}"
+                    inputmode="numeric"
+                    data-input-kind="integer"
+                    autocomplete="off"
                     placeholder="5000"
                 >
                 <span class="form-hint">Leave blank if there is no minimum. Shown as “Min. order ₹5,000”.</span>
@@ -184,17 +185,13 @@
                 <label for="offer-starts">Starts</label>
                 <input
                     id="offer-starts"
-                    type="text"
+                    type="date"
                     name="starts_at"
                     class="form-control @error('starts_at') is-invalid @enderror"
                     value="{{ $starts }}"
-                    inputmode="numeric"
-                    maxlength="10"
-                    placeholder="DD/MM/YYYY"
-                    data-input-kind="datedmy"
                     autocomplete="off"
                 >
-                <span class="form-hint">Example: 17/09/2026</span>
+                <span class="form-hint">Pick the first day this offer should show.</span>
                 @error('starts_at')<span class="invalid-feedback">{{ $message }}</span>@enderror
             </div>
 
@@ -202,17 +199,14 @@
                 <label for="offer-ends">Valid till</label>
                 <input
                     id="offer-ends"
-                    type="text"
+                    type="date"
                     name="ends_at"
                     class="form-control @error('ends_at') is-invalid @enderror"
                     value="{{ $ends }}"
-                    inputmode="numeric"
-                    maxlength="10"
-                    placeholder="DD/MM/YYYY"
-                    data-input-kind="datedmy"
+                    min="{{ $starts }}"
                     autocomplete="off"
                 >
-                <span class="form-hint">Example: 26/12/2026. Leave blank for no end date.</span>
+                <span class="form-hint">Leave blank if the offer has no end date.</span>
                 @error('ends_at')<span class="invalid-feedback">{{ $message }}</span>@enderror
             </div>
 
@@ -363,17 +357,29 @@
     var suffixInput = document.getElementById('offer-suffix');
     var titleInput = document.getElementById('offer-title');
     var minInput = document.getElementById('offer-min');
+    var startsInput = document.getElementById('offer-starts');
     var endsInput = document.getElementById('offer-ends');
     var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
     function formatUntil(value) {
-        var parts = String(value || '').split('/');
-        if (parts.length !== 3) {
-            return 'Limited period';
+        var raw = String(value || '');
+        var day;
+        var month;
+        var year;
+        if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+            var iso = raw.split('-');
+            year = parseInt(iso[0], 10);
+            month = parseInt(iso[1], 10) - 1;
+            day = parseInt(iso[2], 10);
+        } else {
+            var parts = raw.split('/');
+            if (parts.length !== 3) {
+                return 'Limited period';
+            }
+            day = parseInt(parts[0], 10);
+            month = parseInt(parts[1], 10) - 1;
+            year = parseInt(parts[2], 10);
         }
-        var day = parseInt(parts[0], 10);
-        var month = parseInt(parts[1], 10) - 1;
-        var year = parseInt(parts[2], 10);
         if (!day || month < 0 || month > 11 || !year) {
             return 'Limited period';
         }
@@ -426,8 +432,19 @@
     [discountInput, suffixInput, titleInput, minInput, endsInput].forEach(function (input) {
         if (input) {
             input.addEventListener('input', syncPreview);
+            input.addEventListener('change', syncPreview);
         }
     });
+    if (startsInput && endsInput) {
+        startsInput.addEventListener('change', function () {
+            if (startsInput.value) {
+                endsInput.min = startsInput.value;
+            } else {
+                endsInput.removeAttribute('min');
+            }
+            syncPreview();
+        });
+    }
     syncPreview();
 })();
 </script>

@@ -19,9 +19,10 @@ class PageController extends Controller
     public function __construct(private readonly PolicyPageService $policies)
     {
         $brand = config('brand.name');
-        $phone = config('brand.contact.phone');
-        $email = config('brand.contact.email');
-        $address = config('brand.contact.address');
+        $contact = storefront_contact();
+        $phone = $contact['phone'];
+        $email = $contact['email'];
+        $address = $contact['address'];
 
         $this->pages = [
             'faq' => [

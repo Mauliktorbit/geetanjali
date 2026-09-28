@@ -17,9 +17,11 @@
         'initProductMedia',
         'initCollectionChecks',
         'initStockFields',
+        'initProductFormTabs',
         'initUnsavedGuard',
         'initFormLoading',
         'initFilterDropdowns',
+        'initTableSort',
         'initCharts',
         'initAlertDismiss',
         'initNotifications',
@@ -566,24 +568,59 @@
       });
     },
 
+    initProductFormTabs() {
+      const root = document.querySelector('[data-product-form]');
+      if (!root) return;
+      const tabs = Array.from(root.querySelectorAll('[data-product-tab]'));
+      const panels = Array.from(root.querySelectorAll('[data-product-panel]'));
+      if (!tabs.length || !panels.length) return;
+
+      const show = (id) => {
+        tabs.forEach((tab) => {
+          const active = tab.getAttribute('data-product-tab') === id;
+          tab.classList.toggle('is-active', active);
+          tab.setAttribute('aria-selected', active ? 'true' : 'false');
+        });
+        panels.forEach((panel) => panel.classList.toggle('is-active', panel.getAttribute('data-product-panel') === id));
+      };
+
+      tabs.forEach((tab) => {
+        const id = tab.getAttribute('data-product-tab');
+        const panel = root.querySelector('[data-product-panel="' + id + '"]');
+        if (panel && panel.querySelector('.is-invalid, .invalid-feedback')) {
+          tab.classList.add('has-error');
+        }
+        tab.addEventListener('click', () => show(id));
+      });
+
+      const form = root.closest('form');
+      if (form) {
+        form.addEventListener('invalid', (event) => {
+          const panel = event.target.closest('[data-product-panel]');
+          if (panel) show(panel.getAttribute('data-product-panel'));
+        }, true);
+      }
+
+      const invalid = root.querySelector('.is-invalid, .invalid-feedback');
+      const errorPanel = invalid && invalid.closest('[data-product-panel]');
+      if (errorPanel) {
+        show(errorPanel.getAttribute('data-product-panel'));
+      }
+    },
+
     initUnsavedGuard() {
       document.querySelectorAll('form[data-unsaved-guard]').forEach((form) => {
         let dirty = false;
-        let submitting = false;
 
-        const markDirty = () => {
+        form.addEventListener('input', () => {
           dirty = true;
-        };
-
-        form.addEventListener('input', markDirty);
-        form.addEventListener('change', markDirty);
-        form.addEventListener('submit', () => {
-          submitting = true;
+        });
+        form.addEventListener('change', () => {
+          dirty = true;
         });
 
         const confirmLeave = (href) => {
           const go = () => {
-            submitting = true;
             window.location.href = href;
           };
           if (window.Swal) {
@@ -615,12 +652,6 @@
             confirmLeave(link.href);
           });
         });
-
-        window.addEventListener('beforeunload', (e) => {
-          if (!dirty || submitting) return;
-          e.preventDefault();
-          e.returnValue = '';
-        });
       });
     },
 
@@ -644,6 +675,56 @@
     /* ------------------------------------------------------------------ */
     /* Dropdown filters                                                   */
     /* ------------------------------------------------------------------ */
+    initTableSort() {
+      document.querySelectorAll('.data-table thead th[data-sort]').forEach((th) => {
+        if (th.querySelector('.th-sort')) {
+          return;
+        }
+        const column = (th.getAttribute('data-sort') || '').trim();
+        if (!column) {
+          return;
+        }
+        const params = new URLSearchParams(window.location.search);
+        let current = params.get('sort') || '';
+        let dir = (params.get('direction') || '').toLowerCase();
+        const compact = current.match(/^([a-z0-9_]+)_(asc|desc)$/i);
+        if (compact) {
+          current = compact[1];
+          dir = compact[2].toLowerCase();
+        }
+        const next = current === column && dir === 'asc' ? 'desc' : (current === column && dir === 'desc' ? 'asc' : (th.getAttribute('data-sort-dir') || 'asc'));
+        const url = new URL(window.location.href);
+        url.searchParams.set('sort', column);
+        url.searchParams.set('direction', next);
+        url.searchParams.delete('page');
+        const link = document.createElement('a');
+        link.className = 'th-sort' + (current === column && (dir === 'asc' || dir === 'desc') ? ' is-' + dir : '');
+        link.href = url.toString();
+        const label = (th.textContent || '').trim();
+        link.innerHTML = label + ' <span class="th-sort__icon" aria-hidden="true"></span>';
+        th.textContent = '';
+        th.appendChild(link);
+      });
+
+      document.querySelectorAll('form.filters-bar').forEach((form) => {
+        if (form.querySelector('input[name="sort"]')) {
+          return;
+        }
+        const params = new URLSearchParams(window.location.search);
+        ['sort', 'direction'].forEach((name) => {
+          const value = params.get(name);
+          if (!value) {
+            return;
+          }
+          const input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = name;
+          input.value = value;
+          form.appendChild(input);
+        });
+      });
+    },
+
     initFilterDropdowns() {
       document.querySelectorAll('.filter-dropdown').forEach((wrap) => {
         const btn = wrap.querySelector('.filter-dropdown-btn, [data-filter-toggle]');
@@ -807,30 +888,52 @@
         if (type === 'order_created') {
           return '<svg viewBox="0 0 24 24"><path d="M6 6h15l-1.5 9h-12z"/><path d="M6 6 5 3H2"/><circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/></svg>';
         }
+        if (type === 'low_stock') {
+          return '<svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.3 7 12 12l8.7-5"/><path d="M12 22V12"/></svg>';
+        }
         return '<svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>';
+      };
+
+      const setHeadActions = (items) => {
+        const rows = Array.isArray(items) ? items : [];
+        const readAll = document.querySelector('[data-notify-read-all]');
+        const clearAll = document.querySelector('[data-notify-clear-all]');
+        if (readAll) readAll.hidden = !rows.some((item) => item && !item.read);
+        if (clearAll) clearAll.hidden = rows.length < 1;
       };
 
       const renderList = (items) => {
         const list = document.getElementById('admin-notify-list');
         if (!list) return;
+        setHeadActions(items);
         if (!items || !items.length) {
           list.innerHTML = '<p class="notify-panel__empty">No notifications yet. New orders and returns will appear here.</p>';
           return;
         }
         list.innerHTML = items
           .map((item) => {
-        const kind = item.type === 'return_requested' ? 'return' : item.type === 'order_created' ? 'order' : (item.type === 'enquiry_created' || item.type === 'newsletter_subscribed' ? 'enquiry' : 'info');
-            return `<form method="POST" action="${item.read_url}" data-no-loading>
-              <input type="hidden" name="_token" value="${csrf}">
-              <button type="submit" class="notify-item${item.read ? '' : ' is-unread'}">
-                <span class="notify-item__icon notify-item__icon--${kind}">${iconSvg(item.type)}</span>
-                <span class="notify-item__copy">
-                  <strong></strong>
-                  <small></small>
-                  <em></em>
-                </span>
-              </button>
-            </form>`;
+        const kind = item.type === 'return_requested' ? 'return' : item.type === 'order_created' ? 'order' : (item.type === 'enquiry_created' || item.type === 'newsletter_subscribed' ? 'enquiry' : (item.type === 'low_stock' ? 'stock' : 'info'));
+            const deleteUrl = item.delete_url || '';
+            return `<div class="notify-item-row${item.read ? '' : ' is-unread'}">
+              <form method="POST" action="${item.read_url}" data-no-loading class="notify-item-row__open">
+                <input type="hidden" name="_token" value="${csrf}">
+                <button type="submit" class="notify-item">
+                  <span class="notify-item__icon notify-item__icon--${kind}">${iconSvg(item.type)}</span>
+                  <span class="notify-item__copy">
+                    <strong></strong>
+                    <small></small>
+                    <em></em>
+                  </span>
+                </button>
+              </form>
+              ${deleteUrl ? `<form method="POST" action="${deleteUrl}" data-no-loading class="notify-item-row__clear">
+                <input type="hidden" name="_token" value="${csrf}">
+                <input type="hidden" name="_method" value="DELETE">
+                <button type="submit" class="notify-item__dismiss" title="Clear notification" aria-label="Clear notification" data-confirm="Clear this notification?" data-confirm-danger>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                </button>
+              </form>` : ''}
+            </div>`;
           })
           .join('');
         Array.from(list.querySelectorAll('.notify-item')).forEach((btn, i) => {
@@ -864,7 +967,7 @@
           window.Swal.fire({
             toast: true,
             position: 'top-end',
-            icon: item.type === 'return_requested' ? 'warning' : 'success',
+            icon: item.type === 'return_requested' || item.type === 'low_stock' ? 'warning' : 'success',
             title: item.title,
             text: item.message,
             showConfirmButton: true,

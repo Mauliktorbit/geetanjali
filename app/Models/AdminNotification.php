@@ -62,6 +62,9 @@ class AdminNotification extends Model
             if (! empty($data['enquiry_id']) && \Illuminate\Support\Facades\Route::has('admin.enquiries.show')) {
                 return route('admin.enquiries.show', $data['enquiry_id']);
             }
+            if (! empty($data['product_id']) && \Illuminate\Support\Facades\Route::has('admin.inventory.show')) {
+                return route('admin.inventory.show', $data['product_id']);
+            }
         } catch (\Throwable) {
             // fall through
         }
@@ -95,6 +98,7 @@ class AdminNotification extends Model
             'alert' => $this->isAlert(),
             'time' => $this->timeAgo(),
             'read_url' => route('admin.notifications.read', $this),
+            'delete_url' => route('admin.notifications.destroy', $this),
         ];
     }
 }

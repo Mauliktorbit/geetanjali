@@ -4,9 +4,11 @@ namespace App\Services;
 
 use App\Models\Coupon;
 use App\Models\Customer;
+use App\Models\Offer;
 use App\Models\Order;
 use App\Repositories\CouponRepository;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Model;
 
 class CouponService extends BaseService
 {
@@ -152,6 +154,15 @@ class CouponService extends BaseService
     public function incrementUsage(Coupon $coupon): void
     {
         $coupon->increment('usage_count');
+    }
+
+    public function delete(Model $model): bool
+    {
+        if ($model instanceof Coupon) {
+            Offer::query()->where('coupon_id', $model->id)->update(['coupon_id' => null]);
+        }
+
+        return parent::delete($model);
     }
 
     public function save(array $data, ?Coupon $coupon = null): Coupon

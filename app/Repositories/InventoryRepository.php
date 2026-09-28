@@ -78,8 +78,7 @@ class InventoryRepository extends BaseRepository
         $query = Product::query()
             ->select('products.id', 'products.name', 'products.sku', 'products.main_image', 'products.gallery_images', 'products.category_id')
             ->with('category:id,name,slug')
-            ->selectRaw("{$stockSql} as stock_qty")
-            ->orderBy('name');
+            ->selectRaw("{$stockSql} as stock_qty");
 
         if (! empty($filters['search'])) {
             $search = $filters['search'];
@@ -90,14 +89,47 @@ class InventoryRepository extends BaseRepository
         }
 
         $status = (string) ($filters['status'] ?? '');
+        $lowLimit = (int) \App\Services\InventoryService::lowStockThreshold();
         if ($status === 'out') {
             $query->whereRaw("{$stockSql} <= 0");
         } elseif ($status === 'low') {
-            $query->whereRaw("{$stockSql} > 0 and {$stockSql} <= 5");
+            $query->whereRaw("{$stockSql} > 0 and {$stockSql} <= {$lowLimit}");
         } elseif ($status === 'in') {
-            $query->whereRaw("{$stockSql} > 5");
+            $query->whereRaw("{$stockSql} > {$lowLimit}");
         }
 
+        $this->applyProductSort($query, $stockSql, (string) ($filters['sort'] ?? 'name_asc'));
+
         return $query->paginate($filters['per_page'] ?? $perPage)->withQueryString();
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public static function productSortOptions(): array
+    {
+        return [
+            'name_asc' => 'Product name A to Z',
+            'name_desc' => 'Product name Z to A',
+            'stock_asc' => 'Stock: Low to High',
+            'stock_desc' => 'Stock: High to Low',
+            'status_in' => 'Status: In Stock first',
+            'status_out' => 'Status: Out of Stock first',
+        ];
+    }
+
+    protected function applyProductSort(Builder $query, string $stockSql, string $sort): void
+    {
+        $sort = array_key_exists($sort, self::productSortOptions()) ? $sort : 'name_asc';
+        $statusRank = "case when {$stockSql} > 5 then 1 when {$stockSql} > 0 then 2 else 3 end";
+
+        match ($sort) {
+            'name_desc' => $query->orderBy('products.name', 'desc'),
+            'stock_asc' => $query->orderByRaw("{$stockSql} asc")->orderBy('products.name'),
+            'stock_desc' => $query->orderByRaw("{$stockSql} desc")->orderBy('products.name'),
+            'status_in' => $query->orderByRaw("{$statusRank} asc")->orderBy('products.name'),
+            'status_out' => $query->orderByRaw("{$statusRank} desc")->orderBy('products.name'),
+            default => $query->orderBy('products.name'),
+        };
     }
 }

@@ -12,13 +12,13 @@
     $displayPhone = $phone
         ? (str_starts_with((string) $phone, '+') ? $phone : '+91 '.$phone)
         : 'Not added';
-    $expressCharge = $shippingOptions['express']['charge'];
+    $firstShipping = array_key_first($shippingOptions);
+    $firstCharge = $firstShipping ? (float) $shippingOptions[$firstShipping]['charge'] : 0;
 @endphp
 <div
     class="checkout-page"
     data-checkout-page
     data-base-total="{{ $cart['total'] }}"
-    data-express-charge="{{ $expressCharge }}"
 >
     @include('frontend.components.breadcrumb', ['items' => $breadcrumb])
 
@@ -111,16 +111,25 @@
                     <div class="checkout-card__head">
                         <h2 class="font-heading">Delivery Method</h2>
                     </div>
-                    @foreach ($shippingOptions as $key => $option)
-                        <label class="method-card {{ $key === 'standard' ? 'is-selected' : '' }}">
-                            <input type="radio" name="shipping_method" value="{{ $key }}" @checked($key === 'standard') data-shipping-option>
+                    @forelse ($shippingOptions as $key => $option)
+                        <label class="method-card {{ $key === $firstShipping ? 'is-selected' : '' }}">
+                            <input
+                                type="radio"
+                                name="shipping_method"
+                                value="{{ $key }}"
+                                @checked($key === $firstShipping)
+                                data-shipping-option
+                                data-shipping-charge="{{ $option['charge'] }}"
+                            >
                             <span class="address-card__radio" aria-hidden="true"></span>
                             <span class="method-card__copy">
-                                <strong>{{ $option['label'] }} — ₹{{ number_format($option['charge']) }}</strong>
+                                <strong>{{ $option['label'] }} — {{ (float) $option['charge'] > 0 ? '₹'.number_format($option['charge']) : 'Free' }}</strong>
                                 <small>Delivery in {{ $option['eta'] }}</small>
                             </span>
                         </label>
-                    @endforeach
+                    @empty
+                        <p class="checkout-empty">Delivery options are being updated. Please try again shortly.</p>
+                    @endforelse
                 </section>
 
                 {{-- 4. Payment --}}
@@ -187,8 +196,8 @@
                     <div class="checkout-totals">
                         <div><span>Subtotal</span><strong>₹{{ number_format($cart['subtotal']) }}</strong></div>
                         <div class="is-discount"><span>Discount</span><strong>- ₹{{ number_format($cart['discount']) }}</strong></div>
-                        <div><span>Shipping</span><strong data-shipping-label>{{ $cart['shipping'] > 0 ? '₹'.number_format($cart['shipping']) : '₹0' }}</strong></div>
-                        <div class="is-total"><span>Total</span><strong data-order-total>₹{{ number_format($cart['total']) }}</strong></div>
+                        <div><span>Shipping</span><strong data-shipping-label>{{ $firstCharge > 0 ? '₹'.number_format($firstCharge) : 'Free' }}</strong></div>
+                        <div class="is-total"><span>Total</span><strong data-order-total>₹{{ number_format($cart['total'] + $firstCharge) }}</strong></div>
                     </div>
 
                     @if ($cart['savings'] > 0)

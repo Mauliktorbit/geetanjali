@@ -23,6 +23,7 @@
                     'emptyMessage' => 'No new arrivals match your filters.',
                     'formPrefix' => 'new-arrivals',
                     'showBridalSets' => false,
+                    'collectionSlug' => 'new-arrivals',
                 ])
             </div>
         </section>

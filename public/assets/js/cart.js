@@ -58,6 +58,18 @@ async function postJson(url, body, csrf) {
     return res.json();
 }
 
+function promptRemoveItem(row) {
+    const form = row.querySelector('[data-remove-form]');
+    if (!form) return;
+
+    if (typeof form.requestSubmit === 'function') {
+        form.requestSubmit();
+        return;
+    }
+
+    form.querySelector('button[type="submit"]')?.click();
+}
+
 function initQty(page, updateUrl, csrf) {
     page.querySelectorAll('[data-cart-item]').forEach((row) => {
         const input = row.querySelector('[data-qty-input]');
@@ -79,23 +91,53 @@ function initQty(page, updateUrl, csrf) {
             }
         };
 
-        minus?.addEventListener('click', () => sync(Number(input.value || 1) - 1));
+        minus?.addEventListener('click', () => {
+            const current = Number(input.value || 1);
+            if (current <= 1) {
+                promptRemoveItem(row);
+                return;
+            }
+            sync(current - 1);
+        });
         plus?.addEventListener('click', () => sync(Number(input.value || 1) + 1));
-        input?.addEventListener('change', () => sync(Number(input.value || 1)));
+        input?.addEventListener('change', () => {
+            const next = Number(input.value || 1);
+            if (next < 1) {
+                input.value = '1';
+                promptRemoveItem(row);
+                return;
+            }
+            sync(next);
+        });
     });
 }
 
 function initRemove(page) {
+    const csrf = page.dataset.csrf || document.querySelector('meta[name="csrf-token"]')?.content || '';
+
     page.querySelectorAll('[data-remove-form]').forEach((form) => {
         form.addEventListener('submit', async (e) => {
-            if (form.dataset.swalConfirmed === '1') return;
             e.preventDefault();
             const ok = window.AppAlert
                 ? await window.AppAlert.confirm('Remove this item from your cart?', form)
                 : window.confirm('Remove this item from your cart?');
             if (!ok) return;
-            form.dataset.swalConfirmed = '1';
-            form.submit();
+
+            try {
+                await fetch(form.action, {
+                    method: 'POST',
+                    headers: {
+                        Accept: 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': csrf,
+                    },
+                    body: new FormData(form),
+                });
+            } catch {
+                // Reload anyway so the cart matches the server.
+            }
+
+            window.location.reload();
         });
     });
 }

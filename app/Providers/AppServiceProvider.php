@@ -59,7 +59,7 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        Auth::guard('web')->setRememberDuration(525600);
+        Auth::guard('web')->setRememberDuration((int) config('auth.session_timeout_minutes', 10080));
 
         View::share('brandName', config('brand.name'));
         View::share('brandTagline', config('brand.tagline'));

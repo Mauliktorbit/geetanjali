@@ -120,6 +120,9 @@ Route::name('admin.')->group(function () {
         // Inventory
         Route::get('inventory', [InventoryController::class, 'index'])->name('inventory.index');
         Route::get('inventory/view/{product}', [InventoryController::class, 'show'])->name('inventory.show');
+        Route::get('inventory/bulk', [InventoryController::class, 'bulkForm'])->name('inventory.bulk');
+        Route::post('inventory/bulk', [InventoryController::class, 'bulkSave'])->name('inventory.bulk.store');
+        Route::post('inventory/bulk-selected', [InventoryController::class, 'bulkSelected'])->name('inventory.bulk.selected');
         Route::get('inventory/adjust/{product?}', [InventoryController::class, 'adjustForm'])->name('inventory.adjust');
         Route::post('inventory/adjust', [InventoryController::class, 'adjust'])->name('inventory.adjust.store');
         Route::get('inventory/transfer', [InventoryController::class, 'transferForm'])->name('inventory.transfer');
@@ -200,8 +203,10 @@ Route::name('admin.')->group(function () {
         // Notifications & audit
         Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
         Route::get('notifications/feed', [NotificationController::class, 'feed'])->name('notifications.feed');
-        Route::post('notifications/{notification}/read', [NotificationController::class, 'markRead'])->name('notifications.read');
         Route::post('notifications/read-all', [NotificationController::class, 'markAllRead'])->name('notifications.read-all');
+        Route::delete('notifications/clear-all', [NotificationController::class, 'destroyAll'])->name('notifications.destroy-all');
+        Route::post('notifications/{notification}/read', [NotificationController::class, 'markRead'])->name('notifications.read');
+        Route::delete('notifications/{notification}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
         Route::get('audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
 
         // Backups

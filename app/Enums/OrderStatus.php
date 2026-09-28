@@ -60,6 +60,37 @@ class OrderStatus
         ];
     }
 
+    /**
+     * Statuses an admin may choose from the current order status.
+     * Website orders start as Confirmed, so New is omitted unless the order is still New.
+     *
+     * @return array<string, string>
+     */
+    public static function adminUpdateLabels(string $status): array
+    {
+        $current = self::simpleKey($status);
+        $labels = self::simpleLabels();
+        $flow = [self::NEW, self::CONFIRMED, self::PACKED, self::SHIPPED, self::DELIVERED];
+        $index = array_search($current, $flow, true);
+
+        $allowed = [];
+        if ($index !== false) {
+            foreach (array_slice($flow, $index) as $key) {
+                $allowed[$key] = $labels[$key];
+            }
+        } elseif (isset($labels[$current])) {
+            $allowed[$current] = $labels[$current];
+        } else {
+            $allowed[$current] = self::label($status);
+        }
+
+        if ($current === self::CANCELLED || in_array($status, self::cancellable(), true)) {
+            $allowed[self::CANCELLED] = $labels[self::CANCELLED];
+        }
+
+        return $allowed;
+    }
+
     public static function simpleKey(string $status): string
     {
         return match ($status) {
@@ -76,9 +107,30 @@ class OrderStatus
         return self::simpleLabels()[self::simpleKey($status)] ?? self::label($status);
     }
 
+    /**
+     * Orders that still need packing or confirmation.
+     *
+     * @return list<string>
+     */
+    public static function pendingKeys(): array
+    {
+        return [self::NEW, self::ON_HOLD, self::CONFIRMED];
+    }
+
+    /**
+     * Statuses that must not count toward sales, AOV, or best sellers.
+     *
+     * @return list<string>
+     */
+    public static function excludedFromSales(): array
+    {
+        return self::filterKeys(self::CANCELLED);
+    }
+
     public static function filterKeys(string $simple): array
     {
         return match ($simple) {
+            'pending' => self::pendingKeys(),
             self::NEW => [self::NEW, self::ON_HOLD],
             self::CONFIRMED => [self::CONFIRMED],
             self::PACKED => [self::PROCESSING, self::PACKED, self::READY_TO_SHIP],

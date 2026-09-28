@@ -13,7 +13,7 @@
 <div class="form-group form-check"><label><input type="checkbox" name="open_in_new_tab" value="1"> New tab</label></div>
 <button class="btn btn-primary">Add item</button>
 </form>
-<table class="data-table mt-4"><thead><tr><th>Title</th><th>URL</th><th>Sort</th><th></th></tr></thead><tbody>
+<table class="data-table mt-4"><thead><tr><th data-sort="title">Title</th><th>URL</th><th>Sort</th><th></th></tr></thead><tbody>
 @forelse($items as $item)
 <tr>
 <form method="POST" action="{{ route('admin.menus.items.update',[$menu,$item]) }}">@csrf @method('PUT')

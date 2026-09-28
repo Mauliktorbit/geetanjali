@@ -8,6 +8,16 @@ use Illuminate\Database\Eloquent\Builder;
 
 class PaymentRepository extends BaseRepository
 {
+    protected array $sortable = [
+        'order' => 'order_id',
+        'customer' => 'customer_id',
+        'method' => 'payment_method',
+        'amount',
+        'date' => 'created_at',
+        'payment_method',
+        'paid_at',
+    ];
+
     protected array $searchable = [
         'transaction_id',
         'payment_method',

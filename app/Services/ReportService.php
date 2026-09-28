@@ -15,7 +15,7 @@ class ReportService
     public function salesReport(array $filters = []): Collection
     {
         $query = Order::query()
-            ->whereNotIn('status', [OrderStatus::CANCELLED]);
+            ->whereNotIn('status', OrderStatus::excludedFromSales());
 
         $this->applyDateFilters($query, $filters);
 
@@ -67,7 +67,7 @@ class ReportService
                 DB::raw('COUNT(DISTINCT order_id) as orders')
             )
             ->whereHas('order', function ($q) use ($filters) {
-                $q->whereNotIn('status', [OrderStatus::CANCELLED]);
+                $q->whereNotIn('status', OrderStatus::excludedFromSales());
                 $this->applyDateFilters($q, $filters);
             });
 
@@ -95,11 +95,11 @@ class ReportService
                 'customers.last_order_at'
             )
             ->withCount(['orders as period_orders' => function ($q) use ($filters) {
-                $q->whereNotIn('status', [OrderStatus::CANCELLED]);
+                $q->whereNotIn('status', OrderStatus::excludedFromSales());
                 $this->applyDateFilters($q, $filters);
             }])
             ->withSum(['orders as period_spent' => function ($q) use ($filters) {
-                $q->whereNotIn('status', [OrderStatus::CANCELLED]);
+                $q->whereNotIn('status', OrderStatus::excludedFromSales());
                 $this->applyDateFilters($q, $filters);
             }], 'grand_total');
 
@@ -116,7 +116,7 @@ class ReportService
     public function profitabilityReport(array $filters = []): Collection
     {
         $orders = Order::query()
-            ->whereNotIn('status', [OrderStatus::CANCELLED]);
+            ->whereNotIn('status', OrderStatus::excludedFromSales());
         $this->applyDateFilters($orders, $filters);
 
         $revenue = (float) (clone $orders)->sum('grand_total');

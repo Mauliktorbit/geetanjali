@@ -690,6 +690,7 @@
     padding: 0.25rem 0;
     color: #555;
 }
+.account-totals .is-discount strong { color: #16803c; }
 .account-totals .is-total {
     margin-top: 0.4rem;
     padding-top: 0.65rem;
@@ -1055,7 +1056,9 @@ body.dr-modal-open { overflow: hidden; }
 .dr-modal__backdrop {
     position: absolute;
     inset: 0;
-    background: rgba(6, 78, 59, 0.48);
+    background: var(--popup-backdrop);
+    backdrop-filter: blur(var(--popup-backdrop-blur));
+    -webkit-backdrop-filter: blur(var(--popup-backdrop-blur));
 }
 
 .dr-modal__panel {

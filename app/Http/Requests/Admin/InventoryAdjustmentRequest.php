@@ -15,7 +15,7 @@ class InventoryAdjustmentRequest extends FormRequest
     {
         return [
             'product_id' => ['required', 'exists:products,id'],
-            'stock' => ['required', 'integer', 'min:0'],
+            'stock_to_add' => ['required', 'integer', 'min:1'],
         ];
     }
 
@@ -23,8 +23,8 @@ class InventoryAdjustmentRequest extends FormRequest
     {
         return [
             'product_id.required' => 'Please choose a product.',
-            'stock.required' => 'Please enter the stock quantity.',
-            'stock.min' => 'Stock cannot be less than 0.',
+            'stock_to_add.required' => 'Please enter how many pieces to add.',
+            'stock_to_add.min' => 'Stock to add must be at least 1.',
         ];
     }
 }

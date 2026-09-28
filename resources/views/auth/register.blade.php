@@ -17,12 +17,6 @@
                     </div>
                 @endif
 
-                @if ($errors->any())
-                    <div class="auth-alert" role="alert">
-                        {{ $errors->first() }}
-                    </div>
-                @endif
-
                 <form
                     method="POST"
                     action="{{ route('register.submit') }}"

@@ -5,6 +5,7 @@
     'formPrefix' => 'bridal',
     'drawerId' => 'bridalFilterDrawer',
     'filterCounts' => [],
+    'collectionSlug' => null,
 ])
 
 @php
@@ -27,7 +28,7 @@
             @endforeach
             <input type="hidden" name="view" value="{{ $filters['view'] ?? 'grid' }}">
             <label class="visually-hidden" for="{{ $formPrefix }}-sort-mobile">Sort by</label>
-            <select id="{{ $formPrefix }}-sort-mobile" name="sort" class="bridal-select" data-auto-submit onchange="this.form.dataset.listingSubmitting='1'; this.form.submit()">
+            <select id="{{ $formPrefix }}-sort-mobile" name="sort" class="bridal-select" data-auto-submit>
                 <option value="featured" @selected(($filters['sort'] ?? '') === 'featured')>Featured</option>
                 <option value="newest" @selected(($filters['sort'] ?? '') === 'newest')>Newest</option>
                 <option value="price_low" @selected(($filters['sort'] ?? '') === 'price_low')>Price: Low to High</option>
@@ -47,6 +48,7 @@
             'listingUrl' => $listingUrl,
             'showBridalSets' => $showBridalSets,
             'filterCounts' => $filterCounts,
+            'collectionSlug' => $collectionSlug,
         ])
     </div>
 </div>

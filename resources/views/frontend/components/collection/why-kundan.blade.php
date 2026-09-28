@@ -3,9 +3,6 @@
 <section class="kundan-why" aria-labelledby="kundan-why-heading">
     <div class="site-container">
         <div class="kundan-why__inner">
-            <span class="kundan-why__floral kundan-why__floral--left" aria-hidden="true"></span>
-            <span class="kundan-why__floral kundan-why__floral--right" aria-hidden="true"></span>
-
             <h2 id="kundan-why-heading" class="font-heading">Why Choose Kundan Jewellery?</h2>
             @include('frontend.components.gold-divider', ['align' => 'center'])
 

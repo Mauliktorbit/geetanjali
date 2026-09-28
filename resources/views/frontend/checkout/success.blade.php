@@ -61,11 +61,16 @@
                     <em>₹{{ number_format((float) $item->total) }}</em>
                 </div>
             @endforeach
+
+            @include('frontend.components.order-totals', [
+                'order' => $order,
+                'shippingLabel' => $shippingLabel,
+            ])
         </div>
 
         <div class="checkout-success__actions">
             <a class="checkout-place" href="{{ route('pages.track-order', ['order_id' => $order->order_number]) }}">Track Order</a>
-            <a class="checkout-place checkout-place--ghost" href="{{ route('products.new-arrivals') }}">Continue Shopping</a>
+            <a class="checkout-place checkout-place--ghost" href="{{ route('products.new-arrivals') }}" data-storefront-back>Continue Shopping</a>
         </div>
     </div>
 </div>

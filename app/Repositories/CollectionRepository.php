@@ -9,6 +9,14 @@ class CollectionRepository extends BaseRepository
 {
     protected array $searchable = ['name'];
 
+    protected array $sortable = [
+        'status' => 'is_active',
+    ];
+
+    protected string $defaultSort = 'sort_order';
+
+    protected string $defaultDirection = 'asc';
+
     public function __construct(Collection $model)
     {
         parent::__construct($model);
@@ -19,8 +27,4 @@ class CollectionRepository extends BaseRepository
         return $this->model->newQuery();
     }
 
-    protected function applySorting(Builder $query, array $filters): void
-    {
-        $query->orderBy('sort_order')->orderBy('name');
-    }
 }

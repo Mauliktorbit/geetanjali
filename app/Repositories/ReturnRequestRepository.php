@@ -9,6 +9,15 @@ use Illuminate\Database\Eloquent\Builder;
 
 class ReturnRequestRepository extends BaseRepository
 {
+    protected array $sortable = [
+        'return' => 'return_number',
+        'order' => 'order_id',
+        'customer' => 'customer_id',
+        'amount' => 'refund_amount',
+        'return_number',
+        'refund_amount',
+    ];
+
     protected array $searchable = [
         'return_number',
         'customer_reason',

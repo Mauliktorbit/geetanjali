@@ -4,6 +4,7 @@
     'description' => 'For over three decades, Geetanjali Jewellers has been a name synonymous with trust, elegance and unmatched craftsmanship.',
     'image' => 'public/assets/images/about/about-hero.jpg',
     'image_alt' => 'Geetanjali Jewellers premium Kundan jewellery on silk',
+    'breadcrumb' => [],
 ])
 
 <section
@@ -17,8 +18,11 @@
         aria-label="{{ $image_alt }}"
     ></div>
 
-    <div class="container about-hero__inner">
+    <div class="site-container about-hero__inner">
         <div class="about-hero__content reveal">
+            @if (! empty($breadcrumb))
+                @include('frontend.components.breadcrumb', ['items' => $breadcrumb, 'flush' => true])
+            @endif
             <span class="section-label">About Us</span>
             <h1 id="about-hero-heading" class="about-heading">
                 <span class="break">{{ $heading_line_1 }}</span>

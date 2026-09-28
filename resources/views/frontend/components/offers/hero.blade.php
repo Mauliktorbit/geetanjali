@@ -14,7 +14,7 @@
     </div>
 
     <div class="offers-hero__inner">
-        <div class="container">
+        <div class="site-container">
             <div class="offers-hero__content">
                 <h1 id="offers-hero-heading" class="font-heading">{{ $hero['title'] ?? 'Exciting Offers' }}</h1>
                 <p class="offers-hero__subtitle font-heading">{{ $hero['subtitle'] ?? 'For Every Celebration' }}</p>

@@ -24,6 +24,7 @@
                 <option value="{{ $key }}" @selected(request('payment_method') === $key)>{{ $label }}</option>
             @endforeach
         </select>
+        @include('admin.components.sort-fields')
         <button class="btn btn-secondary" type="submit">Filter</button>
         @if (request()->hasAny(['search', 'status', 'payment_method']))
             <a href="{{ route('admin.payments.index') }}" class="btn btn-ghost">Clear</a>
@@ -34,12 +35,12 @@
         <table class="data-table orders-table">
             <thead>
                 <tr>
-                    <th>Order</th>
-                    <th>Customer</th>
-                    <th>Method</th>
-                    <th>Amount</th>
-                    <th>Status</th>
-                    <th>Date</th>
+                    @include('admin.components.sortable-th', ['column' => 'order', 'label' => 'Order'])
+                    @include('admin.components.sortable-th', ['column' => 'customer', 'label' => 'Customer'])
+                    @include('admin.components.sortable-th', ['column' => 'method', 'label' => 'Method'])
+                    @include('admin.components.sortable-th', ['column' => 'amount', 'label' => 'Amount', 'default' => 'desc'])
+                    @include('admin.components.sortable-th', ['column' => 'status', 'label' => 'Status'])
+                    @include('admin.components.sortable-th', ['column' => 'date', 'label' => 'Date', 'default' => 'desc'])
                     <th class="col-actions">Actions</th>
                 </tr>
             </thead>

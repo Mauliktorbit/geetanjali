@@ -9,6 +9,12 @@ class ReviewRepository extends BaseRepository
 {
     protected array $searchable = ['customer_name', 'comment', 'product.name', 'customer.name'];
 
+    protected array $sortable = [
+        'product' => 'product_id',
+        'customer' => 'customer_name',
+        'rating',
+    ];
+
     public function __construct(Review $model)
     {
         parent::__construct($model);

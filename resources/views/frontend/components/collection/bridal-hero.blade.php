@@ -14,7 +14,7 @@
     </div>
 
     <div class="bridal-hero__inner">
-        <div class="container">
+        <div class="site-container">
             <div class="bridal-hero__content">
                 @if (!empty($hero['label']))
                     <p class="bridal-hero__label">{{ $hero['label'] }}</p>

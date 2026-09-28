@@ -47,10 +47,10 @@
                 <thead>
                     <tr>
                         <th><input type="checkbox" data-check-all></th>
-                    <th>Name</th>
+                    <th data-sort="name">Name</th>
                     <th>Company Name</th>
-                    <th>Email</th>
-                    <th>Phone</th>
+                    <th data-sort="email">Email</th>
+                    <th data-sort="phone">Phone</th>
                     <th>Gstin</th>
                         <th>Actions</th>
                     </tr>

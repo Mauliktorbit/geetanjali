@@ -4,7 +4,7 @@
 <div class="page-header">
     <div>
         <h1>Edit Product</h1>
-        <p class="subtitle">Update the details shown on the product page.</p>
+        <p class="subtitle">Update the photos, details, price, and stock shown on the website.</p>
         @include('admin.components.breadcrumbs', ['items' => [['label'=>'Products','url'=>route('admin.products.index')], ['label'=>$item->name]]])
     </div>
     <div class="page-actions">
@@ -13,13 +13,16 @@
     </div>
 </div>
 @include('admin.components.alerts')
-<div class="card product-form-card">
+<div class="card product-form-card product-form-card--wide">
     <form method="POST" action="{{ route('admin.products.update', $item) }}" enctype="multipart/form-data" data-unsaved-guard>
         @csrf @method('PUT')
         @include('admin.products._form', ['item' => $item])
-        <div class="form-actions">
-            <button class="btn btn-primary" type="submit">Update product</button>
-            <a href="{{ route('admin.products.show', $item) }}" class="btn btn-ghost" data-unsaved-cancel>Cancel</a>
+        <div class="product-form-footer">
+            <p class="product-form-footer__hint">Required fields are marked *</p>
+            <div class="product-form-footer__actions">
+                <button class="btn btn-primary" type="submit">Update product</button>
+                <a href="{{ route('admin.products.show', $item) }}" class="btn btn-ghost" data-unsaved-cancel>Cancel</a>
+            </div>
         </div>
     </form>
 </div>

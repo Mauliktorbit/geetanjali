@@ -34,6 +34,11 @@
       }
       .gj-swal .swal2-actions { gap: 0.6rem; }
       .gj-swal .swal2-styled { border-radius: 999px !important; padding: 0.65rem 1.35rem !important; font-weight: 600 !important; }
+      .swal2-container.swal2-backdrop-show {
+        background: rgba(20, 20, 20, 0.22) !important;
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+      }
     `;
     document.head.appendChild(style);
   }
@@ -241,11 +246,11 @@
       if (!ready()) return Promise.resolve();
       injectStyles();
       const payload = item || {};
-      const isReturn = payload.type === 'return_requested';
+      const isWarning = payload.type === 'return_requested' || payload.type === 'low_stock';
       return window.Swal.fire({
         toast: true,
         position: 'top-end',
-        icon: isReturn ? 'warning' : 'success',
+        icon: isWarning ? 'warning' : 'success',
         title: payload.title || 'New alert',
         text: payload.message || '',
         showConfirmButton: true,

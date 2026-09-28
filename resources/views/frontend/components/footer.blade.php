@@ -70,26 +70,27 @@
 
                     <div class="footer-col footer-contact">
                         <h3>Contact Us</h3>
+                        @php $contact = storefront_contact(); @endphp
                         <ul>
                             <li>
                                 <i class="bi bi-geo-alt" aria-hidden="true"></i>
-                                <span>{{ config('brand.contact.address') }}</span>
+                                <span>{{ $contact['address'] }}</span>
                             </li>
                             <li>
                                 <i class="bi bi-telephone" aria-hidden="true"></i>
-                                <a href="tel:{{ preg_replace('/\s+/', '', config('brand.contact.phone')) }}">
-                                    {{ config('brand.contact.phone') }}
+                                <a href="tel:{{ $contact['phone_href'] }}">
+                                    {{ $contact['phone'] }}
                                 </a>
                             </li>
                             <li>
                                 <i class="bi bi-envelope" aria-hidden="true"></i>
-                                <a href="mailto:{{ config('brand.contact.email') }}">
-                                    {{ config('brand.contact.email') }}
+                                <a href="mailto:{{ $contact['email'] }}">
+                                    {{ $contact['email'] }}
                                 </a>
                             </li>
                             <li>
                                 <i class="bi bi-clock" aria-hidden="true"></i>
-                                <span>{{ config('brand.contact.hours') }}</span>
+                                <span>{{ $contact['hours'] }}</span>
                             </li>
                         </ul>
                     </div>

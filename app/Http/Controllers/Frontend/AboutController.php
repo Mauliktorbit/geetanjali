@@ -50,8 +50,8 @@ class AboutController extends Controller
             ],
             'image' => 'public/assets/images/about/showroom.jpg',
             'image_alt' => 'Premium jewellery showroom ambience at Geetanjali Jewellers',
-            'cta_label' => 'Know More About Us',
-            'cta_url' => '#promise',
+            'cta_label' => 'Explore Collections',
+            'cta_url' => route('collections.kundan'),
         ];
     }
 

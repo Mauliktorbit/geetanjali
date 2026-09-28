@@ -111,6 +111,16 @@
     color: #b94a48;
     font-size: 12.5px;
     text-align: left;
+    transition: opacity 0.25s ease;
+}
+
+.auth-alert.is-hiding,
+.auth-error.is-hiding {
+    opacity: 0;
+}
+
+.auth-alert[hidden] {
+    display: none !important;
 }
 
 .auth-alert--success {
@@ -256,6 +266,7 @@
     margin-top: 0.3rem;
     font-size: 11.5px;
     color: #b94a48;
+    transition: opacity 0.25s ease;
 }
 
 .auth-error[hidden] {

@@ -30,9 +30,7 @@ class NotificationController extends AdminController
 
     public function markRead(AdminNotification $notification)
     {
-        if ($notification->user_id && $notification->user_id !== Auth::id()) {
-            abort(403);
-        }
+        $this->authorizeNotification($notification);
 
         $this->notificationService->markRead($notification);
         $url = $notification->url();
@@ -53,5 +51,35 @@ class NotificationController extends AdminController
         }
 
         return $this->success('All notifications marked as read.');
+    }
+
+    public function destroy(AdminNotification $notification)
+    {
+        $this->authorizeNotification($notification);
+        $this->notificationService->clear($notification);
+
+        if (request()->expectsJson()) {
+            return response()->json(['ok' => true]);
+        }
+
+        return $this->success('Notification cleared.');
+    }
+
+    public function destroyAll()
+    {
+        $this->notificationService->clearAll(Auth::id());
+
+        if (request()->expectsJson()) {
+            return response()->json(['ok' => true]);
+        }
+
+        return $this->success('All notifications cleared.');
+    }
+
+    protected function authorizeNotification(AdminNotification $notification): void
+    {
+        if (! $this->notificationService->belongsToUser($notification, Auth::id())) {
+            abort(403);
+        }
     }
 }

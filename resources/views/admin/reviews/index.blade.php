@@ -24,6 +24,7 @@
                 <option value="{{ $star }}" @selected((string) request('rating') === (string) $star)>{{ $star }} star{{ $star > 1 ? 's' : '' }}</option>
             @endfor
         </select>
+        @include('admin.components.sort-fields')
         <button class="btn btn-secondary" type="submit">Filter</button>
         @if (request()->hasAny(['search', 'status', 'rating']))
             <a href="{{ route('admin.reviews.index') }}" class="btn btn-ghost">Clear</a>
@@ -34,10 +35,10 @@
         <table class="data-table">
             <thead>
                 <tr>
-                    <th>Product</th>
-                    <th>Customer</th>
-                    <th>Rating</th>
-                    <th>Status</th>
+                    @include('admin.components.sortable-th', ['column' => 'product', 'label' => 'Product'])
+                    @include('admin.components.sortable-th', ['column' => 'customer', 'label' => 'Customer'])
+                    @include('admin.components.sortable-th', ['column' => 'rating', 'label' => 'Rating', 'default' => 'desc'])
+                    @include('admin.components.sortable-th', ['column' => 'status', 'label' => 'Status'])
                     <th class="col-actions">Actions</th>
                 </tr>
             </thead>

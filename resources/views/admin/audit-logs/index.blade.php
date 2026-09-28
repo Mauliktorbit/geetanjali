@@ -11,7 +11,7 @@
 <input type="date" name="date_to" value="{{ request('date_to') }}" class="form-control">
 <button class="btn btn-secondary">Filter</button>
 </form>
-<table class="data-table"><thead><tr><th>When</th><th>User</th><th>Action</th><th>Type</th><th>IP</th></tr></thead><tbody>
+<table class="data-table"><thead><tr><th data-sort="created_at">When</th><th>User</th><th>Action</th><th>Type</th><th>IP</th></tr></thead><tbody>
 @forelse($items as $item)
 <tr><td>{{ $item->created_at }}</td><td>{{ $item->user?->name }}</td><td>{{ $item->action }}</td><td>{{ class_basename($item->auditable_type ?? '') }} #{{ $item->auditable_id }}</td><td>{{ $item->ip_address }}</td></tr>
 @empty<tr><td colspan="5">No logs</td></tr>@endforelse

@@ -28,6 +28,7 @@
         </select>
         <input type="date" name="date_from" value="{{ request('date_from') }}" class="form-control" aria-label="From date">
         <input type="date" name="date_to" value="{{ request('date_to') }}" class="form-control" aria-label="To date">
+        @include('admin.components.sort-fields')
         <button class="btn btn-secondary" type="submit">Filter</button>
         @if (request()->hasAny(['search', 'status', 'payment_status', 'date_from', 'date_to']))
             <a href="{{ route('admin.orders.index') }}" class="btn btn-ghost">Clear</a>
@@ -38,12 +39,12 @@
         <table class="data-table orders-table">
             <thead>
                 <tr>
-                    <th>Order</th>
+                    @include('admin.components.sortable-th', ['column' => 'order', 'label' => 'Order', 'default' => 'desc'])
                     <th>Product</th>
-                    <th>Customer</th>
-                    <th>Status</th>
-                    <th>Payment</th>
-                    <th>Total</th>
+                    @include('admin.components.sortable-th', ['column' => 'customer', 'label' => 'Customer'])
+                    @include('admin.components.sortable-th', ['column' => 'status', 'label' => 'Status'])
+                    @include('admin.components.sortable-th', ['column' => 'payment', 'label' => 'Payment'])
+                    @include('admin.components.sortable-th', ['column' => 'total', 'label' => 'Total', 'default' => 'desc'])
                     <th class="col-actions">Actions</th>
                 </tr>
             </thead>

@@ -112,10 +112,78 @@ abstract class BaseRepository
         }
     }
 
+    /**
+     * Request keys or columns that may be used for listing sort.
+     * Numeric keys are treated as both the request key and the SQL column.
+     *
+     * @var array<int|string, string>
+     */
+    protected array $sortable = [];
+
+    protected string $defaultSort = 'created_at';
+
+    protected string $defaultDirection = 'desc';
+
     protected function applySorting(Builder $query, array $filters): void
     {
-        $sort = $filters['sort'] ?? 'created_at';
-        $direction = strtolower($filters['direction'] ?? 'desc') === 'asc' ? 'asc' : 'desc';
-        $query->orderBy($sort, $direction);
+        [$column, $direction] = $this->resolveSort($filters);
+        $query->orderBy($this->qualifySortColumn($column), $direction);
+    }
+
+    /**
+     * @param  array<string, mixed>  $filters
+     * @return array{0: string, 1: string}
+     */
+    protected function resolveSort(array $filters): array
+    {
+        $map = $this->sortableColumns();
+        $sort = trim((string) ($filters['sort'] ?? ''));
+        $direction = strtolower(trim((string) ($filters['direction'] ?? '')));
+
+        if ($sort !== '' && preg_match('/^([a-z0-9_]+)_(asc|desc)$/i', $sort, $matches)) {
+            $sort = $matches[1];
+            $direction = strtolower($matches[2]);
+        }
+
+        if ($sort === '' || ! isset($map[$sort])) {
+            return [$this->defaultSort, $this->defaultDirection];
+        }
+
+        if (! in_array($direction, ['asc', 'desc'], true)) {
+            $direction = $this->defaultDirection;
+        }
+
+        return [$map[$sort], $direction];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    protected function sortableColumns(): array
+    {
+        $defaults = [
+            'id', 'name', 'title', 'slug', 'sku', 'email', 'phone', 'code',
+            'status', 'is_active', 'is_blocked', 'sort_order', 'created_at', 'updated_at',
+        ];
+
+        $map = [];
+        foreach (array_merge($defaults, $this->sortable) as $key => $column) {
+            if (is_int($key)) {
+                $map[$column] = $column;
+            } else {
+                $map[$key] = $column;
+            }
+        }
+
+        return $map;
+    }
+
+    protected function qualifySortColumn(string $column): string
+    {
+        if (str_contains($column, '.') || str_contains($column, ' ') || str_ends_with($column, '_count')) {
+            return $column;
+        }
+
+        return $this->model->getTable().'.'.$column;
     }
 }

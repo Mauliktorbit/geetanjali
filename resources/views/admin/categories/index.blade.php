@@ -19,6 +19,7 @@
 <div class="card product-list-card">
     <form method="GET" class="filters-bar product-list-filters">
         <input type="text" name="search" value="{{ request('search') }}" placeholder="Search name" class="form-control">
+        @include('admin.components.sort-fields')
         <button class="btn btn-secondary" type="submit">Search</button>
         @if (request()->filled('search'))
             <a href="{{ route('admin.categories.index') }}" class="btn btn-ghost">Clear</a>
@@ -42,8 +43,8 @@
                 <tr>
                     <th class="col-check"><input type="checkbox" data-check-all form="bulk-form" aria-label="Select all"></th>
                     <th class="col-image">Image</th>
-                    <th>Name</th>
-                    <th>Products</th>
+                    @include('admin.components.sortable-th', ['column' => 'name', 'label' => 'Name'])
+                    @include('admin.components.sortable-th', ['column' => 'products', 'label' => 'Products'])
                     <th>Collections</th>
                     <th class="col-actions">Actions</th>
                 </tr>

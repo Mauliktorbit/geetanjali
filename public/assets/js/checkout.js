@@ -26,13 +26,14 @@ document.addEventListener('DOMContentLoaded', () => {
             input.addEventListener('change', () => {
                 selectCard(input);
                 if (input.matches('[data-shipping-option]')) {
-                    updateShipping(checkoutPage, input.value);
+                    updateShipping(checkoutPage);
                 }
             });
         });
 
         initContactModal();
         initAddressModal(checkoutPage);
+        updateShipping(checkoutPage);
     }
 
     if (accountAddresses) {
@@ -80,13 +81,13 @@ function formatMoney(value) {
     return '₹' + Number(value || 0).toLocaleString('en-IN');
 }
 
-function updateShipping(page, method) {
+function updateShipping(page) {
     const base = Number(page.dataset.baseTotal || 0);
-    const express = Number(page.dataset.expressCharge || 0);
-    const charge = method === 'express' ? express : 0;
+    const selected = page.querySelector('[data-shipping-option]:checked');
+    const charge = Number(selected?.dataset.shippingCharge || 0);
     const label = page.querySelector('[data-shipping-label]');
     const total = page.querySelector('[data-order-total]');
-    if (label) label.textContent = formatMoney(charge);
+    if (label) label.textContent = charge > 0 ? formatMoney(charge) : 'Free';
     if (total) total.textContent = formatMoney(base + charge);
 }
 

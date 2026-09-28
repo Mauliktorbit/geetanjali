@@ -14,7 +14,7 @@
     </div>
 
     <div class="kundan-hero__inner">
-        <div class="container">
+        <div class="site-container">
             <div class="kundan-hero__content">
                 <h1 id="kundan-hero-heading" class="font-heading">{{ $hero['heading'] ?? 'Kundan Collection' }}</h1>
                 <p class="kundan-hero__subtitle font-heading">{{ $hero['subtitle'] ?? '' }}</p>

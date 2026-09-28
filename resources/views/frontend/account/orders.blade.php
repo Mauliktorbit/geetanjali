@@ -31,7 +31,7 @@
         </a>
     @empty
         <p class="account-empty">No orders yet. Discover jewellery made for everyday wear and celebrations.</p>
-        <a class="account-ghost-btn" href="{{ route('home') }}">Continue Shopping</a>
+        <a class="account-ghost-btn" href="{{ route('home') }}" data-storefront-back>Continue Shopping</a>
     @endforelse
 
     @if ($orders->hasPages())

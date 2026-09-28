@@ -7,6 +7,7 @@
     'heading' => null,
     'showBridalSets' => false,
     'filterCounts' => [],
+    'collectionSlug' => null,
 ])
 
 @php
@@ -22,6 +23,7 @@
     'filterCounts' => $filterCounts,
     'formPrefix' => $formPrefix,
     'drawerId' => $drawerId,
+    'collectionSlug' => $collectionSlug,
 ])
 
 <div class="bridal-listing__meta">
@@ -72,6 +74,7 @@
                 'listingUrl' => $listingUrl,
                 'showBridalSets' => $showBridalSets,
                 'filterCounts' => $filterCounts,
+                'collectionSlug' => $collectionSlug,
             ])
         </div>
     </div>

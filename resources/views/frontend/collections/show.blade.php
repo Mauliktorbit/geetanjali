@@ -19,6 +19,7 @@
                     'emptyMessage' => $emptyMessage,
                     'formPrefix' => 'collection',
                     'showBridalSets' => false,
+                    'collectionSlug' => $collection->slug,
                 ])
             </div>
         </section>

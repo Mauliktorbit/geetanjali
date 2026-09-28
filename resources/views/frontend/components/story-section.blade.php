@@ -4,8 +4,8 @@
     'paragraphs' => [],
     'image' => 'public/assets/images/about/showroom.jpg',
     'image_alt' => 'Geetanjali Jewellers premium jewellery showroom',
-    'cta_label' => 'Know More About Us',
-    'cta_url' => route('about') . '#promise',
+    'cta_label' => 'Explore Collections',
+    'cta_url' => route('collections.kundan'),
 ])
 
 @php

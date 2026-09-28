@@ -68,6 +68,13 @@
         </a>
     </div>
 
+    <div class="nav-item">
+        <a href="{{ $adminRoute('admin.reports.index') }}" class="nav-link {{ $isActive('admin.reports.*') ? 'active' : '' }}">
+            <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 16v-5"/><path d="M12 16V8"/><path d="M17 16v-9"/></svg></span>
+            <span class="nav-label">Reports</span>
+        </a>
+    </div>
+
     <div class="nav-section-label">Marketing</div>
 
     <div class="nav-item">
@@ -97,6 +104,13 @@
         <a href="{{ $adminRoute('admin.enquiries.index') }}" class="nav-link {{ $isActive('admin.enquiries.*') ? 'active' : '' }}">
             <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path d="m22 6-10 7L2 6"/></svg></span>
             <span class="nav-label">Enquiries</span>
+        </a>
+    </div>
+
+    <div class="nav-item">
+        <a href="{{ $adminRoute('admin.shipping-methods.index') }}" class="nav-link {{ $isActive('admin.shipping-methods.*') ? 'active' : '' }}">
+            <span class="nav-icon"><svg viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></span>
+            <span class="nav-label">Shipping rules</span>
         </a>
     </div>
 

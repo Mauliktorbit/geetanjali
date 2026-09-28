@@ -122,6 +122,49 @@ class Order extends Model
         return $this->belongsTo(Coupon::class);
     }
 
+    public function discountLineLabel(): string
+    {
+        $code = strtoupper(trim((string) $this->coupon_code));
+
+        return $code !== '' ? 'Discount ('.$code.')' : 'Discount';
+    }
+
+    public function shippingAmountLabel(): string
+    {
+        $charge = (float) $this->shipping_charge;
+
+        return $charge > 0 ? '₹'.number_format($charge) : 'Free';
+    }
+
+    public function paymentMethodLabel(): string
+    {
+        $key = strtolower(trim((string) $this->payment_method));
+        if ($key === '') {
+            return '—';
+        }
+
+        return \App\Services\CheckoutService::PAYMENTS[$key]
+            ?? ucwords(str_replace(['_', '-'], ' ', $key));
+    }
+
+    public function shippingMethodLabel(): string
+    {
+        $address = is_array($this->shipping_address) ? $this->shipping_address : [];
+        $snapshot = trim((string) ($address['shipping_method_label'] ?? ''));
+        if ($snapshot !== '') {
+            return $snapshot;
+        }
+
+        $code = trim((string) $this->shipping_method);
+        if ($code === '') {
+            return '—';
+        }
+
+        $label = trim((string) (app(\App\Services\ShippingMethodService::class)->metaForCode($code)['label'] ?? ''));
+
+        return $label !== '' ? $label : ucwords(str_replace(['_', '-'], ' ', $code));
+    }
+
     public function reviews(): HasMany
     {
         return $this->hasMany(Review::class);

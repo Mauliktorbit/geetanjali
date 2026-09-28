@@ -29,6 +29,8 @@ return Application::configure(basePath: dirname(__DIR__))
             return route('account.index');
         });
 
+        $middleware->appendToGroup('web', \App\Http\Middleware\ExpireStaleAuthentication::class);
+
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminAuthenticate::class,
             'permission' => \App\Http\Middleware\PermissionMiddleware::class,

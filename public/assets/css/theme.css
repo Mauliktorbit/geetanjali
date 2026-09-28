@@ -16,6 +16,8 @@
     --search-bg: #F7F6F2;
     --hero-text: #F4F1E8;
     --container-max: 1400px;
+    --popup-backdrop: rgba(20, 20, 20, 0.22);
+    --popup-backdrop-blur: 16px;
     --section-space: 88px;
     --section-space-sm: 52px;
     --header-height: 88px;

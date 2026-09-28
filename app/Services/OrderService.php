@@ -19,7 +19,8 @@ class OrderService
     public function __construct(
         protected OrderRepository $orderRepository,
         protected InventoryService $inventoryService,
-        protected NotificationService $notificationService
+        protected NotificationService $notificationService,
+        protected CustomerMailService $customerMail,
     ) {}
 
     public function createOrder(array $data, array $items): Order
@@ -76,13 +77,12 @@ class OrderService
             throw new InvalidArgumentException('Invalid order status.');
         }
 
-        return DB::transaction(function () use ($order, $toStatus, $note) {
+        if ($order->status === $toStatus) {
+            return $order;
+        }
+
+        $order = DB::transaction(function () use ($order, $toStatus, $note) {
             $from = $order->status;
-
-            if ($from === $toStatus) {
-                return $order;
-            }
-
             $updates = ['status' => $toStatus];
 
             if ($toStatus === OrderStatus::CONFIRMED) {
@@ -101,8 +101,12 @@ class OrderService
             $order->update($updates);
             $this->recordStatusHistory($order, $from, $toStatus, $note);
 
-            return $order->fresh();
+            return $order->fresh(['items']);
         });
+
+        $this->customerMail->notifyOrderStatus($order);
+
+        return $order;
     }
 
     public function cancelOrder(Order $order, ?string $reason = null): Order

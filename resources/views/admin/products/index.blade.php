@@ -33,6 +33,7 @@
             <option value="1" @selected(request('status') === '1')>Published</option>
             <option value="0" @selected(request('status') === '0')>Unpublished</option>
         </select>
+        @include('admin.components.sort-fields')
         <button class="btn btn-secondary" type="submit">Search</button>
         @if (request()->hasAny(['search', 'category_id', 'collection_id', 'status']))
             <a href="{{ route('admin.products.index') }}" class="btn btn-ghost">Clear</a>
@@ -58,12 +59,12 @@
             <thead>
                 <tr>
                     <th><input type="checkbox" data-check-all form="bulk-form" aria-label="Select all products"></th>
-                    <th>Product</th>
-                    <th>SKU</th>
+                    @include('admin.components.sortable-th', ['column' => 'name', 'label' => 'Product'])
+                    @include('admin.components.sortable-th', ['column' => 'sku', 'label' => 'SKU'])
                     <th>Category</th>
                     <th>Jewellery collection</th>
-                    <th>Price</th>
-                    <th>Status</th>
+                    @include('admin.components.sortable-th', ['column' => 'price', 'label' => 'Price'])
+                    @include('admin.components.sortable-th', ['column' => 'status', 'label' => 'Status'])
                     <th>Actions</th>
                 </tr>
             </thead>

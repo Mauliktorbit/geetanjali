@@ -47,7 +47,7 @@
                 <thead>
                     <tr>
                         <th><input type="checkbox" data-check-all></th>
-                    <th>Title</th>
+                    <th data-sort="title">Title</th>
                     <th>Starts At</th>
                     <th>Ends At</th>
                     <th>Discount Percent</th>

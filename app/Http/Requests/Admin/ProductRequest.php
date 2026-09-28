@@ -62,7 +62,7 @@ class ProductRequest extends FormRequest
             'highlights.*' => ['nullable', 'string', 'max:255'],
             'highlights_text' => ['nullable', 'string'],
             'care_instructions' => ['nullable', 'string', 'max:5000'],
-            'sold_count' => ['required', 'integer', 'min:0'],
+            'sold_count' => ['nullable', 'integer', 'min:0'],
             'quantity' => ['required', 'integer', 'min:0'],
             'stock_status' => ['required', Rule::in(['in_stock', 'out_of_stock'])],
             'collections' => ['required', 'array', 'min:1'],
@@ -144,13 +144,21 @@ class ProductRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $booleans = [
-            'return_eligible', 'cod_available', 'is_featured',
-            'is_new_arrival', 'is_bestseller', 'is_active',
+            'is_featured',
+            'is_new_arrival',
+            'is_bestseller',
+            'is_active',
         ];
 
         $merged = [];
         foreach ($booleans as $key) {
             $merged[$key] = $this->boolean($key);
+        }
+
+        foreach (['return_eligible', 'cod_available'] as $key) {
+            if ($this->exists($key)) {
+                $merged[$key] = $this->boolean($key);
+            }
         }
 
         if ($this->exists('highlights_text')) {
@@ -165,7 +173,9 @@ class ProductRequest extends FormRequest
             $collections = filled($collections) ? [$collections] : [];
         }
         $merged['collections'] = array_values(array_filter($collections));
-        $merged['sold_count'] = max(0, (int) $this->input('sold_count', 0));
+        if ($this->exists('sold_count')) {
+            $merged['sold_count'] = max(0, (int) $this->input('sold_count', 0));
+        }
         $merged['quantity'] = max(0, (int) $this->input('quantity', 0));
         $merged['stock_status'] = $this->input('stock_status') === 'in_stock' ? 'in_stock' : 'out_of_stock';
         $merged['remove_main_image'] = $this->boolean('remove_main_image');

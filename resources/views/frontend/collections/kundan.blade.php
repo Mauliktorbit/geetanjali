@@ -27,6 +27,7 @@
                     'emptyMessage' => 'No products match your filters.',
                     'formPrefix' => 'kundan',
                     'showBridalSets' => false,
+                    'collectionSlug' => 'kundan',
                 ])
             </div>
         </section>

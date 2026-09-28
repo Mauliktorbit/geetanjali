@@ -30,7 +30,7 @@ class OfferRequest extends FormRequest
             'minimum_order' => ['nullable', 'numeric', 'min:0'],
             'theme' => ['required', Rule::in(array_keys(Offer::themes()))],
             'starts_at' => dmy_date_rules(),
-            'ends_at' => dmy_date_rules(),
+            'ends_at' => dmy_date_rules(afterOrEqual: 'starts_at'),
             'image' => [
                 $isCreate ? 'required' : 'nullable',
                 'image',
@@ -56,8 +56,9 @@ class OfferRequest extends FormRequest
             'image.required' => 'Upload a photo for this offer.',
             'image.image' => 'Please upload a valid image file.',
             'image.max' => 'The image must be 4 MB or smaller.',
-            'starts_at.regex' => 'Enter the start date as DD/MM/YYYY.',
-            'ends_at.regex' => 'Enter the end date as DD/MM/YYYY, for example 26/12/2026.',
+            'starts_at.regex' => 'Choose a start date.',
+            'ends_at.regex' => 'Choose a valid till date.',
+            'ends_at.after_or_equal' => 'Valid till must be on or after the start date.',
         ];
     }
 

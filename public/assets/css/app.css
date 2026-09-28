@@ -1,23 +1,23 @@
 /* Geetanjali Jewellers — public/assets/css
    Load after bootstrap.min.css and bootstrap-icons.min.css
 */
-@import url('theme.css');
-@import url('layout.css');
-@import url('home.css?v=20260921l');
-@import url('about.css');
-@import url('product.css?v=20260921c');
-@import url('collection.css?v=20260921l');
-@import url('bridal.css?v=20260921l');
-@import url('new-arrivals.css?v=20260921l');
-@import url('offers.css');
-@import url('auth.css');
+@import url('theme.css?v=20260928i');
+@import url('layout.css?v=20260928i');
+@import url('home.css?v=20260928i');
+@import url('about.css?v=20260928b');
+@import url('product.css?v=20260928i');
+@import url('collection.css?v=20260928i');
+@import url('bridal.css?v=20260928i');
+@import url('new-arrivals.css?v=20260928i');
+@import url('offers.css?v=20260928a');
+@import url('auth.css?v=20260928f');
 @import url('cart.css');
-@import url('checkout.css');
+@import url('checkout.css?v=20260928i');
 @import url('wishlist.css');
-@import url('account.css');
-@import url('contact.css');
+@import url('account.css?v=20260928i');
+@import url('contact.css?v=20260928f');
 @import url('pages.css');
-@import url('responsive.css?v=20260921l');
+@import url('responsive.css?v=20260928e');
 
 .password-field {
     position: relative;
@@ -61,4 +61,25 @@
 
 .password-field__toggle.is-visible .password-toggle__icon--hide {
     display: block;
+}
+
+/* Storefront popups: frosted blur instead of a green/dark wash */
+.quick-view__backdrop,
+.kundan-filter-drawer__backdrop,
+.bridal-filter-drawer__backdrop,
+.na-filter-drawer__backdrop,
+.checkout-modal,
+.dr-modal__backdrop,
+.product-lightbox,
+body .swal2-container.swal2-backdrop-show,
+body .offcanvas-backdrop,
+body .modal-backdrop {
+    background: var(--popup-backdrop) !important;
+    backdrop-filter: blur(var(--popup-backdrop-blur));
+    -webkit-backdrop-filter: blur(var(--popup-backdrop-blur));
+}
+
+body .offcanvas-backdrop,
+body .modal-backdrop {
+    opacity: 1 !important;
 }

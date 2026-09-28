@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\OrderStatus;
+use App\Models\Coupon;
 use App\Models\Customer;
 use App\Models\CustomerAddress;
 use App\Models\Order;
@@ -41,7 +42,26 @@ class CheckoutService
         private readonly CartService $cart,
         private readonly NotificationService $notifications,
         private readonly PaymentService $payments,
+        private readonly ShippingMethodService $shippingMethods,
+        private readonly CouponService $coupons,
+        private readonly CustomerMailService $customerMail,
     ) {}
+
+    /**
+     * @return array<string, array{label: string, charge: float, eta: string, days: int, free_above: float|null}>
+     */
+    public function shippingOptions(?float $orderAmount = null): array
+    {
+        return $this->shippingMethods->checkoutOptions($orderAmount);
+    }
+
+    /**
+     * @return array{label: string, eta: string, days: int}
+     */
+    public function shippingMeta(string $code): array
+    {
+        return $this->shippingMethods->metaForCode($code);
+    }
 
     public function ensureCustomer(User $user): Customer
     {
@@ -109,10 +129,12 @@ class CheckoutService
             throw new \InvalidArgumentException('Please select a delivery address.');
         }
 
-        $shippingKey = $input['shipping_method'] ?? 'standard';
+        $orderAmount = max(0, (float) $summary['subtotal'] - (float) $summary['discount']);
+        $shippingOptions = $this->shippingOptions($orderAmount);
+        $shippingKey = $input['shipping_method'] ?? array_key_first($shippingOptions);
         $paymentKey = $input['payment_method'] ?? 'upi';
 
-        if (! isset(self::SHIPPING[$shippingKey])) {
+        if (! $shippingKey || ! isset($shippingOptions[$shippingKey])) {
             throw new \InvalidArgumentException('Please choose a delivery method.');
         }
 
@@ -120,10 +142,16 @@ class CheckoutService
             throw new \InvalidArgumentException('Please choose a payment method.');
         }
 
-        $shipping = self::SHIPPING[$shippingKey];
+        $shipping = $shippingOptions[$shippingKey];
         $shippingCharge = (float) $shipping['charge'];
-        $grandTotal = max(0, (float) $summary['subtotal'] - (float) $summary['discount'] + $shippingCharge);
+        $grandTotal = max(0, $orderAmount + $shippingCharge);
         $isCod = $paymentKey === 'cod';
+        $couponModel = null;
+        if (! empty($summary['coupon'])) {
+            $couponModel = Coupon::query()
+                ->whereRaw('UPPER(code) = ?', [strtoupper((string) $summary['coupon'])])
+                ->first();
+        }
 
         $shippingPayload = [
             'label' => $address->label,
@@ -135,9 +163,12 @@ class CheckoutService
             'state' => $address->state,
             'country' => $address->country,
             'pincode' => $address->pincode,
+            'shipping_method_code' => $shippingKey,
+            'shipping_method_label' => (string) ($shipping['label'] ?? ''),
+            'shipping_eta' => (string) ($shipping['eta'] ?? ''),
         ];
 
-        return DB::transaction(function () use (
+        $order = DB::transaction(function () use (
             $user,
             $customer,
             $summary,
@@ -148,7 +179,8 @@ class CheckoutService
             $shippingCharge,
             $grandTotal,
             $isCod,
-            $shippingPayload
+            $shippingPayload,
+            $couponModel
         ) {
             $order = Order::create([
                 'order_number' => $this->nextOrderNumber(),
@@ -162,6 +194,7 @@ class CheckoutService
                 'payment_status' => $isCod ? 'unpaid' : 'paid',
                 'payment_method' => $paymentKey,
                 'shipping_method' => $shippingKey,
+                'coupon_id' => $couponModel?->id,
                 'coupon_code' => $summary['coupon'],
                 'subtotal' => $summary['subtotal'],
                 'discount_amount' => $summary['discount'],
@@ -213,17 +246,25 @@ class CheckoutService
 
             $this->cart->clear();
 
+            if ($couponModel) {
+                $this->coupons->incrementUsage($couponModel);
+            }
+
             $this->payments->createFromOrder($order);
 
             $this->notifications->notifyNewOrder($order->load('items'));
 
             return $order;
         });
+
+        $this->customerMail->sendOrderConfirmed($order->load('items'));
+
+        return $order;
     }
 
     public function expectedDelivery(Order $order): \Carbon\CarbonInterface
     {
-        $days = self::SHIPPING[$order->shipping_method]['days'] ?? 5;
+        $days = $this->shippingMethods->metaForCode((string) $order->shipping_method)['days'];
 
         return now()->addWeekdays($days)->startOfDay();
     }

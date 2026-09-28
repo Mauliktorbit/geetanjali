@@ -17,6 +17,7 @@
             <option value="active" @selected(request('status') === 'active')>Active</option>
             <option value="inactive" @selected(in_array(request('status'), ['inactive', 'blocked'], true))>Inactive</option>
         </select>
+        @include('admin.components.sort-fields')
         <button class="btn btn-secondary" type="submit">Filter</button>
         @if (request()->hasAny(['search', 'status']))
             <a href="{{ route('admin.customers.index') }}" class="btn btn-ghost">Clear</a>
@@ -27,12 +28,12 @@
         <table class="data-table">
             <thead>
                 <tr>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Phone</th>
-                    <th>Orders</th>
-                    <th>Spent</th>
-                    <th>Status</th>
+                    @include('admin.components.sortable-th', ['column' => 'name', 'label' => 'Name'])
+                    @include('admin.components.sortable-th', ['column' => 'email', 'label' => 'Email'])
+                    @include('admin.components.sortable-th', ['column' => 'phone', 'label' => 'Phone'])
+                    @include('admin.components.sortable-th', ['column' => 'orders', 'label' => 'Orders', 'default' => 'desc'])
+                    @include('admin.components.sortable-th', ['column' => 'spent', 'label' => 'Spent', 'default' => 'desc'])
+                    @include('admin.components.sortable-th', ['column' => 'status', 'label' => 'Status'])
                     <th class="col-actions">Actions</th>
                 </tr>
             </thead>

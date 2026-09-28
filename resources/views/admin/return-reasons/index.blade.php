@@ -47,7 +47,7 @@
                 <thead>
                     <tr>
                         <th><input type="checkbox" data-check-all></th>
-                    <th>Name</th>
+                    <th data-sort="name">Name</th>
                     <th>Type</th>
                     <th>Is Active</th>
                         <th>Actions</th>

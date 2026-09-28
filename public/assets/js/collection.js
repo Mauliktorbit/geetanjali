@@ -88,7 +88,19 @@ function initAutoSubmitFilters() {
         let timer = null;
         const submitForm = () => {
             clearTimeout(timer);
-            timer = setTimeout(() => form.submit(), 280);
+            timer = setTimeout(() => {
+                const url = new URL(form.getAttribute('action') || window.location.href, window.location.href);
+                url.hash = '';
+                const params = new URLSearchParams();
+                new FormData(form).forEach((value, key) => {
+                    if (String(value).trim() === '') {
+                        return;
+                    }
+                    params.append(key, String(value));
+                });
+                url.search = params.toString();
+                window.location.replace(url.toString());
+            }, 280);
         };
 
         form.querySelectorAll('input[type="checkbox"], input[type="number"]').forEach((el) => {

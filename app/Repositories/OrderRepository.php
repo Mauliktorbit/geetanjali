@@ -10,6 +10,18 @@ use Illuminate\Support\Collection;
 
 class OrderRepository extends BaseRepository
 {
+    protected array $sortable = [
+        'order' => 'order_number',
+        'customer' => 'customer_name',
+        'payment' => 'payment_status',
+        'total' => 'grand_total',
+        'date' => 'created_at',
+        'order_number',
+        'customer_name',
+        'payment_status',
+        'grand_total',
+    ];
+
     protected array $searchable = [
         'order_number',
         'customer_name',
@@ -78,7 +90,7 @@ class OrderRepository extends BaseRepository
     {
         return (float) $this->query()
             ->whereBetween('created_at', [$from, $to])
-            ->whereNotIn('status', ['cancelled'])
+            ->whereNotIn('status', OrderStatus::excludedFromSales())
             ->sum('grand_total');
     }
 }

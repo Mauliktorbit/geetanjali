@@ -14,6 +14,25 @@ class InventoryService
 {
     public function __construct(protected InventoryRepository $inventoryRepository) {}
 
+    public static function lowStockThreshold(): int
+    {
+        $value = setting('low_stock_threshold', setting('product.low_stock_threshold', 5));
+
+        return max(0, (int) $value);
+    }
+
+    /**
+     * @return 'out'|'low'|'in'
+     */
+    public static function stockStatus(int $available): string
+    {
+        if ($available <= 0) {
+            return 'out';
+        }
+
+        return $available <= self::lowStockThreshold() ? 'low' : 'in';
+    }
+
     public function availableStockForProduct(int $productId): int
     {
         return (int) Inventory::query()->where('product_id', $productId)->sum('available_stock');
@@ -25,6 +44,8 @@ class InventoryService
         $warehouseId = $this->defaultWarehouseId();
 
         return DB::transaction(function () use ($productId, $quantity, $warehouseId) {
+            $previousAvailable = $this->availableStockForProduct($productId);
+
             Inventory::query()
                 ->where('product_id', $productId)
                 ->whereNull('product_variant_id')
@@ -65,6 +86,8 @@ class InventoryService
                 );
             }
 
+            $this->queueLowStockCheck($productId, $previousAvailable);
+
             return $inventory->fresh();
         });
     }
@@ -86,6 +109,30 @@ class InventoryService
         ])->id;
     }
 
+    /**
+     * @param  array<int, int>  $additions  product id => pieces to add
+     */
+    public function addStockToProducts(array $additions, string $reason = 'Bulk stock update'): int
+    {
+        $warehouseId = $this->defaultWarehouseId();
+        $updated = 0;
+
+        DB::transaction(function () use ($additions, $warehouseId, $reason, &$updated) {
+            foreach ($additions as $productId => $quantity) {
+                $productId = (int) $productId;
+                $quantity = (int) $quantity;
+                if ($productId < 1 || $quantity < 1) {
+                    continue;
+                }
+
+                $this->adjustStock($productId, null, $warehouseId, $quantity, $reason);
+                $updated++;
+            }
+        });
+
+        return $updated;
+    }
+
     public function adjustStock(
         int $productId,
         ?int $variantId,
@@ -102,6 +149,7 @@ class InventoryService
             $reason, $type, $referenceType, $referenceId, $meta
         ) {
             $inventory = $this->getOrCreateInventory($productId, $variantId, $warehouseId);
+            $previousAvailable = $this->availableStockForProduct($productId);
             $previous = (int) $inventory->current_stock;
             $newQty = $previous + $quantityChange;
 
@@ -132,6 +180,8 @@ class InventoryService
                 $referenceId,
                 $meta
             );
+
+            $this->queueLowStockCheck($productId, $previousAvailable);
 
             return $inventory->fresh();
         });
@@ -237,6 +287,7 @@ class InventoryService
                 throw new InvalidArgumentException('Insufficient available stock to reserve.');
             }
 
+            $previousAvailable = $this->availableStockForProduct($productId);
             $previous = (int) $inventory->current_stock;
 
             $inventory->update([
@@ -264,6 +315,8 @@ class InventoryService
                 ]
             );
 
+            $this->queueLowStockCheck($productId, $previousAvailable);
+
             return $inventory->fresh();
         });
     }
@@ -287,6 +340,7 @@ class InventoryService
             $returnToAvailable, $reason, $referenceType, $referenceId
         ) {
             $inventory = $this->getOrCreateInventory($productId, $variantId, $warehouseId);
+            $previousAvailable = $this->availableStockForProduct($productId);
             $releaseQty = min($quantity, (int) $inventory->reserved_stock);
             $previous = (int) $inventory->current_stock;
 
@@ -322,8 +376,25 @@ class InventoryService
                 ]
             );
 
+            $this->queueLowStockCheck($productId, $previousAvailable);
+
             return $inventory->fresh();
         });
+    }
+
+    protected function queueLowStockCheck(int $productId, int $previousAvailable): void
+    {
+        $this->notifyIfLowStock($productId, $previousAvailable);
+    }
+
+    protected function notifyIfLowStock(int $productId, int $previousAvailable): void
+    {
+        $limit = self::lowStockThreshold();
+        $current = $this->availableStockForProduct($productId);
+
+        if ($previousAvailable > $limit && $current <= $limit) {
+            app(NotificationService::class)->notifyLowStock($productId, $current, $limit);
+        }
     }
 
     protected function getOrCreateInventory(int $productId, ?int $variantId, int $warehouseId): Inventory

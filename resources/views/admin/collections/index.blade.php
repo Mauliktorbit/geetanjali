@@ -24,6 +24,7 @@
             <option value="1" @selected(request('status') === '1')>Active</option>
             <option value="0" @selected(request('status') === '0')>Inactive</option>
         </select>
+        @include('admin.components.sort-fields')
         <button class="btn btn-secondary" type="submit">Search</button>
         @if (request()->hasAny(['search', 'status']))
             <a href="{{ route('admin.collections.index') }}" class="btn btn-ghost">Clear</a>
@@ -48,8 +49,8 @@
             <thead>
                 <tr>
                     <th class="col-check"><input type="checkbox" data-check-all form="bulk-form" aria-label="Select all"></th>
-                    <th>Name</th>
-                    <th>Status</th>
+                    @include('admin.components.sortable-th', ['column' => 'name', 'label' => 'Name'])
+                    @include('admin.components.sortable-th', ['column' => 'status', 'label' => 'Status'])
                     <th class="col-actions">Actions</th>
                 </tr>
             </thead>

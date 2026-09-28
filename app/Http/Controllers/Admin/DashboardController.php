@@ -14,15 +14,17 @@ class DashboardController extends AdminController
     public function index(Request $request)
     {
         $overview = $this->dashboardService->overview();
+        $storeNow = $this->dashboardService->clock();
 
-        $hour = now()->hour;
+        $hour = $storeNow->hour;
         $greeting = $hour < 12 ? 'Good morning' : ($hour < 17 ? 'Good afternoon' : 'Good evening');
         $adminName = trim((string) strtok((string) (auth()->user()?->name ?? 'Admin'), ' ')) ?: 'Admin';
 
         return view('admin.dashboard.index', compact(
             'overview',
             'greeting',
-            'adminName'
+            'adminName',
+            'storeNow'
         ));
     }
 }

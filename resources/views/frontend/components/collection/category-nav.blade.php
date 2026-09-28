@@ -1,5 +1,6 @@
 @props(['categories' => []])
 
+@if (! empty($categories))
 <nav class="kundan-cat-nav" aria-label="Kundan categories">
     <div class="site-container">
         <ul class="kundan-cat-nav__list">
@@ -26,3 +27,4 @@
         </ul>
     </div>
 </nav>
+@endif

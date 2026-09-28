@@ -273,6 +273,8 @@ iframe {
     .product-grid .product-card__media {
         grid-area: media;
         aspect-ratio: 1 / 1;
+        width: 100%;
+        height: auto;
         min-height: 0;
     }
 
@@ -315,6 +317,10 @@ iframe {
     .product-grid .product-card__actions {
         grid-area: actions;
         flex-direction: row;
+        align-items: stretch;
+        align-self: stretch;
+        width: auto;
+        max-width: none;
         gap: 8px;
         opacity: 1;
         transform: none;
@@ -520,7 +526,6 @@ iframe {
     .related-grid,
     .related-product-grid {
         grid-template-columns: 1fr 1fr;
-    }
     }
 
     .about-values__grid {

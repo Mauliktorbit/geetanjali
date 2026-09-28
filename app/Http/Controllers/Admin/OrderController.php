@@ -38,7 +38,7 @@ class OrderController extends AdminController
 
         return view('admin.orders.index', [
             'items' => $items,
-            'statuses' => OrderStatus::simpleLabels(),
+            'statuses' => ['pending' => 'Pending'] + OrderStatus::simpleLabels(),
         ]);
     }
 
@@ -87,7 +87,7 @@ class OrderController extends AdminController
 
         return view('admin.orders.show', [
             'item' => $order,
-            'statuses' => OrderStatus::simpleLabels(),
+            'statuses' => OrderStatus::adminUpdateLabels((string) $order->status),
         ]);
     }
 
@@ -149,8 +149,9 @@ class OrderController extends AdminController
 
     public function updateStatus(Request $request, Order $order)
     {
+        $allowed = array_keys(OrderStatus::adminUpdateLabels((string) $order->status));
         $request->validate([
-            'status' => ['required', 'string', 'in:'.implode(',', array_keys(OrderStatus::simpleLabels()))],
+            'status' => ['required', 'string', 'in:'.implode(',', $allowed)],
         ]);
 
         $this->orderService->updateStatus($order, $request->input('status'));
@@ -277,7 +278,9 @@ class OrderController extends AdminController
             $this->shipmentService->addTracking($shipment, $request->input('tracking_number'));
         }
 
-        return $this->success('Tracking updated.');
+        app(\App\Services\CustomerMailService::class)->sendOrderShipped($order->fresh(['items']), true);
+
+        return $this->success('Tracking updated. The customer has been emailed.');
     }
 
     public function cancel(Request $request, Order $order)
@@ -320,18 +323,11 @@ class OrderController extends AdminController
 
     public function resendConfirmation(Order $order)
     {
-        CommunicationLog::create([
-            'customer_id' => $order->customer_id,
-            'channel' => 'email',
-            'type' => 'order_confirmation',
-            'subject' => 'Order Confirmation ' . $order->order_number,
-            'message' => 'Order confirmation resent for ' . $order->order_number,
-            'status' => 'queued',
-            'sent_by' => Auth::id(),
-            'meta' => ['order_id' => $order->id],
-        ]);
+        $sent = app(\App\Services\CustomerMailService::class)->sendOrderConfirmed($order->load('items'), true);
 
-        return $this->success('Confirmation queued for resend.');
+        return $this->success($sent
+            ? 'Order confirmation sent to the customer.'
+            : 'Could not send the confirmation. Check the customer email address and mail settings.');
     }
 
     public function contactCustomer(Request $request, Order $order)

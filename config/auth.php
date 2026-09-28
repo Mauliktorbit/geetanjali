@@ -41,7 +41,7 @@ return [
         'web' => [
             'driver' => 'session',
             'provider' => 'users',
-            'remember' => 525600,
+            'remember' => (int) env('SESSION_LIFETIME', 10080),
         ],
     ],
 
@@ -114,5 +114,11 @@ return [
     */
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
+
+    /*
+    | Absolute login lifetime in minutes. After this, the user must sign in again
+    | even if they have been active or still have a remember cookie.
+    */
+    'session_timeout_minutes' => (int) env('SESSION_LIFETIME', 10080),
 
 ];

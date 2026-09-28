@@ -11,6 +11,10 @@ class NewsletterSubscriberRepository extends BaseRepository
         'source',
     ];
 
+    protected array $sortable = [
+        'date' => 'created_at',
+    ];
+
     public function __construct(NewsletterSubscriber $model)
     {
         parent::__construct($model);

@@ -2,12 +2,13 @@
     'filters' => [],
     'formId' => 'na-filter-form',
     'categoryOptions' => null,
+    'collectionSlug' => 'new-arrivals',
 ])
 
 @php
     $categories = ! empty($categoryOptions)
         ? $categoryOptions
-        : \App\Services\StorefrontCatalogService::jewelleryTypeOptions();
+        : \App\Services\StorefrontCatalogService::jewelleryTypeOptions($collectionSlug ?? 'new-arrivals');
     $metals = \App\Services\StorefrontCatalogService::METAL_LABELS;
     $stones = [
         'diamond' => 'Diamond',
@@ -18,7 +19,7 @@
     ];
     $occasions = [
         'wedding' => 'Wedding',
-        'engagement' => 'Engagement',
+        'party' => 'Party',
         'festival' => 'Festival',
         'daily-wear' => 'Daily Wear',
     ];

@@ -1,7 +1,73 @@
 /**
  * Shared cart + wishlist actions for product cards and product pages.
  */
+const LAST_SHOP_KEY = 'geetanjaliLastShopUrl';
+
+function isUtilityPath(pathname) {
+    const path = String(pathname || '').replace(/\/+$/, '') || '/';
+    return /(^|\/)(cart|checkout|wishlist|login|register|forgot-password|my-account|order-confirmation)(\/|$)/.test(path);
+}
+
+function rememberLastShopUrl() {
+    if (isUtilityPath(window.location.pathname)) {
+        return;
+    }
+    try {
+        sessionStorage.setItem(LAST_SHOP_KEY, window.location.href);
+    } catch (error) {
+        // Ignore private-mode quota errors.
+    }
+}
+
+function storefrontBackUrl(fallback) {
+    const current = window.location.pathname + window.location.search;
+    const candidates = [];
+
+    try {
+        candidates.push(sessionStorage.getItem(LAST_SHOP_KEY));
+    } catch (error) {
+        // Ignore storage access errors.
+    }
+
+    if (document.referrer) {
+        candidates.push(document.referrer);
+    }
+
+    for (const candidate of candidates) {
+        if (!candidate) {
+            continue;
+        }
+        try {
+            const url = new URL(candidate, window.location.href);
+            if (url.origin !== window.location.origin) {
+                continue;
+            }
+            if (isUtilityPath(url.pathname)) {
+                continue;
+            }
+            if ((url.pathname + url.search) === current) {
+                continue;
+            }
+            return url.href;
+        } catch (error) {
+            // Ignore malformed stored URLs.
+        }
+    }
+
+    return fallback || '';
+}
+
 document.addEventListener('click', async (event) => {
+    const backLink = event.target.closest('[data-storefront-back]');
+    if (backLink) {
+        const next = storefrontBackUrl(backLink.getAttribute('href'));
+        if (next && next !== window.location.href) {
+            event.preventDefault();
+            window.location.assign(next);
+        }
+        return;
+    }
+
     const wishBtn = event.target.closest('[data-wishlist-toggle]');
     if (wishBtn) {
         event.preventDefault();
@@ -68,8 +134,17 @@ function storefrontToast(message) {
     storefrontToast._timer = setTimeout(() => toast.classList.remove('is-visible'), 2600);
 }
 
+function productRoot(el) {
+    return el.closest('.product-card')
+        || el.closest('[data-wishlist-item]')
+        || el.closest('[data-quick-view-dialog]')
+        || el.closest('[data-product-page]')
+        || el.closest('[data-product-id]')
+        || el;
+}
+
 function productPayload(el) {
-    const card = el.closest('.product-card, [data-product-page]') || el.closest('[data-product-id]') || el;
+    const card = productRoot(el);
     const qtyInput = card.querySelector?.('[data-qty-input]');
     const min = Math.max(1, parseInt(qtyInput?.min || card.dataset.qtyMin || '1', 10) || 1);
     let max = parseInt(qtyInput?.max || card.dataset.qtyMax || '', 10);
@@ -84,12 +159,14 @@ function productPayload(el) {
     if (!Number.isFinite(quantity)) quantity = min;
     quantity = Math.min(max, Math.max(min, quantity));
 
+    const productId = Number(card.dataset.productId || el.dataset.productId || 0);
+
     return {
-        product_id: Number(el.dataset.productId || card.dataset.productId || 0),
+        product_id: productId,
         quantity,
         name: card.dataset.productName || '',
         slug: card.dataset.productSlug || '',
-        image: card.dataset.productImage || '',
+        image: card.dataset.productImage || card.querySelector?.('img')?.getAttribute('src') || '',
         price: card.dataset.productPrice || '',
         compare_at_price: card.dataset.productCompare || '',
         discount_label: priceDiscountLabel(card.dataset.productPrice, card.dataset.productCompare),
@@ -469,4 +546,6 @@ document.addEventListener('keydown', (event) => {
         closeQuickView();
     }
 });
+
+rememberLastShopUrl();
 

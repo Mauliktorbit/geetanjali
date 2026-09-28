@@ -9,6 +9,14 @@ class CategoryRepository extends BaseRepository
 {
     protected array $searchable = ['name'];
 
+    protected array $sortable = [
+        'products' => 'products_count',
+    ];
+
+    protected string $defaultSort = 'id';
+
+    protected string $defaultDirection = 'desc';
+
     public function __construct(Category $model)
     {
         parent::__construct($model);
@@ -26,6 +34,7 @@ class CategoryRepository extends BaseRepository
 
     protected function applySorting(Builder $query, array $filters): void
     {
-        $query->orderBy('name');
+        parent::applySorting($query, $filters);
+        $query->orderByDesc($this->model->getTable().'.id');
     }
 }

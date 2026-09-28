@@ -294,6 +294,11 @@
     color: #555;
 }
 .checkout-totals .is-discount strong { color: #16803c; }
+.checkout-totals small {
+    font-weight: 500;
+    color: #8a8070;
+    letter-spacing: 0;
+}
 .checkout-totals .is-total {
     margin-top: 0.4rem;
     padding-top: 0.7rem;
@@ -353,9 +358,9 @@
     display: none;
     place-items: center;
     padding: 1.25rem;
-    background: rgba(6, 78, 59, 0.55);
-    backdrop-filter: blur(3px);
-    -webkit-backdrop-filter: blur(3px);
+    background: var(--popup-backdrop);
+    backdrop-filter: blur(var(--popup-backdrop-blur));
+    -webkit-backdrop-filter: blur(var(--popup-backdrop-blur));
 }
 
 .checkout-modal:not([hidden]) {
@@ -555,8 +560,14 @@ body.is-checkout-modal-open {
     background: #fff;
     border: 1px solid #e8e2d6;
     border-radius: 12px;
-    padding: 0.35rem 1rem 0.5rem;
+    padding: 0.35rem 1rem 0.85rem;
     text-align: left;
+}
+
+.checkout-success__items .checkout-totals {
+    margin-top: 0.45rem;
+    padding-top: 0.55rem;
+    border-top: 1px dashed #eadfca;
 }
 
 .checkout-success__actions {

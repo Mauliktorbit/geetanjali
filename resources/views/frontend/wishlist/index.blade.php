@@ -77,7 +77,7 @@
                 <div class="wishlist-empty">
                     <h2 class="font-heading">{{ $emptyTitle }}</h2>
                     <p>{{ $emptyCopy }}</p>
-                    <a href="{{ route('products.new-arrivals') }}" class="wishlist-btn wishlist-btn--primary">Continue Shopping</a>
+                    <a href="{{ route('products.new-arrivals') }}" class="wishlist-btn wishlist-btn--primary" data-storefront-back>Continue Shopping</a>
                 </div>
             @else
                 <div class="wishlist-grid" data-wishlist-grid>

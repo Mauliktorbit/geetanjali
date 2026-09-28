@@ -71,26 +71,22 @@
         window.setTimeout(pinCollectionListing, 280);
     }
 
-    function ensureCollectionPaginationHash(link) {
-        if (!link || !listingEl()) {
-            return;
-        }
-        if (!link.closest('.pagination, .kundan-pagination, .bridal-pagination, .na-pagination')) {
-            return;
-        }
-
-        try {
-            const url = new URL(link.href, window.location.href);
-            if (url.origin !== window.location.origin) {
+    function listingUrlFromForm(form) {
+        const url = new URL(form.getAttribute('action') || window.location.href, window.location.href);
+        url.hash = '';
+        const params = new URLSearchParams();
+        new FormData(form).forEach((value, key) => {
+            if (String(value).trim() === '') {
                 return;
             }
-            if (!url.hash) {
-                url.hash = 'collection-products';
-                link.setAttribute('href', url.toString());
-            }
-        } catch (err) {
-            // ignore invalid href
-        }
+            params.append(key, String(value));
+        });
+        url.search = params.toString();
+        return url;
+    }
+
+    function submitListingForm(form) {
+        window.location.replace(listingUrlFromForm(form).toString());
     }
 
     function isSamePage(url) {
@@ -106,8 +102,6 @@
         if (!link) {
             return;
         }
-
-        ensureCollectionPaginationHash(link);
 
         try {
             const url = new URL(link.href, window.location.href);
@@ -132,12 +126,7 @@
         }
 
         form.dataset.listingSubmitting = '1';
-        const action = form.getAttribute('action') || '';
-        const hashAt = action.indexOf('#');
-        if (hashAt !== -1) {
-            form.setAttribute('action', action.slice(0, hashAt));
-        }
-        form.submit();
+        submitListingForm(form);
     });
 
     if (document.readyState === 'complete') {

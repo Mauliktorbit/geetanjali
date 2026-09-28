@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Requests\Admin\InventoryAdjustmentRequest;
+use App\Http\Requests\Admin\InventoryBulkAdjustmentRequest;
 use App\Models\Inventory;
 use App\Models\Product;
 use App\Models\StockMovement;
@@ -22,8 +23,12 @@ class InventoryController extends AdminController
     public function index(Request $request)
     {
         $items = $this->repository->paginateProducts($request->all());
+        $sortOptions = InventoryRepository::productSortOptions();
+        $currentSort = array_key_exists((string) $request->input('sort'), $sortOptions)
+            ? (string) $request->input('sort')
+            : 'name_asc';
 
-        return view('admin.inventory.index', compact('items'));
+        return view('admin.inventory.index', compact('items', 'sortOptions', 'currentSort'));
     }
 
     public function show(Product $product)
@@ -36,7 +41,7 @@ class InventoryController extends AdminController
 
         $stock = (int) $inventories->sum('available_stock');
         $reserved = (int) $inventories->sum('reserved_stock');
-        $status = $stock <= 0 ? 'out' : ($stock <= 5 ? 'low' : 'in');
+        $status = InventoryService::stockStatus($stock);
         $statusLabel = $status === 'out' ? 'Out of stock' : ($status === 'low' ? 'Low stock' : 'In stock');
         $badge = $status === 'out' ? 'inactive' : ($status === 'low' ? 'warning' : 'active');
 
@@ -91,27 +96,79 @@ class InventoryController extends AdminController
     {
         $data = $request->validated();
         $productId = (int) $data['product_id'];
-        $newStock = (int) $data['stock'];
+        $add = (int) $data['stock_to_add'];
         $currentStock = $this->inventoryService->availableStockForProduct($productId);
-        $change = $newStock - $currentStock;
-
-        if ($change === 0) {
-            return $this->success('Stock is already '.$newStock.'.', 'admin.inventory.index');
-        }
+        $newTotal = $currentStock + $add;
 
         try {
             $this->inventoryService->adjustStock(
                 $productId,
                 null,
                 $this->inventoryService->defaultWarehouseId(),
-                $change,
+                $add,
                 'Stock update'
             );
         } catch (InvalidArgumentException $e) {
             return $this->error($e->getMessage());
         }
 
-        return $this->success('Stock updated to '.$newStock.'.', 'admin.inventory.index');
+        return $this->success('Added '.$add.' to stock. New total: '.$newTotal.'.', 'admin.inventory.index');
+    }
+
+    public function bulkForm(Request $request)
+    {
+        $filters = $request->all();
+        $filters['per_page'] = 50;
+        $items = $this->repository->paginateProducts($filters);
+        $sortOptions = InventoryRepository::productSortOptions();
+        $currentSort = array_key_exists((string) $request->input('sort'), $sortOptions)
+            ? (string) $request->input('sort')
+            : 'name_asc';
+
+        return view('admin.inventory.bulk', compact('items', 'sortOptions', 'currentSort'));
+    }
+
+    public function bulkSelected(InventoryBulkAdjustmentRequest $request)
+    {
+        $data = $request->validated();
+        $add = (int) $data['stock_to_add'];
+        $map = [];
+        foreach ($data['ids'] as $id) {
+            $map[(int) $id] = $add;
+        }
+
+        $count = $this->inventoryService->addStockToProducts($map, 'Bulk stock update');
+
+        return $this->success('Added '.$add.' to stock for '.$count.' products.', 'admin.inventory.index');
+    }
+
+    public function bulkSave(Request $request)
+    {
+        $data = $request->validate([
+            'items' => ['required', 'array'],
+            'items.*.product_id' => ['required', 'integer', 'exists:products,id'],
+            'items.*.stock_to_add' => ['nullable', 'integer', 'min:1'],
+        ], [
+            'items.*.stock_to_add.min' => 'Stock to add must be at least 1.',
+        ]);
+
+        $map = [];
+        foreach ($data['items'] as $row) {
+            $add = (int) ($row['stock_to_add'] ?? 0);
+            if ($add > 0) {
+                $map[(int) $row['product_id']] = $add;
+            }
+        }
+
+        if ($map === []) {
+            return $this->error('Enter stock to add for at least one product.');
+        }
+
+        $count = $this->inventoryService->addStockToProducts($map, 'Bulk stock update');
+
+        return redirect()
+            ->route('admin.inventory.bulk', $request->only(['search', 'status', 'sort']))
+            ->with('success', 'Updated stock for '.$count.' products.');
     }
 
     public function transferForm()

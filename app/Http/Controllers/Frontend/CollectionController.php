@@ -24,7 +24,7 @@ class CollectionController extends Controller
         return view('frontend.collections.kundan', [
             'products' => $products,
             'filters' => $filters,
-            'categoryNav' => $this->categoryNav($filters),
+            'categoryNav' => $this->categoryNav($filters, 'kundan'),
             'filterCounts' => $this->catalog->filterCounts('kundan'),
             'whyFeatures' => $this->whyKundanFeatures(),
             'viewMode' => $filters['view'] ?? 'grid',
@@ -100,11 +100,11 @@ class CollectionController extends Controller
      * @param  array{category: string, type?: list<string>}  $filters
      * @return list<array<string, mixed>>
      */
-    private function categoryNav(array $filters): array
+    private function categoryNav(array $filters, string $collectionSlug = 'kundan'): array
     {
         $active = $filters['category'] !== '' ? $filters['category'] : null;
 
-        return StorefrontCatalogService::jewelleryTypes()->map(function ($category) use ($active) {
+        return StorefrontCatalogService::jewelleryTypes($collectionSlug)->map(function ($category) use ($active) {
             $key = $category->slug;
 
             return [

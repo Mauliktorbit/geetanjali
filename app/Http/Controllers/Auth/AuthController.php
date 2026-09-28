@@ -23,7 +23,7 @@ class AuthController extends Controller
         ]);
     }
 
-    public function login(LoginRequest $request): RedirectResponse
+    public function login(LoginRequest $request): RedirectResponse|JsonResponse
     {
         $credentials = $request->only('email', 'password');
         $email = (string) $credentials['email'];
@@ -32,12 +32,12 @@ class AuthController extends Controller
         if ($user?->is_staff && $user->isLocked()) {
             $this->logStaffAttempt($user->id, $email, false, $request, 'Account locked');
 
-            return back()
-                ->withInput($request->only('email'))
-                ->withErrors(['email' => 'Your account is temporarily locked. Please try again later.']);
+            return $this->loginFailure($request, 'Your account is temporarily locked. Please try again later.');
         }
 
-        if (! Auth::attempt($credentials, true)) {
+        $remember = $request->boolean('remember');
+
+        if (! Auth::attempt($credentials, $remember)) {
             if ($user?->is_staff) {
                 $attempts = (int) $user->failed_login_attempts + 1;
                 $updates = ['failed_login_attempts' => $attempts];
@@ -48,9 +48,7 @@ class AuthController extends Controller
                 $this->logStaffAttempt($user->id, $email, false, $request, 'Invalid password');
             }
 
-            return back()
-                ->withInput($request->only('email'))
-                ->withErrors(['email' => 'Invalid email or password.']);
+            return $this->loginFailure($request, 'Invalid email or password.');
         }
 
         /** @var User $user */
@@ -59,26 +57,20 @@ class AuthController extends Controller
         if (! $user->is_active || $user->customer?->is_blocked) {
             Auth::logout();
 
-            return back()
-                ->withInput($request->only('email'))
-                ->withErrors(['email' => 'Your account is inactive. Please contact support.']);
+            return $this->loginFailure($request, 'Your account is inactive. Please contact support.');
         }
 
         if ($user->isLocked()) {
             Auth::logout();
 
-            return back()
-                ->withInput($request->only('email'))
-                ->withErrors(['email' => 'Your account is temporarily locked. Please try again later.']);
+            return $this->loginFailure($request, 'Your account is temporarily locked. Please try again later.');
         }
 
         if ($user->is_staff && ! empty($user->allowed_ips) && ! in_array($request->ip(), $user->allowed_ips, true)) {
             Auth::logout();
             $this->logStaffAttempt($user->id, $email, false, $request, 'IP not allowed');
 
-            return back()
-                ->withInput($request->only('email'))
-                ->withErrors(['email' => 'Login is not allowed from this IP address.']);
+            return $this->loginFailure($request, 'Login is not allowed from this IP address.');
         }
 
         $guestCart = $request->session()->get('cart');
@@ -87,7 +79,8 @@ class AuthController extends Controller
         $guestGift = $request->session()->get('cart_gift_message');
 
         $request->session()->regenerate();
-        Auth::login($user, true);
+        Auth::login($user, $remember);
+        $request->session()->put('auth.login_at', now()->timestamp);
 
         $user->update([
             'failed_login_attempts' => 0,
@@ -102,7 +95,7 @@ class AuthController extends Controller
             $this->logStaffAttempt($user->id, $email, true, $request);
         }
 
-        return $this->redirectAfterLogin($user);
+        return $this->redirectAfterLogin($request, $user);
     }
 
     public function showRegister(): View
@@ -139,7 +132,7 @@ class AuthController extends Controller
         ]);
     }
 
-    public function register(RegisterRequest $request): RedirectResponse
+    public function register(RegisterRequest $request): RedirectResponse|JsonResponse
     {
         $user = User::create([
             'name' => $request->validated('name'),
@@ -158,12 +151,32 @@ class AuthController extends Controller
 
         $request->session()->regenerate();
         Auth::login($user, true);
+        $request->session()->put('auth.login_at', now()->timestamp);
+        $user->update([
+            'last_login_at' => now(),
+            'last_login_ip' => $request->ip(),
+        ]);
 
-        app(\App\Services\CheckoutService::class)->ensureCustomer($user);
+        $customer = app(\App\Services\CheckoutService::class)->ensureCustomer($user);
+        $user->setRelation('customer', $customer);
         $this->mergeGuestBags($user, $guestCart, $guestWishlist, $guestCoupon, $guestGift);
+        app(\App\Services\CustomerMailService::class)->sendWelcome($user);
 
-        return redirect()->intended(route('account.index'))
-            ->with('success', 'Your Geetanjali account has been created successfully.');
+        $message = 'Your Geetanjali account has been created successfully.';
+        $fallback = route('account.index');
+
+        if ($request->expectsJson()) {
+            $url = $request->session()->pull('url.intended', $fallback);
+            $request->session()->flash('success', $message);
+
+            return response()->json([
+                'success' => true,
+                'redirect' => $url,
+                'message' => $message,
+            ]);
+        }
+
+        return redirect()->intended($fallback)->with('success', $message);
     }
 
     public function logout(Request $request): RedirectResponse
@@ -175,15 +188,40 @@ class AuthController extends Controller
         return redirect()->route('login')->with('success', 'You have been logged out.');
     }
 
-    protected function redirectAfterLogin(User $user): RedirectResponse
+    protected function redirectAfterLogin(Request $request, User $user): RedirectResponse|JsonResponse
     {
-        if ($user->is_staff) {
-            return redirect()->intended(route('admin.dashboard'))
-                ->with('success', 'Welcome back, '.$user->name);
+        $fallback = $user->is_staff ? route('admin.dashboard') : route('account.index');
+        $message = $user->is_staff
+            ? 'Welcome back, '.$user->name
+            : 'Welcome back to Geetanjali Jewellers.';
+
+        if ($request->expectsJson()) {
+            $url = $request->session()->pull('url.intended', $fallback);
+            $request->session()->flash('success', $message);
+
+            return response()->json([
+                'success' => true,
+                'redirect' => $url,
+                'message' => $message,
+            ]);
         }
 
-        return redirect()->intended(route('account.index'))
-            ->with('success', 'Welcome back to Geetanjali Jewellers.');
+        return redirect()->intended($fallback)->with('success', $message);
+    }
+
+    private function loginFailure(Request $request, string $message): RedirectResponse|JsonResponse
+    {
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => false,
+                'message' => $message,
+                'errors' => ['email' => [$message]],
+            ], 422);
+        }
+
+        return back()
+            ->withInput($request->only('email'))
+            ->withErrors(['email' => $message]);
     }
 
     private function mergeGuestBags(

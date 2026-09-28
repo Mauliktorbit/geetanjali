@@ -20,6 +20,7 @@
             <option value="1" @selected(request('status') === '1')>Active</option>
             <option value="0" @selected(request('status') === '0')>Inactive</option>
         </select>
+        @include('admin.components.sort-fields')
         <button class="btn btn-secondary" type="submit">Filter</button>
         @if (request()->hasAny(['search', 'status']))
             <a href="{{ route('admin.coupons.index') }}" class="btn btn-ghost">Clear</a>
@@ -30,10 +31,10 @@
         <table class="data-table">
             <thead>
                 <tr>
-                    <th>Name</th>
-                    <th>Discount</th>
-                    <th>Dates</th>
-                    <th>Status</th>
+                    @include('admin.components.sortable-th', ['column' => 'name', 'label' => 'Name'])
+                    @include('admin.components.sortable-th', ['column' => 'discount', 'label' => 'Discount', 'default' => 'desc'])
+                    @include('admin.components.sortable-th', ['column' => 'dates', 'label' => 'Dates'])
+                    @include('admin.components.sortable-th', ['column' => 'status', 'label' => 'Status'])
                     <th class="col-actions">Actions</th>
                 </tr>
             </thead>
@@ -54,6 +55,19 @@
                             <a href="{{ route('admin.coupons.edit', $item) }}" class="btn btn-sm btn-icon" title="Edit" aria-label="Edit {{ $item->code }}">
                                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
                             </a>
+                            <form method="POST" action="{{ route('admin.coupons.destroy', $item) }}" data-no-loading>
+                                @csrf
+                                @method('DELETE')
+                                <button
+                                    class="btn btn-sm btn-icon btn-danger"
+                                    type="submit"
+                                    title="Delete"
+                                    aria-label="Delete {{ $item->code }}"
+                                    onclick="return confirm('Delete coupon {{ $item->code }}? Customers will no longer be able to use this code.')"
+                                >
+                                    <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                                </button>
+                            </form>
                         </div>
                     </td>
                 </tr>

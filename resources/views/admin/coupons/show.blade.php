@@ -9,6 +9,11 @@
     </div>
     <div class="page-actions">
         <a href="{{ route('admin.coupons.edit', $item) }}" class="btn btn-primary">Edit</a>
+        <form method="POST" action="{{ route('admin.coupons.destroy', $item) }}" data-no-loading>
+            @csrf
+            @method('DELETE')
+            <button class="btn btn-danger" type="submit" onclick="return confirm('Delete coupon {{ $item->code }}? Customers will no longer be able to use this code.')">Delete</button>
+        </form>
         <a href="{{ route('admin.coupons.index') }}" class="btn btn-ghost">Back</a>
     </div>
 </div>

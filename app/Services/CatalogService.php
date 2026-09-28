@@ -57,12 +57,12 @@ class CatalogService
      */
     public function resolve(int $id, array $data = []): ?array
     {
-        $fromSnap = $this->fromSnapshot($id, $data);
-        if ($fromSnap) {
-            return $fromSnap;
+        $live = $this->find($id);
+        if ($live) {
+            return $live;
         }
 
-        return $this->find($id);
+        return $this->fromSnapshot($id, $data);
     }
 
     /**
@@ -83,7 +83,7 @@ class CatalogService
         $compare = (float) $product->regular_price;
         $discount = price_discount_label($price, $compare);
 
-        $image = $product->main_image ?: 'public/assets/images/categories/rings.jpg';
+        $image = $product->imagePath();
         $weight = $product->weight ? rtrim(rtrim(number_format((float) $product->weight, 3, '.', ''), '0'), '.').' g' : null;
 
         return [

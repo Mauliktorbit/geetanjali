@@ -19,7 +19,7 @@ class ContactController extends Controller
                 ['label' => 'Home', 'url' => route('home')],
                 ['label' => 'Contact Us', 'url' => null],
             ],
-            'contact' => config('brand.contact'),
+            'contact' => storefront_contact(),
             'heroImage' => 'public/assets/images/contact/hero-bg.jpg',
             'trustItems' => [
                 ['icon' => 'bi-heart', 'title' => 'Skin-friendly', 'subtitle' => 'Anti-tarnish finish'],

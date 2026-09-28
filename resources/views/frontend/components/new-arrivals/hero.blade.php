@@ -14,7 +14,7 @@
     </div>
 
     <div class="na-hero__inner">
-        <div class="container">
+        <div class="site-container">
             <div class="na-hero__content">
                 <h1 id="na-hero-heading" class="font-heading">{{ $hero['title'] ?? 'New Arrivals' }}</h1>
                 @include('frontend.components.gold-divider', ['align' => 'left'])

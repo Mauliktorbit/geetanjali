@@ -9,6 +9,18 @@ class OfferRepository extends BaseRepository
 {
     protected array $searchable = ['title', 'promo_code', 'label', 'discount_display'];
 
+    protected array $sortable = [
+        'offer' => 'title',
+        'valid' => 'ends_at',
+        'status' => 'is_active',
+        'category',
+        'ends_at',
+    ];
+
+    protected string $defaultSort = 'sort_order';
+
+    protected string $defaultDirection = 'asc';
+
     public function __construct(Offer $model)
     {
         parent::__construct($model);
@@ -28,11 +40,4 @@ class OfferRepository extends BaseRepository
         }
     }
 
-    protected function applySorting(Builder $query, array $filters): void
-    {
-        $sort = $filters['sort'] ?? 'sort_order';
-        $direction = strtolower((string) ($filters['direction'] ?? 'asc')) === 'desc' ? 'desc' : 'asc';
-
-        $query->orderBy($sort, $direction)->orderByDesc('id');
-    }
 }

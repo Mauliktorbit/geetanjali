@@ -337,6 +337,14 @@
     z-index: 1090;
 }
 
+body .offcanvas-backdrop,
+body .modal-backdrop {
+    background: var(--popup-backdrop) !important;
+    backdrop-filter: blur(var(--popup-backdrop-blur));
+    -webkit-backdrop-filter: blur(var(--popup-backdrop-blur));
+    opacity: 1 !important;
+}
+
 .offcanvas-nav .offcanvas-header {
     border-bottom: 1px solid var(--border);
     align-items: center;

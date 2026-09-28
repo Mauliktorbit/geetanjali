@@ -48,8 +48,8 @@
                     <tr>
                         <th><input type="checkbox" data-check-all></th>
                     <th>Category</th>
-                    <th>Title</th>
-                    <th>Amount</th>
+                    <th data-sort="title">Title</th>
+                    <th data-sort="amount">Amount</th>
                     <th>Expense Date</th>
                     <th>Payment Method</th>
                         <th>Actions</th>

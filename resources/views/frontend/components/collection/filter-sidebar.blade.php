@@ -5,10 +5,11 @@
     'maxPriceBound' => 500000,
     'formId' => 'kundan-filter-form',
     'actionUrl' => null,
+    'collectionSlug' => 'kundan',
 ])
 
 @php
-    $typeOptions = $typeOptions ?? \App\Services\StorefrontCatalogService::jewelleryTypeOptions();
+    $typeOptions = $typeOptions ?? \App\Services\StorefrontCatalogService::jewelleryTypeOptions($collectionSlug ?? 'kundan');
     $metalOptions = \App\Services\StorefrontCatalogService::METAL_LABELS;
     $stoneOptions = [
         'emerald' => 'Emerald',
@@ -44,6 +45,10 @@
     <fieldset class="kundan-filters__group">
         <legend>Jewellery Type</legend>
         @foreach ($typeOptions as $key => $label)
+            @php $count = (int) ($filterCounts['type'][$key] ?? 0); @endphp
+            @if ($count < 1 && ! in_array($key, $selectedTypes, true))
+                @continue
+            @endif
             <label class="kundan-check">
                 <input
                     type="checkbox"
@@ -51,7 +56,7 @@
                     value="{{ $key }}"
                     @checked(in_array($key, $selectedTypes, true))
                 >
-                <span>{{ $label }} ({{ $filterCounts['type'][$key] ?? 0 }})</span>
+                <span>{{ $label }} ({{ $count }})</span>
             </label>
         @endforeach
     </fieldset>

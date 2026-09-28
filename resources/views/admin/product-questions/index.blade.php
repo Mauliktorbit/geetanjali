@@ -5,7 +5,7 @@
 @include('admin.components.alerts')
 <div class="card">
 <form method="GET" class="filters-bar"><input name="search" value="{{ request('search') }}" class="form-control"><select name="status" class="form-control"><option value="">Status</option><option value="pending">Pending</option><option value="answered">Answered</option><option value="published">Published</option><option value="hidden">Hidden</option></select><button class="btn btn-secondary">Filter</button></form>
-<table class="data-table"><thead><tr><th>Product</th><th>Question</th><th>Status</th><th>Actions</th></tr></thead><tbody>
+<table class="data-table"><thead><tr><th>Product</th><th>Question</th><th data-sort="status">Status</th><th>Actions</th></tr></thead><tbody>
 @forelse($items as $item)
 <tr><td>{{ $item->product?->name }}</td><td>{{ $item->question }}<br><small>{{ $item->answer }}</small></td><td>{{ $item->status }}</td>
 <td>

@@ -4,13 +4,13 @@
 <div class="page-header">
     <div>
         <h1>Update Stock</h1>
-        <p class="subtitle">See the current stock and set how many pieces this product should have.</p>
+        <p class="subtitle">Add pieces to the current stock. The new total is calculated for you.</p>
         @include('admin.components.breadcrumbs', ['items' => [['label' => 'Inventory', 'url' => route('admin.inventory.index')], ['label' => 'Update Stock']]])
     </div>
 </div>
 @include('admin.components.alerts')
 <div class="card product-form-card">
-    <form method="POST" action="{{ route('admin.inventory.adjust.store') }}">
+    <form method="POST" action="{{ route('admin.inventory.adjust.store') }}" data-stock-add-form>
         @csrf
         @if ($selectedProduct)
             <input type="hidden" name="product_id" value="{{ $selectedProduct->id }}">
@@ -37,7 +37,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="inventory-current">Current stock</label>
+                    <label for="inventory-current">Current Stock</label>
                     <input
                         id="inventory-current"
                         type="text"
@@ -46,24 +46,43 @@
                         placeholder="Choose a product first"
                         readonly
                         tabindex="-1"
+                        data-current-stock="{{ $selectedProduct ? (int) $currentStock : '' }}"
                     >
                 </div>
 
                 <div class="form-group">
-                    <label for="inventory-stock">New stock *</label>
+                    <label for="inventory-stock-add">Stock to Add *</label>
                     <input
-                        id="inventory-stock"
+                        id="inventory-stock-add"
                         type="number"
-                        name="stock"
-                        class="form-control @error('stock') is-invalid @enderror"
-                        value="{{ old('stock', $selectedProduct ? $currentStock : '') }}"
-                        min="0"
+                        name="stock_to_add"
+                        class="form-control @error('stock_to_add') is-invalid @enderror"
+                        value="{{ old('stock_to_add') }}"
+                        min="1"
                         step="1"
                         required
                         placeholder="0"
+                        inputmode="numeric"
+                        @disabled(! $selectedProduct)
+                        data-stock-to-add
                     >
-                    <span class="form-hint">This is the total pieces in stock, not plus or minus. Change the number, then save.</span>
-                    @error('stock')<span class="invalid-feedback">{{ $message }}</span>@enderror
+                    <span class="form-hint">Enter how many pieces to add. This is added to the current stock.</span>
+                    @error('stock_to_add')<span class="invalid-feedback">{{ $message }}</span>@enderror
+                </div>
+
+                <div class="form-group">
+                    <label for="inventory-new-total">New Total Stock</label>
+                    <input
+                        id="inventory-new-total"
+                        type="text"
+                        class="form-control inventory-new-total"
+                        value="{{ $selectedProduct ? (int) $currentStock + (int) old('stock_to_add', 0) : '' }}"
+                        placeholder="—"
+                        readonly
+                        tabindex="-1"
+                        data-new-total-stock
+                    >
+                    <span class="form-hint">Current stock + stock to add.</span>
                 </div>
             </div>
 
@@ -83,9 +102,36 @@
             </aside>
         </div>
         <div class="form-actions">
-            <button class="btn btn-primary" type="submit">Save</button>
+            <button class="btn btn-primary" type="submit" @disabled(! $selectedProduct)>Save</button>
             <a href="{{ route('admin.inventory.index') }}" class="btn btn-ghost">Cancel</a>
         </div>
     </form>
 </div>
 @endsection
+@push('scripts')
+<script>
+(function () {
+  var form = document.querySelector('[data-stock-add-form]');
+  if (!form) return;
+  var current = form.querySelector('#inventory-current');
+  var add = form.querySelector('[data-stock-to-add]');
+  var total = form.querySelector('[data-new-total-stock]');
+  if (!current || !add || !total) return;
+
+  function updateTotal() {
+    var currentStock = parseInt(current.getAttribute('data-current-stock') || current.value, 10);
+    if (isNaN(currentStock)) {
+      total.value = '';
+      return;
+    }
+    var addStock = parseInt(add.value, 10);
+    if (isNaN(addStock) || addStock < 0) addStock = 0;
+    total.value = String(currentStock + addStock);
+  }
+
+  add.addEventListener('input', updateTotal);
+  add.addEventListener('change', updateTotal);
+  updateTotal();
+})();
+</script>
+@endpush

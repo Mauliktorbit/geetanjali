@@ -57,10 +57,8 @@
         @endforeach
     </div>
 
-    <p class="attr-label-top">Material</p>
-    <div class="metal-pill">{{ $product->metal ?: 'Fashion jewellery' }}</div>
-
     <ul class="product-attrs">
+        <li><span class="label">Material:</span><span class="value">{{ $product->metal ?: 'Fashion jewellery' }}</span></li>
         @if (filled($product->stone))
             <li><span class="label">Stone:</span><span class="value">{{ $product->stone }}</span></li>
         @endif

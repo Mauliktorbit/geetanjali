@@ -53,7 +53,8 @@
     padding-block: 2.75rem;
 }
 
-.offers-hero__inner > .container {
+.offers-hero__inner > .container,
+.offers-hero__inner > .site-container {
     position: relative;
     z-index: 1;
 }

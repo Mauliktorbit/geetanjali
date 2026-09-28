@@ -15,6 +15,8 @@
     $state = $item->shipping_state ?: ($ship['state'] ?? '');
     $pincode = $item->shipping_pincode ?: ($ship['pincode'] ?? '');
     $addressParts = array_filter([$addressLine, $addressLine2, trim(implode(', ', array_filter([$city, $state]))), $pincode]);
+    $shippingMethodLabel = $item->shippingMethodLabel();
+    $shippingMethodLabel = $shippingMethodLabel === '—' ? '' : $shippingMethodLabel;
 @endphp
 
 <div class="page-header">
@@ -48,12 +50,16 @@
             <span class="value">@include('admin.components.status-badge', ['status' => $paymentBadge, 'label' => $paymentLabel])</span>
         </div>
         <div class="detail-item">
-            <span class="label">Date</span>
-            <span class="value">{{ optional($item->created_at)->format('d M Y, h:i A') ?: '—' }}</span>
+            <span class="label">Payment method</span>
+            <span class="value">{{ $item->paymentMethodLabel() }}</span>
         </div>
         <div class="detail-item">
-            <span class="label">Total</span>
-            <span class="value inventory-stock-value">{{ money($item->grand_total) }}</span>
+            <span class="label">Shipping method</span>
+            <span class="value">{{ $item->shippingMethodLabel() }}</span>
+        </div>
+        <div class="detail-item">
+            <span class="label">Date</span>
+            <span class="value">{{ optional($item->created_at)->format('d M Y, h:i A') ?: '—' }}</span>
         </div>
         <div class="detail-item">
             <span class="label">Customer</span>
@@ -110,6 +116,32 @@
                 </tbody>
             </table>
         </div>
+        <div class="order-totals" aria-label="Order totals">
+            <div class="order-totals__row">
+                <span>Subtotal</span>
+                <strong>{{ money($item->subtotal) }}</strong>
+            </div>
+            @if ((float) $item->discount_amount > 0 || filled($item->coupon_code))
+                <div class="order-totals__row is-discount">
+                    <span>{{ $item->discountLineLabel() }}</span>
+                    <strong>- {{ money($item->discount_amount) }}</strong>
+                </div>
+            @endif
+            @if ((float) $item->tax_amount > 0)
+                <div class="order-totals__row">
+                    <span>Tax</span>
+                    <strong>{{ money($item->tax_amount) }}</strong>
+                </div>
+            @endif
+            <div class="order-totals__row">
+                <span>Shipping{{ $shippingMethodLabel !== '' ? ' ('.$shippingMethodLabel.')' : '' }}</span>
+                <strong>{{ (float) $item->shipping_charge > 0 ? money($item->shipping_charge) : 'Free' }}</strong>
+            </div>
+            <div class="order-totals__row is-total">
+                <span>Order Total</span>
+                <strong>{{ money($item->grand_total) }}</strong>
+            </div>
+        </div>
     @else
         <p class="category-product-empty">No items in this order.</p>
     @endif
@@ -125,7 +157,7 @@
                     <option value="{{ $key }}" @selected($statusKey === $key)>{{ $label }}</option>
                 @endforeach
             </select>
-            <span class="form-hint">Choose New, Confirmed, Packed, Shipped, Delivered or Cancelled.</span>
+            <span class="form-hint">{{ 'Choose '.implode(', ', $statuses).'.' }}</span>
         </div>
         <div class="form-actions">
             <button class="btn btn-primary" type="submit">Save status</button>

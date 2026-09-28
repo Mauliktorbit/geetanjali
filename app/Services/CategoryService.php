@@ -65,7 +65,7 @@ class CategoryService extends BaseService
 
         if ($existing === null) {
             $payload['is_active'] = true;
-            $payload['display_order'] = (int) Category::query()->max('display_order') + 1;
+            $payload['display_order'] = ((int) Category::query()->min('display_order')) - 1;
         }
 
         return $payload;

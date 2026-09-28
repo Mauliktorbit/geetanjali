@@ -63,6 +63,17 @@ class User extends Authenticatable
         return $this->locked_until !== null && $this->locked_until->isFuture();
     }
 
+    public function authenticationHasExpired(): bool
+    {
+        if ($this->last_login_at === null) {
+            return false;
+        }
+
+        $minutes = max(1, (int) config('auth.session_timeout_minutes', 10080));
+
+        return $this->last_login_at->lte(now()->subMinutes($minutes));
+    }
+
     public function isAdmin(): bool
     {
         return (bool) $this->is_staff && (bool) $this->is_active && ! $this->isLocked();

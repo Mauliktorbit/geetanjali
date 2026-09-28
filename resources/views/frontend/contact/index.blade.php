@@ -1,11 +1,12 @@
 @extends('frontend.layouts.app')
 
 @section('title', 'Contact Us | Geetanjali Jewellers')
-@section('meta_description', 'Contact Geetanjali Jewellers in Ahmedabad for jewellery enquiries, store visits and support.')
+@section('meta_description', 'Contact Geetanjali Jewellers in Ahmedabad for jewellery and wholesale enquiries.')
 
 @section('content')
     @php
-        $phoneHref = preg_replace('/\s+/', '', $contact['phone'] ?? '');
+        $contact = $contact ?? storefront_contact();
+        $phoneHref = $contact['phone_href'] ?? preg_replace('/\s+/', '', $contact['phone'] ?? '');
     @endphp
 
     <div class="contact-page">
@@ -20,13 +21,18 @@
                 aria-label="Gold pearl earrings on silk"
             ></div>
 
-            <div class="container contact-hero__inner">
+            <div class="site-container contact-hero__inner">
                 <div class="contact-hero__content">
-                    @include('frontend.components.breadcrumb', ['items' => $breadcrumb])
+                    @include('frontend.components.breadcrumb', ['items' => $breadcrumb, 'flush' => true])
 
                     <h1 id="contact-heading" class="font-heading">Contact Us</h1>
                     @include('frontend.components.gold-divider', ['align' => 'left'])
-                    <p>We'd love to hear from you. Get in touch with us for any enquiries.</p>
+                    <p>We would love to hear from you. Call or email our team for jewellery and wholesale enquiries.</p>
+                    <p class="contact-hero__details">
+                        <a href="tel:{{ $phoneHref }}">{{ $contact['phone'] }}</a>
+                        <span aria-hidden="true">·</span>
+                        <a href="mailto:{{ $contact['email'] }}">{{ $contact['email'] }}</a>
+                    </p>
                 </div>
             </div>
         </section>
@@ -47,7 +53,7 @@
                                 <i class="bi bi-geo-alt-fill"></i>
                             </span>
                             <div>
-                                <strong>Visit Our Store</strong>
+                                <strong>Our Office</strong>
                                 <p>{{ $contact['address'] }}</p>
                             </div>
                         </li>
@@ -174,7 +180,7 @@
 
                     <div class="contact-map">
                         <iframe
-                            title="Geetanjali Jewellers store location map"
+                            title="Geetanjali Jewellers office location map"
                             src="{{ $contact['map_embed'] }}"
                             loading="lazy"
                             referrerpolicy="no-referrer-when-downgrade"

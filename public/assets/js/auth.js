@@ -6,6 +6,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const page = document.querySelector('[data-auth-page]');
     if (!page) return;
 
+    dismissAuthMessages(page);
+
     page.querySelectorAll('[data-otp-input]').forEach((input) => {
         input.addEventListener('input', () => {
             input.value = input.value.replace(/\D/g, '').slice(0, 6);
@@ -16,7 +18,119 @@ document.addEventListener('DOMContentLoaded', () => {
     if (registerForm) {
         bindRegisterValidation(registerForm);
     }
+
+    const loginForm = page.querySelector('form.auth-form:not([data-register-form])');
+    if (loginForm && loginForm.querySelector('#login-email')) {
+        bindAuthAjaxSubmit(loginForm);
+    }
 });
+
+function dismissAuthMessages(page) {
+    const nodes = [...page.querySelectorAll('.auth-alert, .auth-error')].filter((el) => {
+        if (el.hasAttribute('data-auth-persist')) {
+            return false;
+        }
+        if (el.hasAttribute('hidden')) {
+            return false;
+        }
+        return String(el.textContent || '').trim() !== '';
+    });
+
+    if (nodes.length === 0) {
+        return;
+    }
+
+    window.setTimeout(() => {
+        nodes.forEach((el) => {
+            el.classList.add('is-hiding');
+            window.setTimeout(() => {
+                el.hidden = true;
+                el.classList.remove('is-hiding');
+                el.closest('.auth-field')?.classList.remove('is-invalid');
+            }, 280);
+        });
+    }, 4000);
+}
+
+async function submitAuthForm(form) {
+    const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+    const submit = form.querySelector('button[type="submit"]');
+    if (submit) {
+        submit.disabled = true;
+    }
+
+    try {
+        const response = await fetch(form.action, {
+            method: 'POST',
+            body: new FormData(form),
+            credentials: 'same-origin',
+            headers: {
+                Accept: 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': csrf,
+            },
+        });
+        const data = await response.json().catch(() => ({}));
+        if (response.ok && data.redirect) {
+            window.location.replace(data.redirect);
+            return;
+        }
+        paintAuthErrors(form, data);
+    } catch (error) {
+        form.submit();
+        return;
+    }
+
+    if (submit) {
+        submit.disabled = false;
+    }
+}
+
+function paintAuthErrors(form, data) {
+    const errors = data.errors || {};
+    const page = form.closest('[data-auth-page]');
+
+    Object.keys(errors).forEach((name) => {
+        const input = form.querySelector(`[name="${name}"]`);
+        const wrap = input?.closest('[data-field-wrap], .auth-field');
+        if (!wrap) {
+            return;
+        }
+        let box = wrap.querySelector('[data-field-error], .auth-error');
+        if (!box) {
+            box = document.createElement('span');
+            box.className = 'auth-error';
+            wrap.appendChild(box);
+        }
+        box.textContent = Array.isArray(errors[name]) ? String(errors[name][0] || '') : String(errors[name] || '');
+        box.hidden = false;
+        wrap.classList.add('is-invalid');
+        input?.setAttribute('aria-invalid', 'true');
+    });
+
+    if (Object.keys(errors).length === 0 && data.message) {
+        let alert = form.previousElementSibling;
+        if (!alert || !alert.classList.contains('auth-alert')) {
+            alert = document.createElement('div');
+            alert.className = 'auth-alert';
+            alert.setAttribute('role', 'alert');
+            form.parentNode?.insertBefore(alert, form);
+        }
+        alert.hidden = false;
+        alert.textContent = data.message;
+    }
+
+    if (page) {
+        dismissAuthMessages(page);
+    }
+}
+
+function bindAuthAjaxSubmit(form) {
+    form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        submitAuthForm(form);
+    });
+}
 
 function bindRegisterValidation(form) {
     const checkUrl = form.getAttribute('data-check-url') || '';
@@ -248,6 +362,10 @@ function bindRegisterValidation(form) {
         if (firstInvalid) {
             event.preventDefault();
             firstInvalid.focus();
+            return;
         }
+
+        event.preventDefault();
+        submitAuthForm(form);
     });
 }
