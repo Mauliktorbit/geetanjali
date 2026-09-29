@@ -59,14 +59,6 @@
                 <span class="value">{{ $item->description ?: '—' }}</span>
             </div>
             <div class="detail-item">
-                <span class="label">SEO title</span>
-                <span class="value">{{ $item->seo_title ?: '—' }}</span>
-            </div>
-            <div class="detail-item">
-                <span class="label">SEO description</span>
-                <span class="value">{{ $item->seo_description ?: '—' }}</span>
-            </div>
-            <div class="detail-item">
                 <span class="label">Products</span>
                 <span class="value">{{ number_format((int) ($item->products_count ?? $item->products->count())) }}</span>
             </div>

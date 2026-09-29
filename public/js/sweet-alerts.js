@@ -4,6 +4,11 @@
 (function () {
   'use strict';
 
+  if (window.__gjSweetAlertsBound) {
+    return;
+  }
+  window.__gjSweetAlertsBound = true;
+
   const COLORS = {
     brand: '#16352D',
     gold: '#C98B19',
@@ -34,10 +39,21 @@
       }
       .gj-swal .swal2-actions { gap: 0.6rem; }
       .gj-swal .swal2-styled { border-radius: 999px !important; padding: 0.65rem 1.35rem !important; font-weight: 600 !important; }
-      .swal2-container.swal2-backdrop-show {
+      .swal2-container.swal2-backdrop-show:not(.swal2-toast-shown) {
         background: rgba(20, 20, 20, 0.22) !important;
         backdrop-filter: blur(16px);
         -webkit-backdrop-filter: blur(16px);
+      }
+      .gj-swal-toast-wrap,
+      .swal2-container.swal2-toast-shown {
+        background: transparent !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        pointer-events: none;
+      }
+      .gj-swal-toast.swal2-toast {
+        pointer-events: auto;
+        font-family: Poppins, "Segoe UI", sans-serif;
       }
     `;
     document.head.appendChild(style);
@@ -126,16 +142,44 @@
     });
   }
 
+  function hideLeftoverFlashBanners() {
+    document.querySelectorAll([
+      '.flash-area .alert',
+      '.cart-flash',
+      '.wishlist-flash',
+      '.contact-flash',
+      '.account-flash:not([data-auto-dismiss])',
+      '.checkout-flash:not([data-auto-dismiss])',
+      '.auth-alert:not([data-auth-persist])',
+      'main .alert',
+    ].join(',')).forEach((el) => {
+      el.hidden = true;
+    });
+  }
+
   function toast(message, icon) {
     if (!ready()) return;
+    const text = String(message || '').trim();
+    if (!text) return;
+    if (window.__gjToastText === text && Date.now() - (window.__gjToastAt || 0) < 1500) {
+      return;
+    }
+    window.__gjToastText = text;
+    window.__gjToastAt = Date.now();
     window.Swal.fire({
       toast: true,
       position: 'top-end',
       icon: icon || 'success',
-      title: String(message || ''),
+      title: text,
       showConfirmButton: false,
-      timer: 3500,
+      timer: 4000,
       timerProgressBar: true,
+      showCloseButton: true,
+      backdrop: false,
+      customClass: {
+        popup: 'gj-swal-toast',
+        container: 'gj-swal-toast-wrap',
+      },
     });
   }
 
@@ -258,8 +302,9 @@
         showCloseButton: true,
         timer: 9000,
         timerProgressBar: true,
+        backdrop: false,
         confirmButtonColor: COLORS.brand,
-        customClass: { popup: 'gj-swal gj-swal-notice', container: 'gj-swal-notice-wrap' },
+        customClass: { popup: 'gj-swal-toast gj-swal-notice', container: 'gj-swal-toast-wrap gj-swal-notice-wrap' },
       }).then((res) => {
         if (!res.isConfirmed || !payload.read_url) return;
         const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
@@ -288,27 +333,38 @@
     });
   };
 
+  function consumeFlashPayload() {
+    const data = {};
+    document.querySelectorAll('#admin-flash-data, #app-flash-data').forEach((el) => {
+      if (el.dataset.gjConsumed === '1') {
+        return;
+      }
+      el.dataset.gjConsumed = '1';
+      try {
+        Object.assign(data, JSON.parse(el.textContent || '{}'));
+      } catch (err) {
+        // ignore malformed flash payload
+      }
+    });
+    return data;
+  }
+
   document.addEventListener('DOMContentLoaded', () => {
     injectStyles();
-    const flash = document.getElementById('admin-flash-data') || document.getElementById('app-flash-data');
-    if (!flash || !ready()) return;
-    try {
-      const data = JSON.parse(flash.textContent || '{}');
-      const shown = new Set();
-      const showOnce = (message, icon) => {
-        const text = String(message || '').trim();
-        if (!text || shown.has(text)) return;
-        shown.add(text);
-        toast(text, icon);
-      };
-      if (data.success) showOnce(data.success, 'success');
-      if (data.error) showOnce(data.error, 'error');
-      if (data.warning) showOnce(data.warning, 'warning');
-      if (data.info) showOnce(data.info, 'info');
-      if (data.status) showOnce(data.status, 'success');
-      if (Array.isArray(data.errors)) data.errors.forEach((msg) => showOnce(msg, 'error'));
-    } catch (err) {
-      // ignore malformed flash payload
-    }
+    if (!ready()) return;
+    const data = consumeFlashPayload();
+    const shown = new Set();
+    const showOnce = (message, icon) => {
+      const text = String(message || '').trim();
+      if (!text || shown.has(text)) return;
+      shown.add(text);
+      toast(text, icon);
+    };
+    if (data.success) showOnce(data.success, 'success');
+    if (data.error) showOnce(data.error, 'error');
+    if (data.warning) showOnce(data.warning, 'warning');
+    if (data.info) showOnce(data.info, 'info');
+    if (data.status) showOnce(data.status, 'success');
+    hideLeftoverFlashBanners();
   });
 })();

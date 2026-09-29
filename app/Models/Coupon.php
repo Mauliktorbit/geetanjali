@@ -28,8 +28,11 @@ class Coupon extends Model
         'included_products',
         'excluded_products',
         'included_categories',
+        'included_collections',
+        'exclude_sale_items',
         'customer_groups',
         'new_customers_only',
+        'existing_customers_only',
         'payment_methods',
         'locations',
         'is_stackable',
@@ -48,11 +51,14 @@ class Coupon extends Model
             'included_products' => 'array',
             'excluded_products' => 'array',
             'included_categories' => 'array',
+            'included_collections' => 'array',
             'customer_groups' => 'array',
             'payment_methods' => 'array',
             'locations' => 'array',
             'meta' => 'array',
             'new_customers_only' => 'boolean',
+            'existing_customers_only' => 'boolean',
+            'exclude_sale_items' => 'boolean',
             'is_stackable' => 'boolean',
             'is_active' => 'boolean',
         ];
@@ -66,6 +72,79 @@ class Coupon extends Model
     public function offersWithCode(): HasMany
     {
         return $this->hasMany(Offer::class, 'promo_code', 'code');
+    }
+
+    /**
+     * @param  mixed  $value
+     * @return list<int>
+     */
+    public static function normalizeIds(mixed $value): array
+    {
+        return array_values(array_unique(array_filter(
+            array_map(static fn ($id) => (int) $id, is_array($value) ? $value : []),
+            static fn (int $id) => $id > 0
+        )));
+    }
+
+    /**
+     * @return list<int>
+     */
+    public function includedProductIds(): array
+    {
+        return self::normalizeIds($this->included_products);
+    }
+
+    /**
+     * @return list<int>
+     */
+    public function includedCategoryIds(): array
+    {
+        return self::normalizeIds($this->included_categories);
+    }
+
+    /**
+     * @return list<int>
+     */
+    public function includedCollectionIds(): array
+    {
+        return self::normalizeIds($this->included_collections);
+    }
+
+    /**
+     * @return list<int>
+     */
+    public function excludedProductIds(): array
+    {
+        return self::normalizeIds($this->excluded_products);
+    }
+
+    public function hasTargeting(): bool
+    {
+        return $this->includedProductIds() !== []
+            || $this->includedCategoryIds() !== []
+            || $this->includedCollectionIds() !== [];
+    }
+
+    public function customerAudience(): string
+    {
+        if ($this->existing_customers_only) {
+            return 'returning';
+        }
+
+        if ($this->new_customers_only) {
+            return 'new';
+        }
+
+        return 'all';
+    }
+
+    public function customerAudienceLabel(): string
+    {
+        return match ($this->customerAudience()) {
+            'new' => 'New customers (first order)',
+            'returning' => 'Returning customers',
+            default => 'All customers',
+        };
     }
 
     public function linkedOffers(): Collection

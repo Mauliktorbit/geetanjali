@@ -241,6 +241,12 @@
     box-shadow: 0 0 0 3px rgba(6, 78, 59, 0.08);
 }
 
+.contact-form input[readonly] {
+    background: #f6f3ec;
+    color: #3d4a45;
+    cursor: default;
+}
+
 .contact-error {
     margin: 0.3rem 0 0;
     font-size: 12px;

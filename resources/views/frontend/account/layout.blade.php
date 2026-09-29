@@ -16,14 +16,8 @@
         @include('frontend.account.partials.sidebar')
 
         <div class="account-main">
-            @if (session('success'))
-                <div class="account-flash account-flash--success">{{ session('success') }}</div>
-            @endif
-            @if (session('error'))
-                <div class="account-flash account-flash--error">{{ session('error') }}</div>
-            @endif
             @if ($errors->any())
-                <div class="account-flash account-flash--error">{{ $errors->first() }}</div>
+                <div class="account-flash account-flash--error" data-auto-dismiss>{{ $errors->first() }}</div>
             @endif
 
             @yield('account')

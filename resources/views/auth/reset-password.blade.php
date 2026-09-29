@@ -10,14 +10,6 @@
                 <p class="auth-subtitle">Create a new password for<br><strong>{{ $maskedEmail }}</strong></p>
                 @include('frontend.components.gold-divider', ['align' => 'center'])
 
-                @if (session('success'))
-                    <div class="auth-alert auth-alert--success" role="status">{{ session('success') }}</div>
-                @endif
-
-                @if ($errors->any())
-                    <div class="auth-alert" role="alert">{{ $errors->first() }}</div>
-                @endif
-
                 <form method="POST" action="{{ route('password.update') }}" class="auth-form">
                     @csrf
                     <div class="auth-field">
@@ -38,6 +30,7 @@
                                 <i class="bi bi-eye-slash" aria-hidden="true"></i>
                             </button>
                         </div>
+                        @error('password') <span class="auth-error">{{ $message }}</span> @enderror
                     </div>
                     <div class="auth-field">
                         <label for="reset-password-confirm">Confirm Password</label>

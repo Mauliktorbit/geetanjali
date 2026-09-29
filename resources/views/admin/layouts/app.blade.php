@@ -131,7 +131,6 @@
         'warning' => session('warning'),
         'info' => session('info'),
         'status' => session('status'),
-        'errors' => (isset($errors) && $errors->any()) ? $errors->all() : null,
     ];
 @endphp
 {!! json_encode(array_filter($flashPayload)) !!}

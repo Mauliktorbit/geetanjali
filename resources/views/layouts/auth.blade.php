@@ -25,6 +25,7 @@
             @include('auth.components.security-bar')
         </div>
     </div>
+    @include('frontend.components.flash')
     @include('frontend.components.asset-scripts')
     @stack('scripts')
 </body>

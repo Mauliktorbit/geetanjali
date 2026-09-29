@@ -120,7 +120,15 @@ function storefrontCsrf() {
     return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || window.csrfToken || '';
 }
 
-function storefrontToast(message) {
+function storefrontToast(message, icon) {
+    const text = String(message || '').trim();
+    if (!text) {
+        return;
+    }
+    if (window.AppAlert && typeof window.AppAlert.toast === 'function') {
+        window.AppAlert.toast(text, icon || 'success');
+        return;
+    }
     let toast = document.querySelector('.product-toast');
     if (!toast) {
         toast = document.createElement('div');
@@ -128,10 +136,10 @@ function storefrontToast(message) {
         toast.setAttribute('role', 'status');
         document.body.appendChild(toast);
     }
-    toast.textContent = message;
+    toast.textContent = text;
     toast.classList.add('is-visible');
     clearTimeout(storefrontToast._timer);
-    storefrontToast._timer = setTimeout(() => toast.classList.remove('is-visible'), 2600);
+    storefrontToast._timer = setTimeout(() => toast.classList.remove('is-visible'), 4000);
 }
 
 function productRoot(el) {
@@ -547,5 +555,53 @@ document.addEventListener('keydown', (event) => {
     }
 });
 
+function dismissStorefrontMessages() {
+    const nodes = [...document.querySelectorAll([
+        '[data-auto-dismiss]',
+        '.auth-error',
+        '.contact-error',
+        '.static-page__error',
+        '.invalid-feedback',
+        '.cart-flash',
+        '.wishlist-flash',
+        '.contact-flash',
+        '.account-flash',
+        '.checkout-flash',
+        'main .alert',
+    ].join(', '))].filter((el) => {
+        if (el.hasAttribute('data-auth-persist')) {
+            return false;
+        }
+        if (el.hasAttribute('hidden')) {
+            return false;
+        }
+        if (el.closest('.swal2-container')) {
+            return false;
+        }
+        return String(el.textContent || '').trim() !== '';
+    });
+
+    if (nodes.length === 0) {
+        return;
+    }
+
+    window.setTimeout(() => {
+        nodes.forEach((el) => {
+            el.classList.add('is-hiding');
+            window.setTimeout(() => {
+                el.hidden = true;
+                el.classList.remove('is-hiding');
+                el.closest('.auth-field')?.classList.remove('is-invalid');
+            }, 280);
+        });
+    }, 4000);
+}
+
 rememberLastShopUrl();
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', dismissStorefrontMessages);
+} else {
+    dismissStorefrontMessages();
+}
 

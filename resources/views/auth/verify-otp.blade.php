@@ -10,14 +10,6 @@
                 <p class="auth-subtitle">Enter the 6-digit code we sent to<br><strong>{{ $maskedEmail }}</strong></p>
                 @include('frontend.components.gold-divider', ['align' => 'center'])
 
-                @if (session('success'))
-                    <div class="auth-alert auth-alert--success" role="status">{{ session('success') }}</div>
-                @endif
-
-                @if ($errors->any())
-                    <div class="auth-alert" role="alert">{{ $errors->first() }}</div>
-                @endif
-
                 <form method="POST" action="{{ route('password.otp.verify') }}" class="auth-form">
                     @csrf
                     <div class="auth-field">
@@ -36,6 +28,7 @@
                                 data-otp-input
                             >
                         </div>
+                        @error('otp') <span class="auth-error">{{ $message }}</span> @enderror
                     </div>
                     <button type="submit" class="auth-btn">Verify OTP</button>
                 </form>

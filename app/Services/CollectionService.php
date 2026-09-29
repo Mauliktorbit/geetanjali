@@ -75,9 +75,14 @@ class CollectionService extends BaseService
         $payload = [
             'name' => $name,
             'description' => filled($data['description'] ?? null) ? trim((string) $data['description']) : null,
-            'seo_title' => filled($data['seo_title'] ?? null) ? trim((string) $data['seo_title']) : null,
-            'seo_description' => filled($data['seo_description'] ?? null) ? trim((string) $data['seo_description']) : null,
         ];
+
+        if (array_key_exists('seo_title', $data)) {
+            $payload['seo_title'] = filled($data['seo_title']) ? trim((string) $data['seo_title']) : null;
+        }
+        if (array_key_exists('seo_description', $data)) {
+            $payload['seo_description'] = filled($data['seo_description']) ? trim((string) $data['seo_description']) : null;
+        }
 
         if (array_key_exists('is_active', $data)) {
             $payload['is_active'] = (bool) $data['is_active'];

@@ -1,8 +1,9 @@
 @php
     $item = $item ?? null;
     $type = old('discount_type', $item?->typeKey() ?: 'percent');
-    $starts = old('starts_at', $item?->starts_at?->format('d/m/Y'));
-    $ends = old('ends_at', $item?->ends_at?->format('d/m/Y'));
+    $starts = old('starts_at', $item?->starts_at?->format('Y-m-d'));
+    $ends = old('ends_at', $item?->ends_at?->format('Y-m-d'));
+    $audience = old('customer_audience', $item?->customerAudience() ?: 'all');
 @endphp
 
 <div class="form-grid">
@@ -65,38 +66,33 @@
     </div>
 
     <div class="form-group">
-        <label for="coupon-starts">Starts</label>
+        <label for="coupon-starts">Start date</label>
         <input
             id="coupon-starts"
-            type="text"
+            type="date"
             name="starts_at"
             class="form-control @error('starts_at') is-invalid @enderror"
             value="{{ $starts }}"
-            inputmode="numeric"
-            maxlength="10"
-            placeholder="DD/MM/YYYY"
-            data-input-kind="datedmy"
+            data-date-range-start
             autocomplete="off"
         >
-        <span class="form-hint">Example: 11/09/2026</span>
+        <span class="form-hint">Open the calendar and pick the first day this coupon can be used.</span>
         @error('starts_at')<span class="invalid-feedback">{{ $message }}</span>@enderror
     </div>
 
     <div class="form-group">
-        <label for="coupon-ends">Ends</label>
+        <label for="coupon-ends">End date</label>
         <input
             id="coupon-ends"
-            type="text"
+            type="date"
             name="ends_at"
             class="form-control @error('ends_at') is-invalid @enderror"
             value="{{ $ends }}"
-            inputmode="numeric"
-            maxlength="10"
-            placeholder="DD/MM/YYYY"
-            data-input-kind="datedmy"
+            @if ($starts) min="{{ $starts }}" @endif
+            data-date-range-end
             autocomplete="off"
         >
-        <span class="form-hint">Example: 31/12/2026</span>
+        <span class="form-hint">Pick the last day it can be used. Leave blank if it should not expire.</span>
         @error('ends_at')<span class="invalid-feedback">{{ $message }}</span>@enderror
     </div>
 
@@ -116,10 +112,155 @@
         @error('minimum_cart')<span class="invalid-feedback">{{ $message }}</span>@enderror
     </div>
 
+    <div class="form-group">
+        <label for="coupon-max-discount">Maximum discount (₹)</label>
+        <input
+            id="coupon-max-discount"
+            type="number"
+            name="maximum_discount"
+            class="form-control @error('maximum_discount') is-invalid @enderror"
+            value="{{ old('maximum_discount', $item->maximum_discount ?? '') }}"
+            min="0.01"
+            step="0.01"
+            placeholder="No cap"
+        >
+        <span class="form-hint">Cap how many rupees can be taken off. Useful for percent coupons, for example 10% off up to ₹2,000. Leave blank for no cap.</span>
+        @error('maximum_discount')<span class="invalid-feedback">{{ $message }}</span>@enderror
+    </div>
+
+    <div class="form-group">
+        <label for="coupon-usage-limit">Total uses</label>
+        <input
+            id="coupon-usage-limit"
+            type="number"
+            name="usage_limit"
+            class="form-control @error('usage_limit') is-invalid @enderror"
+            value="{{ old('usage_limit', $item?->usage_limit ?? '') }}"
+            min="1"
+            step="1"
+            placeholder="Unlimited"
+        >
+        <span class="form-hint">How many times this code can be used in total. Leave blank for no overall limit.</span>
+        @error('usage_limit')<span class="invalid-feedback">{{ $message }}</span>@enderror
+    </div>
+
+    <div class="form-group">
+        <label for="coupon-per-customer">Uses per customer</label>
+        <input
+            id="coupon-per-customer"
+            type="number"
+            name="per_customer_limit"
+            class="form-control @error('per_customer_limit') is-invalid @enderror"
+            value="{{ old('per_customer_limit', $item?->per_customer_limit ?: '') }}"
+            min="1"
+            step="1"
+            placeholder="Unlimited"
+        >
+        <span class="form-hint">How many times one customer can use this code. Leave blank for no per-customer limit.</span>
+        @error('per_customer_limit')<span class="invalid-feedback">{{ $message }}</span>@enderror
+    </div>
+
+    <div class="form-group">
+        <label for="coupon-audience">Who can use this coupon *</label>
+        <select
+            id="coupon-audience"
+            name="customer_audience"
+            class="form-control @error('customer_audience') is-invalid @enderror"
+            required
+        >
+            <option value="all" @selected($audience === 'all')>All customers</option>
+            <option value="new" @selected($audience === 'new')>New customers (first order)</option>
+            <option value="returning" @selected($audience === 'returning')>Returning customers (already ordered)</option>
+        </select>
+        <span class="form-hint">Choose whether the code is for new users, old users, or everyone.</span>
+        @error('customer_audience')<span class="invalid-feedback">{{ $message }}</span>@enderror
+    </div>
+
     <div class="form-group form-check">
         <label>
             <input type="checkbox" name="is_active" value="1" @checked(old('is_active', $item->is_active ?? true))>
             Active — customers can use this coupon
         </label>
+    </div>
+</div>
+
+@php
+    $categories = $categories ?? collect();
+    $collections = $collections ?? collect();
+    $products = $products ?? collect();
+    $selectedCategoryIds = collect(old('included_categories', $item?->included_categories ?? []))->map(fn ($id) => (int) $id);
+    $selectedCollectionIds = collect(old('included_collections', $item?->included_collections ?? []))->map(fn ($id) => (int) $id);
+    $selectedProductIds = collect(old('included_products', $item?->included_products ?? []))->map(fn ($id) => (int) $id);
+@endphp
+
+<div class="coupon-scope">
+    <div class="coupon-scope__head">
+        <h3>Where this coupon can be used</h3>
+        <p>Leave all boxes unchecked to allow the whole store. If you select any categories, collections, or products, the coupon only applies to matching items.</p>
+    </div>
+
+    <div class="form-group full">
+        <span id="coupon-categories-label">Categories</span>
+        @if ($categories->isEmpty())
+            <p class="form-hint">No categories yet. Add them under Admin → Categories.</p>
+        @else
+            <div class="collection-check-list" role="group" aria-labelledby="coupon-categories-label">
+                @foreach ($categories as $category)
+                    <label class="collection-check">
+                        <input type="checkbox" name="included_categories[]" value="{{ $category->id }}" @checked($selectedCategoryIds->contains((int) $category->id))>
+                        <span>{{ $category->name }}</span>
+                    </label>
+                @endforeach
+            </div>
+        @endif
+        <span class="form-hint">Tick the jewellery types this code should work on.</span>
+        @error('included_categories')<span class="invalid-feedback" style="display:block;">{{ $message }}</span>@enderror
+        @error('included_categories.*')<span class="invalid-feedback" style="display:block;">{{ $message }}</span>@enderror
+    </div>
+
+    <div class="form-group full">
+        <span id="coupon-collections-label">Collections</span>
+        @if ($collections->isEmpty())
+            <p class="form-hint">No collections yet. Add them under Admin → Collections.</p>
+        @else
+            <div class="collection-check-list" role="group" aria-labelledby="coupon-collections-label">
+                @foreach ($collections as $collection)
+                    <label class="collection-check">
+                        <input type="checkbox" name="included_collections[]" value="{{ $collection->id }}" @checked($selectedCollectionIds->contains((int) $collection->id))>
+                        <span>{{ $collection->name }}{{ isset($collection->is_active) && ! $collection->is_active ? ' (Inactive)' : '' }}</span>
+                    </label>
+                @endforeach
+            </div>
+        @endif
+        <span class="form-hint">Limit the coupon to products in these collections.</span>
+        @error('included_collections')<span class="invalid-feedback" style="display:block;">{{ $message }}</span>@enderror
+        @error('included_collections.*')<span class="invalid-feedback" style="display:block;">{{ $message }}</span>@enderror
+    </div>
+
+    <div class="form-group full">
+        <span id="coupon-products-label">Products</span>
+        @if ($products->isEmpty())
+            <p class="form-hint">No products yet. Add them under Admin → Products.</p>
+        @else
+            <div class="collection-check-list collection-check-list--products" role="group" aria-labelledby="coupon-products-label">
+                @foreach ($products as $product)
+                    <label class="collection-check">
+                        <input type="checkbox" name="included_products[]" value="{{ $product->id }}" @checked($selectedProductIds->contains((int) $product->id))>
+                        <span>{{ $product->name }}{{ $product->sku ? ' ('.$product->sku.')' : '' }}</span>
+                    </label>
+                @endforeach
+            </div>
+        @endif
+        <span class="form-hint">Optionally restrict the code to specific products only.</span>
+        @error('included_products')<span class="invalid-feedback" style="display:block;">{{ $message }}</span>@enderror
+        @error('included_products.*')<span class="invalid-feedback" style="display:block;">{{ $message }}</span>@enderror
+    </div>
+
+    <div class="form-group form-check full">
+        <label>
+            <input type="checkbox" name="exclude_sale_items" value="1" @checked(old('exclude_sale_items', $item?->exclude_sale_items ?? false))>
+            Do not apply to products that are already discounted
+        </label>
+        <span class="form-hint">When ticked, the coupon skips items that already have a sale price lower than the regular price.</span>
     </div>
 </div>

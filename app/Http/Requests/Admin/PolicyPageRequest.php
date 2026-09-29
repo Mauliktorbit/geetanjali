@@ -19,8 +19,6 @@ class PolicyPageRequest extends FormRequest
             'sections' => ['nullable', 'array'],
             'sections.*.heading' => ['nullable', 'string', 'max:160'],
             'sections.*.body' => ['nullable', 'string'],
-            'seo_title' => ['nullable', 'string', 'max:180'],
-            'seo_description' => ['nullable', 'string', 'max:320'],
             'is_active' => ['nullable', 'boolean'],
         ];
     }

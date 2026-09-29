@@ -29,14 +29,8 @@
             <p>Review your details and place your order. All jewellery is packed securely and shipped with care.</p>
         </header>
 
-        @if (session('success'))
-            <script id="app-flash-data" type="application/json">@json(['success' => session('success')])</script>
-        @endif
-        @if (session('error'))
-            <div class="checkout-flash checkout-flash--error">{{ session('error') }}</div>
-        @endif
         @if ($errors->any())
-            <div class="checkout-flash checkout-flash--error">{{ $errors->first() }}</div>
+            <div class="checkout-flash checkout-flash--error" data-auto-dismiss>{{ $errors->first() }}</div>
         @endif
 
         <form id="checkout-form" method="POST" action="{{ route('checkout.place') }}" class="checkout-layout">

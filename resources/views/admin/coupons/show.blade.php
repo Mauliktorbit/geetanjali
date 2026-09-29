@@ -46,8 +46,46 @@
             <span class="value">{{ $item->minimum_cart !== null ? money($item->minimum_cart) : 'No minimum' }}</span>
         </div>
         <div class="detail-item">
-            <span class="label">Times used</span>
-            <span class="value">{{ number_format((int) $item->usage_count) }}</span>
+            <span class="label">Maximum discount</span>
+            <span class="value">{{ $item->maximum_discount !== null ? money($item->maximum_discount) : 'No cap' }}</span>
+        </div>
+        <div class="detail-item">
+            <span class="label">Total uses</span>
+            <span class="value">
+                {{ number_format((int) $item->usage_count) }}
+                /
+                {{ $item->usage_limit ? number_format((int) $item->usage_limit) : 'Unlimited' }}
+            </span>
+        </div>
+        <div class="detail-item">
+            <span class="label">Uses per customer</span>
+            <span class="value">{{ ((int) $item->per_customer_limit) > 0 ? number_format((int) $item->per_customer_limit) : 'Unlimited' }}</span>
+        </div>
+        <div class="detail-item">
+            <span class="label">Who can use it</span>
+            <span class="value">{{ $item->customerAudienceLabel() }}</span>
+        </div>
+        <div class="detail-item">
+            <span class="label">Applies to</span>
+            <span class="value">
+                @if (! $item->hasTargeting())
+                    Entire store
+                @else
+                    @if (($scopeCategories ?? collect())->isNotEmpty())
+                        <div>Categories: {{ $scopeCategories->implode(', ') }}</div>
+                    @endif
+                    @if (($scopeCollections ?? collect())->isNotEmpty())
+                        <div>Collections: {{ $scopeCollections->implode(', ') }}</div>
+                    @endif
+                    @if (($scopeProducts ?? collect())->isNotEmpty())
+                        <div>Products: {{ $scopeProducts->map(fn ($product) => $product->sku ? $product->name.' ('.$product->sku.')' : $product->name)->implode(', ') }}</div>
+                    @endif
+                @endif
+            </span>
+        </div>
+        <div class="detail-item">
+            <span class="label">Already discounted products</span>
+            <span class="value">{{ $item->exclude_sale_items ? 'Excluded — coupon will not apply' : 'Allowed' }}</span>
         </div>
     </div>
 </div>

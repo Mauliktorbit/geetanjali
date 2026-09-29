@@ -103,31 +103,10 @@
 
         <section class="form-section">
             <div class="form-section__head">
-                <h3>SEO &amp; visibility</h3>
-                <p>Optional search listing text. Leave blank to use the page title and intro.</p>
+                <h3>Visibility</h3>
+                <p>Control whether this page is shown on the website.</p>
             </div>
             <div class="form-grid">
-                <div class="form-group">
-                    <label for="policy-seo-title">SEO title</label>
-                    <input
-                        id="policy-seo-title"
-                        type="text"
-                        name="seo_title"
-                        class="form-control"
-                        value="{{ old('seo_title', $payload['seo_title']) }}"
-                        maxlength="180"
-                    >
-                </div>
-                <div class="form-group full">
-                    <label for="policy-seo-description">SEO description</label>
-                    <textarea
-                        id="policy-seo-description"
-                        name="seo_description"
-                        class="form-control"
-                        rows="3"
-                        maxlength="320"
-                    >{{ old('seo_description', $payload['seo_description']) }}</textarea>
-                </div>
                 <div class="form-group form-check">
                     <label>
                         <input type="checkbox" name="is_active" value="1" {{ old('is_active', $payload['is_active']) ? 'checked' : '' }}>

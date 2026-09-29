@@ -24,14 +24,14 @@ window.Geetanjali = Object.assign(window.Geetanjali || {}, {
 <script src="{{ asset('js/password-toggle.js') }}?v={{ filemtime(public_path('js/password-toggle.js')) }}"></script>
 <script src="{{ asset('js/delivery-review.js') }}?v={{ filemtime(public_path('js/delivery-review.js')) }}"></script>
 <script src="{{ asset('public/assets/js/app.js') }}?v=20260928h"></script>
-<script src="{{ asset('public/assets/js/storefront.js') }}?v=20260928h"></script>
+<script src="{{ asset('public/assets/js/storefront.js') }}?v=20260928k"></script>
 <script src="{{ asset('public/assets/js/home.js') }}?v=20260916d"></script>
-<script src="{{ asset('public/assets/js/product.js') }}?v=20260921b"></script>
+<script src="{{ asset('public/assets/js/product.js') }}?v=20260928k"></script>
 <script src="{{ asset('public/assets/js/collection.js') }}?v=20260928h"></script>
 <script src="{{ asset('public/assets/js/bridal.js') }}?v=20260921c"></script>
 <script src="{{ asset('public/assets/js/new-arrivals.js') }}?v=20260921c"></script>
 <script src="{{ asset('public/assets/js/offers.js') }}"></script>
-<script src="{{ asset('public/assets/js/auth.js') }}?v=20260928h"></script>
+<script src="{{ asset('public/assets/js/auth.js') }}?v=20260928j"></script>
 <script src="{{ asset('public/assets/js/cart.js') }}?v=20260928h"></script>
 <script src="{{ asset('public/assets/js/checkout.js') }}?v=20260925a"></script>
 <script src="{{ asset('public/assets/js/wishlist.js') }}?v=20260921a"></script>

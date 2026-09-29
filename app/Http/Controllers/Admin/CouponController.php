@@ -3,8 +3,12 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Requests\Admin\CouponRequest;
+use App\Models\Category;
+use App\Models\Collection;
 use App\Models\Coupon;
+use App\Models\Product;
 use App\Services\CouponService;
+use App\Services\StorefrontCatalogService;
 use Illuminate\Http\Request;
 
 class CouponController extends AdminController
@@ -20,7 +24,7 @@ class CouponController extends AdminController
 
     public function create()
     {
-        return view('admin.coupons.create');
+        return view('admin.coupons.create', $this->formOptions());
     }
 
     public function store(CouponRequest $request)
@@ -32,14 +36,28 @@ class CouponController extends AdminController
 
     public function show(Coupon $coupon)
     {
+        $coupon->load(['offers', 'offersWithCode']);
+
         return view('admin.coupons.show', [
-            'item' => $coupon->load(['offers', 'offersWithCode']),
+            'item' => $coupon,
+            'scopeCategories' => Category::query()
+                ->whereIn('id', $coupon->includedCategoryIds())
+                ->orderBy('name')
+                ->pluck('name'),
+            'scopeCollections' => Collection::query()
+                ->whereIn('id', $coupon->includedCollectionIds())
+                ->orderBy('name')
+                ->pluck('name'),
+            'scopeProducts' => Product::query()
+                ->whereIn('id', $coupon->includedProductIds())
+                ->orderBy('name')
+                ->get(['name', 'sku']),
         ]);
     }
 
     public function edit(Coupon $coupon)
     {
-        return view('admin.coupons.edit', ['item' => $coupon]);
+        return view('admin.coupons.edit', array_merge($this->formOptions(), ['item' => $coupon]));
     }
 
     public function update(CouponRequest $request, Coupon $coupon)
@@ -54,5 +72,20 @@ class CouponController extends AdminController
         $this->service->delete($coupon);
 
         return $this->success('Coupon removed.', 'admin.coupons.index');
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function formOptions(): array
+    {
+        return [
+            'categories' => Category::query()->orderBy('name')->get(['id', 'name']),
+            'collections' => StorefrontCatalogService::adminCollections(),
+            'products' => Product::query()
+                ->where('is_archived', false)
+                ->orderBy('name')
+                ->get(['id', 'name', 'sku']),
+        ];
     }
 }

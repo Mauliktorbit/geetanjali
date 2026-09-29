@@ -38,10 +38,6 @@
         </section>
 
         <div class="contact-shell">
-            @if (session('success'))
-                <div class="contact-flash" role="status">{{ session('success') }}</div>
-            @endif
-
             <div class="contact-grid">
                 {{-- Get In Touch --}}
                 <article class="contact-card">
@@ -102,10 +98,11 @@
                                     type="text"
                                     name="name"
                                     placeholder="Your Name"
-                                    value="{{ old('name') }}"
+                                    value="{{ old('name', $prefillName ?? '') }}"
                                     required
                                     maxlength="100"
                                     autocomplete="name"
+                                    @if (! empty($lockContactIdentity)) readonly @endif
                                 >
                                 @error('name') <p class="contact-error">{{ $message }}</p> @enderror
                             </div>
@@ -116,10 +113,11 @@
                                     type="email"
                                     name="email"
                                     placeholder="Your Email"
-                                    value="{{ old('email') }}"
+                                    value="{{ old('email', $prefillEmail ?? '') }}"
                                     required
                                     maxlength="150"
                                     autocomplete="email"
+                                    @if (! empty($lockContactIdentity)) readonly @endif
                                 >
                                 @error('email') <p class="contact-error">{{ $message }}</p> @enderror
                             </div>

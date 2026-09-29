@@ -10,14 +10,6 @@
                 <p class="auth-subtitle">Enter your account email and we will send a 6-digit OTP to reset your password. This works for customer and admin accounts.</p>
                 @include('frontend.components.gold-divider', ['align' => 'center'])
 
-                @if (session('success'))
-                    <div class="auth-alert auth-alert--success" role="status">{{ session('success') }}</div>
-                @endif
-
-                @if ($errors->any())
-                    <div class="auth-alert" role="alert">{{ $errors->first() }}</div>
-                @endif
-
                 <form method="POST" action="{{ route('password.email') }}" class="auth-form">
                     @csrf
                     <div class="auth-field">
@@ -34,6 +26,7 @@
                                 required
                             >
                         </div>
+                        @error('email') <span class="auth-error">{{ $message }}</span> @enderror
                     </div>
                     <button type="submit" class="auth-btn">Send OTP</button>
                 </form>

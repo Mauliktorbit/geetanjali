@@ -18,6 +18,14 @@ function csrfToken() {
 }
 
 function showToast(message) {
+    const text = String(message || '').trim();
+    if (!text) {
+        return;
+    }
+    if (window.AppAlert && typeof window.AppAlert.toast === 'function') {
+        window.AppAlert.toast(text, 'success');
+        return;
+    }
     let toast = document.querySelector('.product-toast');
     if (!toast) {
         toast = document.createElement('div');
@@ -25,10 +33,10 @@ function showToast(message) {
         toast.setAttribute('role', 'status');
         document.body.appendChild(toast);
     }
-    toast.textContent = message;
+    toast.textContent = text;
     toast.classList.add('is-visible');
     clearTimeout(showToast._timer);
-    showToast._timer = setTimeout(() => toast.classList.remove('is-visible'), 2600);
+    showToast._timer = setTimeout(() => toast.classList.remove('is-visible'), 4000);
 }
 
 function initGallery(root) {

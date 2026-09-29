@@ -15,9 +15,22 @@
 @import url('checkout.css?v=20260928i');
 @import url('wishlist.css');
 @import url('account.css?v=20260928i');
-@import url('contact.css?v=20260928f');
+@import url('contact.css?v=20260928k');
 @import url('pages.css');
 @import url('responsive.css?v=20260928e');
+
+[data-auto-dismiss].is-hiding,
+.contact-error.is-hiding,
+.static-page__error.is-hiding,
+.account-flash.is-hiding,
+.checkout-flash.is-hiding,
+.cart-flash.is-hiding,
+.wishlist-flash.is-hiding,
+.contact-flash.is-hiding,
+.invalid-feedback.is-hiding {
+    opacity: 0;
+    transition: opacity 0.28s ease;
+}
 
 .password-field {
     position: relative;
@@ -71,7 +84,7 @@
 .checkout-modal,
 .dr-modal__backdrop,
 .product-lightbox,
-body .swal2-container.swal2-backdrop-show,
+body .swal2-container.swal2-backdrop-show:not(.swal2-toast-shown):not(.gj-swal-toast-wrap),
 body .offcanvas-backdrop,
 body .modal-backdrop {
     background: var(--popup-backdrop) !important;

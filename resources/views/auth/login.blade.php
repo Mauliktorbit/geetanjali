@@ -17,18 +17,6 @@
                     </div>
                 @endif
 
-                @if (session('success'))
-                    <div class="auth-alert auth-alert--success" role="status">
-                        {{ session('success') }}
-                    </div>
-                @endif
-
-                @if (session('error'))
-                    <div class="auth-alert" role="alert">
-                        {{ session('error') }}
-                    </div>
-                @endif
-
                 <form method="POST" action="{{ route('login.submit') }}" class="auth-form" novalidate>
                     @csrf
 
@@ -70,7 +58,7 @@
                         <div class="auth-forgot">
                             <label class="auth-remember">
                                 <input type="checkbox" name="remember" value="1" @checked(old('remember', true))>
-                                Keep me signed in for 1 week
+                                Keep me signed in
                             </label>
                             <a href="{{ route('password.request') }}">Forgot Password?</a>
                         </div>

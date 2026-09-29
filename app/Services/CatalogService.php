@@ -13,7 +13,7 @@ class CatalogService
     public function find(int $id): ?array
     {
         $product = Product::query()
-            ->with('category')
+            ->with(['category', 'collections'])
             ->whereKey($id)
             ->where('is_active', true)
             ->where('is_archived', false)
@@ -33,7 +33,7 @@ class CatalogService
     public function present(int $id, ?array $snapshot = null): ?array
     {
         $product = Product::query()
-            ->with('category')
+            ->with(['category', 'collections'])
             ->whereKey($id)
             ->where('is_active', true)
             ->where('is_archived', false)
@@ -80,6 +80,7 @@ class CatalogService
     public function fromProduct(Product $product): array
     {
         $price = (float) $product->effective_price;
+        $product->loadMissing('collections');
         $compare = (float) $product->regular_price;
         $discount = price_discount_label($price, $compare);
 
@@ -93,6 +94,10 @@ class CatalogService
             'image' => $image,
             'price' => $price,
             'compare_at_price' => $compare > $price ? $compare : null,
+            'on_sale' => $compare > $price,
+            'category_id' => $product->category_id ? (int) $product->category_id : null,
+            'subcategory_id' => $product->subcategory_id ? (int) $product->subcategory_id : null,
+            'collection_ids' => $product->collections->pluck('id')->map(fn ($id) => (int) $id)->values()->all(),
             'discount_label' => $discount,
             'metal' => $product->metal ?: ($product->category?->name ?: ($product->product_type ? ucfirst((string) $product->product_type) : null)),
             'weight' => $weight,
@@ -142,6 +147,10 @@ class CatalogService
             'image' => $image,
             'price' => $price,
             'compare_at_price' => $compare,
+            'on_sale' => $compare > $price,
+            'category_id' => null,
+            'subcategory_id' => null,
+            'collection_ids' => [],
             'discount_label' => price_discount_label($price, $compare),
             'metal' => $metal,
             'weight' => $weight,
@@ -168,6 +177,7 @@ class CatalogService
         $compare = isset($snapshot['compare_at_price']) && $snapshot['compare_at_price'] !== ''
             ? (float) $snapshot['compare_at_price']
             : null;
+        $onSale = $compare && $compare > $price;
 
         return [
             'id' => $id,
@@ -175,7 +185,14 @@ class CatalogService
             'slug' => $snapshot['slug'] ?? null,
             'image' => $snapshot['image'] ?: 'public/assets/images/categories/rings.jpg',
             'price' => $price,
-            'compare_at_price' => $compare && $compare > $price ? $compare : null,
+            'compare_at_price' => $onSale ? $compare : null,
+            'on_sale' => (bool) ($snapshot['on_sale'] ?? $onSale),
+            'category_id' => ! empty($snapshot['category_id']) ? (int) $snapshot['category_id'] : null,
+            'subcategory_id' => ! empty($snapshot['subcategory_id']) ? (int) $snapshot['subcategory_id'] : null,
+            'collection_ids' => array_values(array_unique(array_filter(
+                array_map('intval', (array) ($snapshot['collection_ids'] ?? [])),
+                static fn (int $id) => $id > 0
+            ))),
             'discount_label' => price_discount_label($price, $compare ?? 0),
             'metal' => $snapshot['metal'] ?? null,
             'weight' => $snapshot['weight'] ?? null,

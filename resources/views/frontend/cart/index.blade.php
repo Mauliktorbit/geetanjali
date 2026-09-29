@@ -30,13 +30,6 @@
                 </a>
             </div>
 
-            @if (session('success'))
-                <div class="cart-flash cart-flash--success">{{ session('success') }}</div>
-            @endif
-            @if (session('error'))
-                <div class="cart-flash cart-flash--error">{{ session('error') }}</div>
-            @endif
-
             @if ($cart['count'] < 1)
                 <div class="cart-empty">
                     <h2 class="font-heading">Your cart is empty</h2>

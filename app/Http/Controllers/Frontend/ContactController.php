@@ -14,11 +14,17 @@ class ContactController extends Controller
 
     public function index(): View
     {
+        $user = auth()->user();
+        $prefillFromAccount = $user && ! $user->is_staff;
+
         return view('frontend.contact.index', [
             'breadcrumb' => [
                 ['label' => 'Home', 'url' => route('home')],
                 ['label' => 'Contact Us', 'url' => null],
             ],
+            'prefillName' => $prefillFromAccount ? (string) $user->name : '',
+            'prefillEmail' => $prefillFromAccount ? (string) $user->email : '',
+            'lockContactIdentity' => $prefillFromAccount,
             'contact' => storefront_contact(),
             'heroImage' => 'public/assets/images/contact/hero-bg.jpg',
             'trustItems' => [
@@ -34,9 +40,15 @@ class ContactController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $request->merge([
+        $user = $request->user();
+        $identity = [
             'phone' => indian_mobile($request->input('phone')),
-        ]);
+        ];
+        if ($user && ! $user->is_staff) {
+            $identity['name'] = $user->name;
+            $identity['email'] = $user->email;
+        }
+        $request->merge($identity);
 
         $data = $request->validate([
             'name' => ['required', 'string', 'max:100'],

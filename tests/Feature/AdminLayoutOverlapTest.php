@@ -27,6 +27,13 @@ class AdminLayoutOverlapTest extends TestCase
         $this->assertStringContainsString('body.admin-app', $css);
         $this->assertStringContainsString('.admin-content', $css);
         $this->assertDoesNotMatchRegularExpression('/\.topbar\s*\{[^}]*position:\s*sticky/s', $css);
+        $this->assertStringContainsString('calc(100vw - var(--sidebar-width)', $css);
+        $this->assertStringContainsString('html.admin-html .swal2-container.swal2-top-end', $css);
+        $this->assertStringContainsString('left: var(--sidebar-width)', $css);
+
+        $js = (string) file_get_contents(public_path('js/sweet-alerts.js'));
+        $this->assertStringContainsString('gj-swal-notice-wrap', $js);
+        $this->assertStringContainsString('backdrop: false', $js);
 
         $admin = User::factory()->create([
             'is_staff' => true,

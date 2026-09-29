@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Cart;
 use App\Models\CartItem;
+use App\Models\Coupon;
 use App\Models\Customer;
 use App\Models\Product;
 use App\Models\User;
@@ -18,6 +19,13 @@ class CartService
     private const COUPON_KEY = 'cart_coupon';
 
     private const GIFT_KEY = 'cart_gift_message';
+
+    private const LEGACY_COUPONS = [
+        'GEET10' => ['type' => 'percent', 'value' => 10],
+        'GOLD15' => ['type' => 'percent', 'value' => 15],
+        'PREPAID10' => ['type' => 'percent', 'value' => 10],
+        'FLAT5000' => ['type' => 'flat', 'value' => 5000],
+    ];
 
     public function __construct(
         private readonly CatalogService $catalog,
@@ -34,14 +42,8 @@ class CartService
         $compareTotal = (float) collect($items)->sum(fn (array $item) => ($item['compare_at_price'] ?? $item['price']) * $item['quantity']);
         $itemSavings = max(0, $compareTotal - $subtotal);
 
-        $coupon = $this->couponState();
-        $couponDiscount = 0.0;
-
-        if (is_array($coupon) && isset($coupon['type'], $coupon['value'])) {
-            $couponDiscount = in_array($coupon['type'], ['percent', 'percentage'], true)
-                ? round($subtotal * ((float) $coupon['value'] / 100), 2)
-                : min($subtotal, (float) $coupon['value']);
-        }
+        $coupon = $this->couponState($items);
+        $couponDiscount = is_array($coupon) ? (float) ($coupon['discount'] ?? 0) : 0.0;
 
         $shipping = 0.0;
         $total = max(0, $subtotal - $couponDiscount + $shipping);
@@ -197,14 +199,9 @@ class CartService
     {
         $code = strtoupper(trim($code));
         $items = $this->items();
-        $subtotal = (float) collect($items)->sum(fn (array $item) => $item['line_total']);
         $customer = $this->customer();
 
-        $result = $this->coupons->validate($code, [
-            'subtotal' => $subtotal,
-            'product_ids' => collect($items)->pluck('id')->all(),
-            'customer_id' => $customer?->id,
-        ]);
+        $result = $this->coupons->validate($code, $this->couponCartContext($items, $customer?->id));
 
         if ($result['valid'] && isset($result['coupon'])) {
             $coupon = $result['coupon'];
@@ -218,12 +215,7 @@ class CartService
             return ['success' => true, 'message' => $result['message'], 'code' => $state['code']];
         }
 
-        $legacy = [
-            'GEET10' => ['type' => 'percent', 'value' => 10],
-            'GOLD15' => ['type' => 'percent', 'value' => 15],
-            'PREPAID10' => ['type' => 'percent', 'value' => 10],
-            'FLAT5000' => ['type' => 'flat', 'value' => 5000],
-        ];
+        $legacy = self::LEGACY_COUPONS;
 
         if (! isset($legacy[$code])) {
             $this->clearCoupon();
@@ -387,37 +379,97 @@ class CartService
     }
 
     /**
-     * @return array<string, mixed>|null
+     * @param  list<array<string, mixed>>|null  $items
+     * @return array{code: string, type: string, value: float, discount: float}|null
      */
-    private function couponState(): ?array
+    private function couponState(?array $items = null): ?array
     {
+        $items ??= $this->items();
         $session = Session::get(self::COUPON_KEY);
-        if (is_array($session) && ! empty($session['code'])) {
-            return $session;
-        }
+        $code = is_array($session) && ! empty($session['code'])
+            ? (string) $session['code']
+            : (string) ($this->customerCart()?->coupon_code ?: '');
 
-        $code = $this->customerCart()?->coupon_code;
-        if (! $code) {
+        if ($code === '') {
             return null;
         }
 
-        $items = $this->items();
-        $subtotal = (float) collect($items)->sum(fn (array $item) => $item['line_total']);
-        $check = $this->coupons->validate($code, [
-            'subtotal' => $subtotal,
-            'product_ids' => collect($items)->pluck('id')->all(),
-            'customer_id' => $this->customer()?->id,
-        ]);
+        $check = $this->coupons->validate($code, $this->couponCartContext($items, $this->customer()?->id));
 
         if ($check['valid'] && isset($check['coupon'])) {
             return [
                 'code' => $check['coupon']->code,
                 'type' => $check['coupon']->discount_type,
                 'value' => (float) $check['coupon']->discount_value,
+                'discount' => (float) $check['discount'],
             ];
         }
 
-        return ['code' => $code, 'type' => 'percent', 'value' => 0];
+        $couponExists = Coupon::query()
+            ->where(function ($q) use ($code) {
+                $q->where('code', $code)->orWhere('code', strtoupper($code));
+            })
+            ->exists();
+
+        if ($couponExists) {
+            $this->clearCoupon();
+
+            return null;
+        }
+
+        $legacy = self::LEGACY_COUPONS[strtoupper($code)] ?? null;
+        if ($legacy !== null) {
+            $subtotal = (float) collect($items)->sum(fn (array $item) => $item['line_total'] ?? 0);
+            $type = (string) $legacy['type'];
+            $value = (float) $legacy['value'];
+            $discount = in_array($type, ['percent', 'percentage'], true)
+                ? round($subtotal * ($value / 100), 2)
+                : min($subtotal, $value);
+
+            return [
+                'code' => strtoupper($code),
+                'type' => $type,
+                'value' => $value,
+                'discount' => $discount,
+            ];
+        }
+
+        $this->clearCoupon();
+
+        return null;
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $items
+     * @return array<string, mixed>
+     */
+    private function couponCartContext(array $items, ?int $customerId = null): array
+    {
+        $categoryIds = [];
+        $collectionIds = [];
+
+        foreach ($items as $item) {
+            foreach ([(int) ($item['category_id'] ?? 0), (int) ($item['subcategory_id'] ?? 0)] as $categoryId) {
+                if ($categoryId > 0) {
+                    $categoryIds[] = $categoryId;
+                }
+            }
+            foreach ((array) ($item['collection_ids'] ?? []) as $collectionId) {
+                $collectionId = (int) $collectionId;
+                if ($collectionId > 0) {
+                    $collectionIds[] = $collectionId;
+                }
+            }
+        }
+
+        return [
+            'subtotal' => (float) collect($items)->sum(fn (array $item) => $item['line_total'] ?? 0),
+            'items' => $items,
+            'product_ids' => collect($items)->pluck('id')->map(fn ($id) => (int) $id)->all(),
+            'category_ids' => array_values(array_unique($categoryIds)),
+            'collection_ids' => array_values(array_unique($collectionIds)),
+            'customer_id' => $customerId,
+        ];
     }
 
     /**

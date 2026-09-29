@@ -187,8 +187,8 @@ class PolicyPageService
             'slug' => $definition['slug'],
             'type' => $definition['type'],
             'content' => $this->encodeContent((string) ($data['intro'] ?? ''), $sections),
-            'seo_title' => $data['seo_title'] ?: $data['title'],
-            'seo_description' => $data['seo_description'] ?: ($data['intro'] ?? null),
+            'seo_title' => $data['seo_title'] ?? ($page->seo_title ?: $data['title']),
+            'seo_description' => $data['seo_description'] ?? ($page->seo_description ?: ($data['intro'] ?? null)),
             'is_active' => (bool) ($data['is_active'] ?? true),
         ]);
 

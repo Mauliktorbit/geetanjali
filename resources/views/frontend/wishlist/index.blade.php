@@ -66,13 +66,6 @@
                 @endif
             </div>
 
-            @if (session('success'))
-                <div class="wishlist-flash wishlist-flash--success">{{ session('success') }}</div>
-            @endif
-            @if (session('error'))
-                <div class="wishlist-flash wishlist-flash--error">{{ session('error') }}</div>
-            @endif
-
             @if ($wishlist['count'] < 1)
                 <div class="wishlist-empty">
                     <h2 class="font-heading">{{ $emptyTitle }}</h2>

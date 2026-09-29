@@ -24,6 +24,7 @@
         'initTableSort',
         'initCharts',
         'initAlertDismiss',
+        'initDatePickers',
         'initNotifications',
       ];
       steps.forEach((name) => {
@@ -47,9 +48,15 @@
 
       const MOBILE_BP = 768;
 
+      const syncSidebarOffset = () => {
+        const collapsed = Boolean(shell && shell.classList.contains('sidebar-collapsed') && window.innerWidth > MOBILE_BP);
+        document.documentElement.classList.toggle('admin-sidebar-collapsed', collapsed);
+      };
+
       if (shell && localStorage.getItem(storageKey) === '1' && window.innerWidth > MOBILE_BP) {
         shell.classList.add('sidebar-collapsed');
       }
+      syncSidebarOffset();
 
       if (collapseBtn && shell) {
         collapseBtn.addEventListener('click', () => {
@@ -59,8 +66,11 @@
             storageKey,
             shell.classList.contains('sidebar-collapsed') ? '1' : '0'
           );
+          syncSidebarOffset();
         });
       }
+
+      window.addEventListener('resize', syncSidebarOffset);
 
       document.querySelectorAll('[data-nav-toggle]').forEach((btn) => {
         btn.addEventListener('click', (e) => {
@@ -83,6 +93,63 @@
         const item = link.closest('.nav-item');
         if (item) item.classList.add('open');
       });
+
+      this.initSidebarScroll();
+    },
+
+    initSidebarScroll() {
+      const nav = document.querySelector('.sidebar-nav');
+      if (!nav) return;
+
+      const storageKey = 'admin.sidebar.navScroll';
+
+      const save = () => {
+        try {
+          sessionStorage.setItem(storageKey, String(Math.max(0, nav.scrollTop)));
+        } catch (err) {
+          // Ignore private-mode quota errors.
+        }
+      };
+
+      const activeItem = () => nav.querySelector('.nav-link.active, .nav-sublink.active');
+
+      const isActiveVisible = (el) => {
+        const navBox = nav.getBoundingClientRect();
+        const itemBox = el.getBoundingClientRect();
+        return itemBox.top >= navBox.top && itemBox.bottom <= navBox.bottom;
+      };
+
+      const restore = () => {
+        let saved = null;
+        try {
+          saved = sessionStorage.getItem(storageKey);
+        } catch (err) {
+          saved = null;
+        }
+
+        const top = Number(saved);
+        if (Number.isFinite(top) && top >= 0) {
+          nav.scrollTop = top;
+        }
+
+        const active = activeItem();
+        if (active && !isActiveVisible(active)) {
+          active.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+        }
+      };
+
+      nav.addEventListener('scroll', save, { passive: true });
+      document.querySelectorAll('.sidebar .nav-link[href], .sidebar .nav-sublink[href]').forEach((link) => {
+        link.addEventListener('click', () => {
+          const href = link.getAttribute('href');
+          if (href && href !== '#') {
+            save();
+          }
+        });
+      });
+      window.addEventListener('pageshow', restore);
+      restore();
+      window.requestAnimationFrame(restore);
     },
 
     /* ------------------------------------------------------------------ */
@@ -839,6 +906,44 @@
     },
 
     /* ------------------------------------------------------------------ */
+    /* Date pickers                                                       */
+    /* ------------------------------------------------------------------ */
+    initDatePickers() {
+      const openPicker = (input) => {
+        if (!input || typeof input.showPicker !== 'function') return;
+        try {
+          input.showPicker();
+        } catch (err) {
+          // Browser may block showPicker if the click isn't trusted.
+        }
+      };
+
+      document.querySelectorAll('input[type="date"].form-control').forEach((input) => {
+        input.addEventListener('click', () => openPicker(input));
+      });
+
+      document.querySelectorAll('[data-date-range-start]').forEach((start) => {
+        const form = start.closest('form');
+        const end = form ? form.querySelector('[data-date-range-end]') : document.querySelector('[data-date-range-end]');
+        if (!end) return;
+
+        const syncMin = () => {
+          if (start.value) {
+            end.min = start.value;
+            if (end.value && end.value < start.value) {
+              end.value = start.value;
+            }
+          } else {
+            end.removeAttribute('min');
+          }
+        };
+
+        start.addEventListener('change', syncMin);
+        syncMin();
+      });
+    },
+
+    /* ------------------------------------------------------------------ */
     /* Alert dismiss                                                      */
     /* ------------------------------------------------------------------ */
     initAlertDismiss() {
@@ -848,6 +953,21 @@
           if (alert) alert.remove();
         });
       });
+
+      const nodes = [...document.querySelectorAll('.flash-area .alert, .invalid-feedback')].filter((el) => {
+        return String(el.textContent || '').trim() !== '';
+      });
+      if (nodes.length === 0) return;
+
+      window.setTimeout(() => {
+        nodes.forEach((el) => {
+          el.style.opacity = '0';
+          el.style.transition = 'opacity 0.28s ease';
+          window.setTimeout(() => {
+            el.remove();
+          }, 280);
+        });
+      }, 4000);
     },
 
     /* ------------------------------------------------------------------ */
@@ -975,6 +1095,8 @@
             showCloseButton: true,
             timer: 9000,
             timerProgressBar: true,
+            backdrop: false,
+            customClass: { popup: 'gj-swal-toast gj-swal-notice', container: 'gj-swal-toast-wrap gj-swal-notice-wrap' },
           }).then((res) => {
             if (res.isConfirmed && item.read_url) {
               const form = document.createElement('form');

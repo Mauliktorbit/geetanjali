@@ -88,33 +88,6 @@
             @error('sort_order')<span class="invalid-feedback">{{ $message }}</span>@enderror
         </div>
 
-        <div class="form-group">
-            <label for="collection-seo-title">SEO title</label>
-            <input
-                id="collection-seo-title"
-                type="text"
-                name="seo_title"
-                class="form-control @error('seo_title') is-invalid @enderror"
-                value="{{ old('seo_title', $item->seo_title ?? '') }}"
-                maxlength="180"
-                placeholder="Festive Collection | Geetanjali Jewellers"
-            >
-            @error('seo_title')<span class="invalid-feedback">{{ $message }}</span>@enderror
-        </div>
-
-        <div class="form-group">
-            <label for="collection-seo-description">SEO description</label>
-            <textarea
-                id="collection-seo-description"
-                name="seo_description"
-                class="form-control @error('seo_description') is-invalid @enderror"
-                rows="3"
-                maxlength="320"
-                placeholder="Explore festive fashion jewellery from Geetanjali Jewellers."
-            >{{ old('seo_description', $item->seo_description ?? '') }}</textarea>
-            @error('seo_description')<span class="invalid-feedback">{{ $message }}</span>@enderror
-        </div>
-
         <div class="form-group form-check">
             <input
                 id="collection-active"

@@ -11,12 +11,6 @@
                 <p class="auth-subtitle">Join the Geetanjali family and discover<br>timeless beauty</p>
                 @include('frontend.components.gold-divider', ['align' => 'center'])
 
-                @if (session('success'))
-                    <div class="auth-alert auth-alert--success" role="status">
-                        {{ session('success') }}
-                    </div>
-                @endif
-
                 <form
                     method="POST"
                     action="{{ route('register.submit') }}"
